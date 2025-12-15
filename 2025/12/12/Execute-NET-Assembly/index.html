@@ -161,7 +161,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2025-12-12 19:25:23
+          2025-12-15 19:10:51
         </span>
         
               <span class="post-categories">
@@ -188,8 +188,8 @@
 <p>还有另一个关键的技术就是如何<strong>获取.NET程序的输出</strong>。我翻遍了github的大部分项目，找了三种可行的方案，分别是使用<strong>匿名管道</strong>或<strong>命名管道</strong>或<strong>MailSlot</strong>他们三个的优劣我不就介绍。具体的使用的步骤大致一样，以匿名管道为例：</p>
 <ol>
 <li>创建匿名管道；</li>
-<li>保留原始标准输入的句柄；</li>
-<li>重定向标准输入和错误。</li>
+<li>保留原始标准输出和错误的句柄；</li>
+<li>重定向标准输出和错误为管道的写端。</li>
 <li>创建一个线程从匿名管道的读端读取数据。这一步我卡了挺久，最开始我是抄<a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Dotnet.c">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;Dotnet.c at main · HavocFramework&#x2F;Havoc</a>的实现，但它并没创建线程这一步导致我不能如愿获取到C# 的执行结果。试了很多种方法，创建只有创建线程成功了，具体原因不知。</li>
 </ol>
 <p>一般而言，execute-assembly功能通常由C&#x2F;C++等非托管程序实现，为了能够在非托管程序执行托管程序，必须使用.NET Framework的<code>ICLRRuntimeHost</code>、<code>ICLRRuntimeInfo</code>和<code>ICLRMetaHost</code>这三个COM接口<strong>初始化CLR环境</strong>、<strong>获取程序域</strong>、<strong>装载程序集</strong>和<strong>执行程序集</strong>这四个核心骤。</p>
@@ -273,7 +273,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2025-12-12 19:25:23
+              2025-12-15 19:10:51
             </span>
             
                   <span class="post-categories">
