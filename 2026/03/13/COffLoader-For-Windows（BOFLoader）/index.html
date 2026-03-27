@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      COffLoader For Windows（BOFLoader） 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">COffLoader For Windows（BOFLoader）</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-03-13 20:47:16
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                    <b>#</b> 武器化
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h1 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h1><p>C2植入物的功能模块中一般包含了RunPE，execute-shellcode，execute-assembly等等最基础的渗透功能，但是光靠这些是无法支持后渗透的复杂任务，为此我们需要引入BOF执行器。由于我用Go实现implant，使用Go来完成BOF执行器还是太过复杂，为了缩减implant的体积，有必要引入”扩展”的功能。</p>
+<p>早期CS要实现复杂的功能，往往需要用到fork&amp;run技术，CS 默认会临时启动一个牺牲进程（如 rundll32），再把反射DLL注入进去，有着明显的<strong>进程创建事件</strong>、<strong>父子进程链</strong>，并且该进程本身在EDR看来就是可疑的，因为它没有关联磁盘上的dll文件且无签名。</p>
+<p>当然不能以现在的视角去评价过去的反射DLL注入技术，在当时这种做法是先进的，不过随着攻防对抗强度的升级，fork&amp;run的做法不再符合OPSEC要求。</p>
+<p>命运的转折点发生在2020年，Cobalt Strike 4.1 正式推出了<strong>Beacon Object File（BOF）</strong> 技术，用来替代早期“fork&amp;run”模式，此项技术一经发布就被红队视为“OPSEC分水岭”，这一历史时刻注定是红队的狂欢，它把对抗强度从“进程链”拉回到“内存行为”层面，也直接催生了后续各类加载器（COFFLoader、coffee、goffloader等）和更激进的内存免杀研究，安全研究员们开发了数以百计的BOF，从简单的信息枚举到复杂的横向移动、凭证窃取，几乎覆盖了渗透测试的所有环节。<code>COFFLoader</code> 等项目更是证明了BOF理念的可移植性，使其不再局限于Cobalt Strike。</p>
+<p>现如今，回顾这一技术里程碑，我们不仅能欣赏其设计之美，更能深刻理解攻防对抗螺旋式上升的内在动力：防御方在更高维度上布防，攻击方就必须在更深层次上突破。BOF正是这样一个推动整个领域向前迈进的关键节点。</p>
+<p>要实现C2中的植入物，有一个必定要实现的功能就是BOF执行器，这可以说是现代C2的标配</p>
+<h1 id="二、CoffeeLoader的原理和代码实现"><a href="#二、CoffeeLoader的原理和代码实现" class="headerlink" title="二、CoffeeLoader的原理和代码实现"></a>二、CoffeeLoader的原理和代码实现</h1><p>Windows CoffeeLoader的代码主要参考下面的两个项目：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/Cen4enCen/CenCoffLdr">Cen4enCen&#x2F;CenCoffLdr: A parser for COFF files.</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/CoffeeLdr.c">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;CoffeeLdr.c at main · HavocFramework&#x2F;Havoc</a></li>
+</ol>
+<p>说是参考，其实90%的代码都是抄<strong>Cen4enCen</strong>师傅的实现，他的代码解决了大部分CoffeeLoader存在的问题，是一个非常优秀的CoffeeLoader实现，具体来说是：</p>
+<ol>
+<li>动态分配GOT和BSS的大小。</li>
+<li>处理.BSS段，适配<strong>MSVC</strong>和<strong>MINGW</strong>。</li>
+<li>增加捕获异常的VEH，避免CoffeeLoader崩溃而导致整个Beacon崩溃。</li>
+<li>OPSEC操作，比如说模块踩踏、设置上下文劫持注入等等。</li>
+</ol>
+<p>本文会详细的分析<strong>Cen4enCen</strong>师傅的项目，并写下自己学习CoffeeLoader思考过程，增加X86的适配。我觉得没有必要再造一个轮子项目，所以我不打算开源自己修改后的CoffeeLoader，有需要的就参考 <a target="_blank" rel="noopener" href="https://github.com/Cen4enCen/CenCoffLdr">Cen4enCen&#x2F;CenCoffLdr: A parser for COFF files.</a>，记得给<strong>Cen4enCen</strong>师傅点star啊。</p>
+<p>测试用到的BOF文件：<a target="_blank" rel="noopener" href="https://github.com/trustedsec/CS-Situational-Awareness-BOF">trustedsec&#x2F;CS-Situational-Awareness-BOF: Situational Awareness commands implemented using Beacon Object Files</a></p>
+<p><strong>CoffeeLoader大致步骤</strong>：</p>
+<ol>
+<li>读取COFF文件到内存，此时还是磁盘文件的形式，并没有进行映射操作。</li>
+<li>解析COFF文件，计算总大小、GOT表大小和BSS段大小。</li>
+<li>使用模块践踏计算得到一个可写内存空间，把各节复制进去，并在尾部预留GOT和 .bss。</li>
+<li>遍历 relocation，把外部符号解析成真实函数地址，把节内引用修补成正确偏移。</li>
+<li>找到BOF 入口点（<code>go</code> 或<code> _go</code>），把 <code>.text </code>设成可执行。</li>
+<li>注册VEH，构造一个挂起线程的上下文，让线程从BOF入口开始跑。</li>
+<li>BOF跑完后，通过 RtlExitUserThread 退出，主线程等待结束并清理资源。</li>
+</ol>
+<p>看起来好像很简单，但和反射DLL技术相比，CoffeeLoader真正困难的地方并不在“把文件读进内存”，而在于后续对COFF对象的手工处理。</p>
+<p>对 CoffeeLoader来说，最重要也最复杂的两个步骤就是重定位和符号解析，因为这两步本质上是在模拟链接器的工作。也就是说，我们不是像正常程序那样把 .o 文件交给编译器和链接器去处理，而是要在运行时自己把对象文件中的节、符号、外部引用和地址关系重新组织起来，最终把 .o 文件链接到当前进程申请出的那块内存中，并让它能够像一个已经完成链接的模块一样正常执行。</p>
+<p>⚠请注意，下面的流程分析不会给完整的源代码，会忽略很多细节方面的东西！</p>
+<h2 id="2-1-InitWin32Api"><a href="#2-1-InitWin32Api" class="headerlink" title="2.1 InitWin32Api"></a>2.1 InitWin32Api</h2><p>为了提高CoffeeLoader的OPSEC性，我们需要实现<strong>动态获取API</strong>的功能，并将其封装到一个 <code>Win32Api</code> 结构体中，请注意声明一个全局变量 <code>win32Api</code> 以备后续其他模块或者.c文件使用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-01-30-68cd3cf0359ce822148eb7d61b58b2c1-PixPin_2026-03-07_22-01-27-f56918.png" alt="PixPin_2026-03-07_22-01-27.png"></p>
+<p><strong>声明</strong>全局变量在某个头文件，然后在其他.c文件的做法是很多C&#x2F;C++类型的Beacon的惯用做法。就比如Havoc在Demon.h中这样写 <code>extern PINSTANCE Instance;</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F21-54-05-03efc3446046da25c3815c7e9d548384-PixPin_2026-03-07_21-54-02-d9bd7f.png" alt="PixPin_2026-03-07_21-54-02.png"></p>
+<p>然后在某一个 .c 文件里做<strong>定义</strong>，比如说Havoc的 <code>Demon.c</code> 里定义了Instance变量。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F14-16-45-141d5be9b49b64c458ff371ec61615d5-PixPin_2026-03-08_14-16-39-37f158.png" alt="PixPin_2026-03-08_14-16-39.png"></p>
+<p>再然后其他.c文件（比如 <code>CoffeeLdr.c</code>）<strong>包含</strong> <code>Demon.h</code> 文件，这样就可以使用到Instance中定义的一些变量，比如说 <code>Win32</code> 变量，以备使用动态获取到的WindowsAPI。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-15-25-70ef93f7cc2170fa266b5793094841ff-PixPin_2026-03-07_22-15-22-07695b.png" alt="PixPin_2026-03-07_22-15-22.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-15-51-4885e152709fa75c226af99acb174d17-PixPin_2026-03-07_22-15-49-d39976.png" alt="PixPin_2026-03-07_22-15-49.png"></p>
+<p>为了再动态获取API中避免使用到模块名和函数名等命名字符串，我们需要选择字符串hash算法得到唯一的hash值，至于算法的抉择，我选择使用ROTR算法，然后在计算 <code>GetModuleHandleA</code>、<code>GetProcAddress</code>、<code>LoadLibraryA</code> 和 <code>CreateThread</code> 的函数名hash，并在 <code>CoffeeProcessSymbol</code> 函数中使用到了存储着这些函数名hash的变量 <code>LdrApi</code>，我把CoffeeLoader放到有卡巴斯基的环境中测试，居然报毒了，通过简单控制变量法，我定位到其实是用到了 <code>LdrApi</code> 的这部分代码报毒，更进一步地排查出是使用到了这些函数名的ROTR13的hash值。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-34-24-3c8ddc86016c31e9f305e8dfc7b28e85-PixPin_2026-03-07_22-34-20-866aae.png" alt="PixPin_2026-03-07_22-34-20.png"></p>
+<p>可能是太多C2使用到了ROTR13算法了吧，我将ROTR13改成ROTR14，即32位整数右移14位，这样卡巴斯基就不报毒了。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-42-30-bcda87dd8036f0c66e0e2f8da08a5738-PixPin_2026-03-07_22-42-29-896443.png" alt="PixPin_2026-03-07_22-42-29.png"></p>
+<p>当然也可以参考Havoc的djb2风格的滚动字符串哈希吗，<strong>Cen4enCen</strong>师傅就使用到了这种Hash算法，目前卡巴斯基不报毒，请各位师傅放心参考！</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-42-05-fdd1449216e872e3125e2afc6bfe1a0d-PixPin_2026-03-07_22-42-03-c2a539.png" alt="PixPin_2026-03-07_22-42-03.png"></p>
+<p>也可以选择CRC32哈希算法，算法的选择是多样的，只要能将字符串作为输入参数，得到32位整数即可。</p>
+<p>扯远了，回归正题，我们在最上面不是说声明了一个全局变量 <code>Win32Api</code> 吗，接下来就是用动态获取API获得目标Windows API，初始化 <code>Win32Api</code> 。</p>
+<p>我定义了一个 <code>InitWin32Api</code> 函数，专门负责初始化 <code>Win32Api</code> 变量。具体来说是</p>
+<ol>
+<li>使用 <code>GetModuleByPeb</code> 获取Kernel32和ntdll这两个模块的地址。</li>
+<li><code>GetApiAddressByHash</code> 根据指定的 <code>模块hash + 函数名hash</code> 找到目标APi的地址。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-46-25-cc029fbe6307224ea0c831bc6d62e874-PixPin_2026-03-07_22-46-23-70fae1.png" alt="PixPin_2026-03-07_22-46-23.png"></p>
+<p><code>GetModuleByPeb</code> 是经典的</p>
+<ol>
+<li>获取<code>PEB</code></li>
+<li>从<code>PEB</code>中获取 <code>Ldr</code></li>
+<li>从 <code>Ldr</code> 中获取 <code>InMemoryOrderModuleList</code>，遍历链表中的每一个 <code>LIST_ENTRY</code></li>
+<li>从 <code>LIST_ENTRY</code> 获取 <code>LDR_DATA_TABLE_ENTRY</code> 从而拿到 <code>DllBase</code> 和 <code>BaseDllName</code>，计算BaseDllName的hash值，与指定的模块hash值匹配。</li>
+<li>返回目标模块的句柄。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F22-51-52-e922048404caec833050d3e8f8530d65-PixPin_2026-03-07_22-51-49-0919ba.png" alt="PixPin_2026-03-07_22-51-49.png"></p>
+<p><code>GetApiAddressByHash</code> 也是经典的操作</p>
+<ol>
+<li>DOS头-&gt;NT头-&gt;导出表</li>
+<li>取出导出表里的三张关键表AddressOfNames，AddressOfFunctions，AddressOfNameOrdinals</li>
+<li>获取导出函数名，计算导出函数名的hash，然后与目标 <code>模块哈希 + 函数哈希</code> 匹配</li>
+<li>如果匹配成功，则返回目标函数的地址。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F23-04-58-7f3940bd64447f0c503a70d9c519f48a-PixPin_2026-03-07_23-04-56-37f3cd.png" alt="PixPin_2026-03-07_23-04-56.png"></p>
+<p>我这里增加了x86的支持，具体是增加了一个 <code>GetCurrentPeb</code> 函数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F07%2F23-06-40-c09641450bacd96708c9d62682bc3365-PixPin_2026-03-07_23-05-26-af0eb1.png" alt="PixPin_2026-03-07_23-05-26.png"></p>
+<h2 id="2-2-BofPack"><a href="#2-2-BofPack" class="headerlink" title="2.2 BofPack"></a>2.2 BofPack</h2><p>一个合格的BOF加强器，给 <code>ColbaltStrike</code> <code>BOF</code> 的参数必须按照特定方式格式化，这样能更好的融入庞大的BOF生态。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F18-57-27-34d10cea1f0756dedea18afb64af951a-PixPin_2026-03-12_18-57-16-9af7b8.png" alt="PixPin_2026-03-12_18-57-16.png"></p>
+<p>常参数打包应该遵循如下的规则：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[totalSize][arg1Size][arg1Data][arg2Size][arg2Data]...</span><br></pre></td></tr></table></figure>
+
+<p>我们可以通过BofPack来打包任意个数的参数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F19-25-08-78de227619d599574439c48dfc8b9c4d-PixPin_2026-03-12_19-25-06-f6e72a.png" alt="PixPin_2026-03-12_19-25-06.png"></p>
+<p>打包说完了，那么解析呢？一般BOF文件先用 <code>BeaconDataParse</code> 来解析参数，解析完后，<code>parser-&gt;buffer指向第一个参数长度</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[arg1Size]    [arg1Data]    [arg2Size]   [arg2Data]...</span><br><span class="line">		|</span><br><span class="line">parserparser-&gt;buffer</span><br></pre></td></tr></table></figure>
+
+<p>再根据参数长度，选择 <code>BeaconDataPtr</code>、<code>BeaconDataInt</code>、<code>BeaconDataShort</code>、<code>BeaconDataLength</code> 和 <code>BeaconDataExtract</code> 获取参数，其中 <code>BeaconDataExtract</code> 的作用是“从当前游标位置取一个变长参数”，通常就是字符串或字节块。<code>BeaconDataExtract</code> 的流程是：</p>
+<ol>
+<li>先读当前项的长度 Length</li>
+<li>buffer +&#x3D; 4，跳过长度字段</li>
+<li>把当前位置当作数据起始地址返回</li>
+<li>再把游标继续向后移动 Length</li>
+</ol>
+<p>比如说下面的这个例子，先用 <code>BeaconDataParse</code> 来解析参数，随后用 <code>BeaconDataExtract</code> 获取lpwComputername和lpwPassword。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F19-10-31-f0869c9f8a43fe94bb62a0e4f5c5884b-PixPin_2026-03-12_19-10-28-2bc310.png" alt="PixPin_2026-03-12_19-10-28.png"></p>
+<h2 id="2-3-ParseTotalSize"><a href="#2-3-ParseTotalSize" class="headerlink" title="2.3 ParseTotalSize"></a>2.3 ParseTotalSize</h2><p>在真正“装载并修补” COFF 之前，先预估整个BOF运行时需要多大内存，并顺便算出GOT表和 .bss要占多少空间。所以它本质上是在回答：</p>
+<ul>
+<li>所有节复制进内存要多大</li>
+<li>外部导入函数地址表要多大（对应got表的大小）</li>
+<li>外部未解析数据区要多大（对应.bss）</li>
+</ul>
+<p>遍历所有节，每次取出一个节 <code>COFF_SECTION</code> 并获取到该节的第一个重定位项 <code>COFF_RELOC</code> 的地址。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F14-42-00-61c4aa5d55d79ed3dde6b1ad4cd3c31e-PixPin_2026-03-08_14-41-57-5053ab.png" alt="PixPin_2026-03-08_14-41-57.png"></p>
+<p>然后把该节的原始大小加入总大小，然后再对总大小做页对齐（4KB大小）操作。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F14-42-51-172504cec69f567f0bab5e7605427109-PixPin_2026-03-08_14-42-49-1944c6.png" alt="PixPin_2026-03-08_14-42-49.png"></p>
+<p>遍历当前节的所有重定位项，每个重定项 <code>COFF_RELOC</code> 都会关联一个符号 <code>CoffSymbol</code>，其中 <code>COFF_RELOC</code> 决定重定位的类型，而 <code>CoffSymbol</code> 存储着符号名。</p>
+<p>取出符号名。<strong>短名字（<code>CoffSymbol-&gt;First.Value[0] != 0</code>）</strong>：直接从<code>CoffSymbol.First.Name</code>取8字节，<strong>长名字</strong>：符号名超过8字节，则从字符串表中取。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F14-45-12-bf31e384ae2eeeb862a319c6845bf046-PixPin_2026-03-08_14-45-09-706f28.png" alt="PixPin_2026-03-08_14-45-09.png"></p>
+<p>识别外部符号，只关注：<code>StorageClass == IMAGE_SYM_CLASS_EXTERNAL、SectionNumber == 0</code>，这表示它是<strong>外部未定义符号</strong>。然后根据外部符号区分是<strong>函数导入</strong>还是 <strong>.bss（全局未初始化的变量）</strong> 项。<strong>判断的标准</strong>是符号名是不是 <code>__imp_</code> 这类导入符号前缀。</p>
+<p>如果是：</p>
+<ul>
+<li>说明它是外部函数引用</li>
+<li>dwNumberOfFunc++</li>
+</ul>
+<p>如果不是：</p>
+<ul>
+<li>说明它被当成 .bss</li>
+<li>累加pCoffSymbol-&gt;Value到 <code>*pstBSSSize</code></li>
+<li>dwBssEntryNum++</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F14-52-24-5dc36af686980f50f5cf1396bf55ece7-PixPin_2026-03-08_14-52-21-57b349.png" alt="PixPin_2026-03-08_14-52-21.png"></p>
+<p>最后汇总总大小</p>
+<ul>
+<li><code>sizeof(PVOID) * dwNumberOfFunc</code> ：给GOT预留空间</li>
+<li><code>*pstBSSSize</code> ：给 .bss 预留空间</li>
+<li><code>0x4</code>：额外预留的一个小标记&#x2F;偏移保留区</li>
+</ul>
+<p>为什么会有 <code>*stTotalSize += 0x4</code> 呢，这行的真实意思不是“COFF规范要求保留 4 字节”，而是这个项目自己定义的一套 .bss 偏移约定，我们看下面这个条件判断语句来自 <code>CoffeeProcessSection</code> 函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!pvFunctionPtr &amp;&amp; dwBssEntryOffset)</span><br><span class="line">&#123;</span><br><span class="line">    ulBssAddr = (ULONG_PTR)pCoffee-&gt;BSS + dwBssEntryOffset;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>dwBssEntryOffset隐含着：</p>
+<ul>
+<li>dwBssEntryOffset &#x3D;&#x3D; 0：说明这不是 .bss</li>
+<li>dwBssEntryOffset !&#x3D; 0：说明这是 .bss</li>
+</ul>
+<p>所以如果第一个 .bss 变量的偏移真的是0，那这里就没法区分，<strong>这是第一个 .bss 变量，还是根本没有 .bss 偏移</strong>。比如下图的一个例子，某个.bss变量在bss表中的偏移就是0，</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F19-29-25-447c83c57916a24469944d6fc506cf8a-PixPin_2026-03-08_19-29-09-c7346f.png" alt="PixPin_2026-03-08_19-29-09.png"></p>
+<p>为了解决这个问题，于是<strong>Cen4enCen</strong>用了一个很直接的办法：</p>
+<ul>
+<li>把 .bss 的真实可用偏移整体后移4</li>
+<li>让 0 永远只表示“无效&#x2F;没有 .bss”</li>
+</ul>
+<p><strong>一句话总结</strong>：这 4 个字节不是给 .bss 数据本身用的，而是为了让 .bss 偏移从 4 开始，这样 0 就可以继续被当作“没有 .bss 符号”的标记值。大部分C2并没有实现bss段的解析，这一部分代码我感觉是<strong>Cen4enCen</strong>的精妙的解法。</p>
+<p>不过调试分析的时候我发现GOT和BSS存在冗余分配的现象。</p>
+<p>比如说下面的一个bof文件。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F19-06-28-ff4d7622a898481bfbdcffb2926fe680-PixPin_2026-03-09_19-06-24-7253c2.png" alt="PixPin_2026-03-09_19-06-24.png"></p>
+<p>它的汇编代码如下图</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F19-10-34-fd1928b359b5675599b5b30de4b5b84f-PixPin_2026-03-09_19-10-32-72b93f.png" alt="PixPin_2026-03-09_19-10-32.png"></p>
+<p>按照ParseTotalSize的逻辑，<code>dwNumberOfFunc</code> 和 <code>dwBssEntryNum</code> 实际上表示所有外部符号在汇编代码中出现的次数。</p>
+<p><code>__imp_BeaconPrintf</code> 在代码中出现了了两次，出现一次占位则GOT表分配8字节，等待后续填充。</p>
+<p>因为 <code>num1</code> 这个符号出现了2次，大小为 2 × dword &#x3D; 8字节，<code>str1</code> 这个符号出现了2次，大小为 2 × qword &#x3D; 16，故bss段的大小为 8 + 16 &#x3D; 24字节。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F08%2F17-05-47-1b4188f786f502fa2ac269ca3becd0bb-PixPin_2026-03-08_17-05-45-057902.png" alt="PixPin_2026-03-08_17-05-45.png"></p>
+<p><strong>冗余分配，但是精确记录</strong>。如果这个符号之前已经登记过了，就直接复用原来的偏移，只有第一次见到该符号时，才真正给它分配空间。以下是 <code>CoffeeProcessSymbol</code> 的确保<strong>精确记录</strong>的代码。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (BssEntry[dwCnt].pvSysmbolAddr == (PVOID)pCoffSymbol)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (BssEntry[dwCnt].pvSysmbolAddr == NULL &amp;&amp; BssEntry[dwCnt].stOffset == <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    BssEntry[dwCnt].stOffset = pCoffSymbol-&gt;Value;</span><br><span class="line">    BssEntry[dwCnt].pvSysmbolAddr = (PVOID)pCoffSymbol;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">    dwSum += BssEntry[dwCnt].stOffset;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>下图是正确修正后并使用GOT和BSS的bof汇编代码。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F19-18-58-1bf07a5bbdc09f726d8c3b0d8594f6a6-PixPin_2026-03-09_19-18-51-4d3e7a.png" alt="PixPin_2026-03-09_19-18-51.png"></p>
+<h2 id="2-4-CoffeeModuleStomping"><a href="#2-4-CoffeeModuleStomping" class="headerlink" title="2.4 CoffeeModuleStomping"></a>2.4 CoffeeModuleStomping</h2><p><strong>模块践踏</strong>它不是自己新申请一块显眼的可执行内存去放恶意代码，而是先加载一个正常DLL，然后把这个 DLL映像里的部分内容覆盖掉，让自己的代码“住进”这个合法模块的内存区域里执行，显著的优点是：<strong>不出现新的可执行匿名内存</strong>。</p>
+<p><code>CoffeeModuleStomping</code>的代码如下</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F21-20-03-424f6b61fc8e7bb0751bf2f224668e83-PixPin_2026-03-09_21-20-00-c7fb2f.png" alt="PixPin_2026-03-09_21-20-00.png"></p>
+<p>它的目标很明确：优先尝试加载并践踏，“clipwinrt.dll”作为载体；如果失败就退化为 NtAllocateVirtualMemory分配RW内存。之后在这篇内存区域内复制各节、布局GOT、布局BSS、做 relocation、执行 BOF。</p>
+<h2 id="2-5-节区映射与init-Bss-Entry"><a href="#2-5-节区映射与init-Bss-Entry" class="headerlink" title="2.5 节区映射与init Bss Entry"></a>2.5 节区映射与init Bss Entry</h2><p>把COFF文件里的各个节手动复制到一块连续的新内存里，每复制完一个section，就把下一个section的起始地址对齐到页边界，一般是 0x1000。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F21-47-10-1ae07532b703d92c8916e7e3575abcfd-PixPin_2026-03-09_21-47-08-f62bac.png" alt="PixPin_2026-03-09_21-47-08.png"></p>
+<p>所有节都复制到新内存后，紧接着构造GOT表和BSS。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F21-49-28-0857b93d5c39f2d46d84c7a9a9f9bf2d-PixPin_2026-03-09_21-49-25-3c4f4b.png" alt="PixPin_2026-03-09_21-49-25.png"></p>
+<p>所以内存布局大致像这样：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">新内存起始地址</span><br><span class="line">-&gt; .text</span><br><span class="line">-&gt; 对齐到下一页</span><br><span class="line">-&gt; .rdata</span><br><span class="line">-&gt; 对齐到下一页</span><br><span class="line">-&gt; .data</span><br><span class="line">-&gt; 对齐到下一页</span><br><span class="line">-&gt;……</span><br><span class="line">-&gt; GOT</span><br><span class="line">-&gt; BSS</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-6-CoffeeProcessSymbol"><a href="#2-6-CoffeeProcessSymbol" class="headerlink" title="2.6 CoffeeProcessSymbol"></a>2.6 CoffeeProcessSymbol</h2><p><strong>符号解析</strong>：我引用的这个<strong>未定义的外部符号</strong>到底是谁</p>
+<p>把一个重定项里引用到的<strong>未定义的外部符号</strong>，判断它到底是Beacon API、普通DLL导入函数，还是.bss变量，然后给出<strong>对于函数符号，给出最终函数地址；对于bss变量，则返回它在BSS段中的偏移</strong>。</p>
+<p><strong>Cen4enCen</strong>师傅的代码只能识别x64的外部函数符号，我在此基础上增加了x86的判断逻辑。</p>
+<p>判断的依据是</p>
+<p><strong>x64的格式</strong>：</p>
+<ol>
+<li><code>__imp_libraryName$functionName , __imp_functionName</code></li>
+<li><code>__imp_Beacon</code> 前缀</li>
+</ol>
+<p><strong>x86的格式</strong>：</p>
+<ol>
+<li><code>__imp__libraryName$functionName</code> 和 <code>__imp__functionName</code></li>
+<li><code>__imp__Beacon</code> 前缀</li>
+</ol>
+<p><strong>.bss变量</strong>：如果不属于上面两种情况，则认为是.bss变量。</p>
+<h3 id="（一）Beacon-API-符号"><a href="#（一）Beacon-API-符号" class="headerlink" title="（一）Beacon API 符号"></a><strong>（一）Beacon API 符号</strong></h3><ul>
+<li>GetImportPrefixSize() 判断是不是 <code>__imp_</code> 或 <code>__imp__</code></li>
+<li>GetBeaconPrefixSize() 再判断是不是 <code>__imp_Beacon</code> 或 <code>__imp__Beacon</code></li>
+</ul>
+<p>如果是 Beacon 符号，流程是：</p>
+<ol>
+<li>跳过<code>__imp_</code> 或 <code>__imp__</code> 前缀</li>
+<li>去掉可能存在的前导下划线</li>
+<li>去掉 x86 stdcall 后缀，比如 @8</li>
+<li>把规范化后的名字拿去和 <code>BeaconApi[]</code> 表逐项哈希比较</li>
+<li>找到后把对应本地实现地址写入 *<code>pvFunctionAddr</code></li>
+<li>返回 TRUE</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-38-35-ea372ca863ccfa43ef3d32c9900e7f03-PixPin_2026-03-09_22-38-33-905b3a.png" alt="PixPin_2026-03-09_22-38-33.png"></p>
+<p>例如：</p>
+<p>x64<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-23-01-75b3ed82bbf28cb92f8c118cb4c2c5be-PixPin_2026-03-09_22-22-54-c156dc.png" alt="PixPin_2026-03-09_22-22-54.png"></p>
+<p>x86<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-34-53-90434563a079312ff87525b963a9e6ab-PixPin_2026-03-09_22-34-50-a129ac.png" alt="PixPin_2026-03-09_22-34-50.png"></p>
+<h3 id="（二）普通导入符号"><a href="#（二）普通导入符号" class="headerlink" title="（二）普通导入符号"></a><strong>（二）普通导入符号</strong></h3><p>如果不是 Beacon，但有 <code>__imp_</code> 或 <code>__imp__</code> 前缀，就按DLL导入函数处理。</p>
+<p>它支持两种情况。</p>
+<ol>
+<li><strong>标准格式</strong>：<code>__imp_library$function</code> 或 <code>__imp__libraryName$functionName</code><br>例如：</li>
+</ol>
+<p>x64<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-22-41-dde43c2a3796268475e946863cc03a3f-PixPin_2026-03-09_22-22-40-c44da0.png" alt="PixPin_2026-03-09_22-22-40.png"></p>
+<p>x86<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-32-21-2a0164d5af4cfff9070a740f2570e8a8-PixPin_2026-03-09_22-32-17-422651.png" alt="PixPin_2026-03-09_22-32-17.png"></p>
+<p>流程是：</p>
+<ul>
+<li>检查符号名里有没有 $</li>
+<li>$ 前面当库名，后面当函数名</li>
+<li>规范化库名，如果没有 .dll 就补 .dll</li>
+<li>尝试先从 <code>PEB</code> 找模块</li>
+<li>找不到就<code> LoadLibraryA</code></li>
+<li>然后调用 <code>LdrGetProcedureAddress</code> 拿函数地址</li>
+<li>成功后写入 <code>*pvFunctionAddr</code></li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F20-57-26-3d1ad4c96e42b974055ba424814fdaf1-PixPin_2026-03-11_20-57-22-6295ff.png" alt="PixPin_2026-03-11_20-57-22.png"></p>
+<ol start="2">
+<li><strong>非标准格式</strong>：<code>__imp_function </code> 或 <code>__imp__functionName</code></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-41-32-d62b21bda1044c7678e9f0dd01f04509-PixPin_2026-03-09_22-41-29-c2c0ea.png" alt="PixPin_2026-03-09_22-41-29.png"></p>
+<p>这种情况下它尽力而为，去 <code>LdrApi[]</code> 这个内置表里匹配一些常见函数，比如：</p>
+<ul>
+<li>LoadLibraryA</li>
+<li>GetProcAddress</li>
+<li>FreeLibrary</li>
+<li>CreateThread</li>
+<li>toWideChar</li>
+</ul>
+<p>这类情况函数挺常见的，例如</p>
+<p>x64<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-30-32-66cae93d0ba0ac0524c006d8ee5d7ca4-PixPin_2026-03-09_22-29-48-ec1592.png" alt="PixPin_2026-03-09_22-29-48.png"></p>
+<p>x86<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-34-13-04681bc20f868ec18fdc05e4015c5846-PixPin_2026-03-09_22-34-01-a8295e.png" alt="PixPin_2026-03-09_22-34-01.png"></p>
+<h3 id="三-bss-符号"><a href="#三-bss-符号" class="headerlink" title="(三) .bss 符号"></a><strong>(三) .bss 符号</strong></h3><p>如果不属于上面两种情况，则认为是.bss变量。</p>
+<p>流程是：</p>
+<ol>
+<li>遍历全局 <code>BssEntry[]</code></li>
+<li>看这个 <code>pCoffSymbol</code> 之前有没有登记过</li>
+<li>如果登记过，就找到它前面所有 <code>BSS</code> 变量大小之和</li>
+<li>如果没登记过，就把当前符号的大小 <code>pCoffSymbol-&gt;Value</code> 记录进去</li>
+<li>最后把偏移写到 <code>*pdwBssAddr</code></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F09%2F22-41-45-2ef4cfb590bc104c67aa2e59538318b2-PixPin_2026-03-09_22-41-42-205b31.png" alt="PixPin_2026-03-09_22-41-42.png"></p>
+<h2 id="2-7-CoffeeProcessSection"><a href="#2-7-CoffeeProcessSection" class="headerlink" title="2.7 CoffeeProcessSection"></a>2.7 CoffeeProcessSection</h2><p><strong>重定位</strong>：我已经知道符号对应的目标是谁了，那当前这条指令&#x2F;这块数据里应该写入什么值。</p>
+<p>因为section被我们手动搬到了一块新内存里，原来对象文件里的地址&#x2F;位移就不对了。<br>所以要根据relocation type，把引用位置修补成正确值。</p>
+<p><strong>主流程是</strong>：</p>
+<ol>
+<li>遍历每个 section</li>
+<li>取到该 section 的重定位表</li>
+<li>遍历每一个 relocation</li>
+<li>找到这个 relocation 对应的符号</li>
+<li>判断这个符号是：<ul>
+<li>外部函数</li>
+<li>Beacon API</li>
+<li>.bss 变量</li>
+<li>本地 section 内符号</li>
+</ul>
+</li>
+<li>根据重定位类型，把 pvRelocAddr 处的值修好</li>
+</ol>
+<p>具体流程我就不过多介绍了，随便问个AI就能说的明明白白，下文我会着重讲解不同类型的重定位项如何修正。</p>
+<h3 id="（一）外部函数重定位"><a href="#（一）外部函数重定位" class="headerlink" title="（一）外部函数重定位"></a>（一）外部函数重定位</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F19-01-59-2837a7e90384fcadd46f6240cadce59a-PixPin_2026-03-10_19-01-57-dba100.png" alt="PixPin_2026-03-10_19-01-57.png"></p>
+<p>这段代码：</p>
+<p>①真实函数地址放进GOT的一个槽位里。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pCoffee-&gt;GOT[dwNumberOfFunc] = pvFunctionPtr;</span><br></pre></td></tr></table></figure>
+
+<p>②把当前重定位字段修成指向这个GOT槽位的RIP相对偏移，因为 <code>IMAGE_REL_AMD64_REL32</code> 修的是一个 32位相对位移字段，不是64位绝对地址字段。</p>
+<p><strong>公式</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">offset = GOT槽位地址 - 重定位字段地址 - 4</span><br></pre></td></tr></table></figure>
+
+<p>或者更简洁地表示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">offset = Target - NextIP</span><br></pre></td></tr></table></figure>
+
+<p>举一个例子，我要修正 <code>call    cs:__imp_BeaconPrintf</code> 这个指令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">……</span><br><span class="line">.text$mn:000000000000002E FF 15 7C 00 00 00                             call    cs:__imp_BeaconPrintf</span><br><span class="line">.text$mn:0000000000000034 4C 8B 0D 6D 00 00 00                          mov     r9, cs:str1</span><br><span class="line">……</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>000000000000002E -&gt; FF 15</li>
+<li>0000000000000030 -&gt; 7C 00 00 00（重定位字段）</li>
+</ul>
+<p>此时根据下面的代码，我们能得出重定位字段地址pvRelocAddr &#x3D; 0x0000000000000030</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pvRelocAddr = pCoffee-&gt;SecMap[dwSectionCnt].Ptr + pCoffee-&gt;Reloc-&gt;VirtualAddress;</span><br></pre></td></tr></table></figure>
+
+<p>NextIP &#x3D; 重定位字段地址 + 重定位字段的长度，即NextIP &#x3D; pvRelocAddr + 4 &#x3D; 0000000000000034</p>
+<p>GOT表的地址很简单，取地址就行：<code>&amp;pCoffee-&gt;GOT[dwNumberOfFunc]</code></p>
+<p>最终</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Offset = GOT槽位地址 - （重定位字段地址 + 4）</span><br><span class="line"></span><br><span class="line">即Offset = (UINT32)((ULONG_PTR)(&amp;pCoffee-&gt;GOT[dwNumberOfFunc]) - (ULONG_PTR)(pvRelocAddr)-sizeof(UINT32))</span><br></pre></td></tr></table></figure>
+
+<h3 id="（二）本地-section-符号或-bss-符号"><a href="#（二）本地-section-符号或-bss-符号" class="headerlink" title="（二）本地 section 符号或 .bss 符号"></a>（二）本地 section 符号或 .bss 符号</h3><p>当重定位类型位类型为 <code>IMAGE_REL_AMD64_REL32 ~ REL32_5</code>，这是RIP相对重定位，写进去的是 32 位位移，不是绝对地址，与上文分析过程类似，只不过多了后缀，其后缀 <code>_1~_5</code> 表示重定位字段后面跟着多长的操作数。</p>
+<p><strong>公式</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Offset = Target - NextIP - extra</span><br></pre></td></tr></table></figure>
+
+<p>这里：</p>
+<p>①Target 是目标运行时地址，比如说本地section符号（如.data定义的字符串常量）<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-06-27-a03a93d70ca6a4b13482750aab9025c5-PixPin_2026-03-10_22-06-23-148044.png" alt="PixPin_2026-03-10_22-06-23.png"></p>
+<p>又或者.bss变量</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-06-52-0331068c82b6b5505f2b5fdb508c3acc-PixPin_2026-03-10_22-06-51-bb0292.png" alt="PixPin_2026-03-10_22-06-51.png"></p>
+<p>对于.bss 符号，其bss变量地址为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ulBssAddr = (ULONG_PTR)pCoffee-&gt;BSS + dwBssEntryOffset;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>pCoffee-&gt;BSS</code> 表示BSS节的地址</li>
+<li><code>dwBssEntryOffset</code> 表示bss变量在节内的偏移</li>
+</ul>
+<p>本地section符号，其字符串常量地址为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pvSymbolSecAddr + pCoffSymbol-&gt;Value</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>pvSymbolSecAddr</code> 表示字符串常量所在的节的地址</li>
+<li><code>pCoffSymbol-&gt;Value</code> 表示字符串常量的节内偏移</li>
+</ul>
+<p>②NextIP &#x3D; pvRelocAddr + 4</p>
+<p>③extra &#x3D; pCoffee-&gt;Reloc-&gt;Type - 4</p>
+<p>比如</p>
+<ul>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32，extra &#x3D; 4 - 4 &#x3D; 0</li>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32_1，extra &#x3D; 5 - 4 &#x3D; 1</li>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32_2，extra &#x3D; 6 - 4 &#x3D; 2</li>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32_3，extra &#x3D; 7 - 4 &#x3D; 3</li>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32_4，extra &#x3D; 8 - 4 &#x3D; 4</li>
+<li>当Type &#x3D; IMAGE_REL_AMD64_REL32_5，extra &#x3D; 9 - 4 &#x3D; 5</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-09-05-72dbe32f377df6b09af11aeb33203a8e-PixPin_2026-03-10_22-08-49-c486b6.png" alt="PixPin_2026-03-10_22-08-49.png"></p>
+<p>有实际的例子吗，当然有啊，比如说下图，就是一个典型的<code>Type = IMAGE_REL_AMD64_REL32_4</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-20-26-1ac12c3607ca8a621dd8130ef8448b89-PixPin_2026-03-10_22-20-23-c30fac.png" alt="PixPin_2026-03-10_22-20-23.png"></p>
+<ul>
+<li><code>C7 05</code> 表示指令mov</li>
+<li><code>89 00 00 00</code> 是目标文件静态布局下的占位位移，编译器帮我们算出来的，大小为dword，即32位</li>
+<li><code>7B 00 00 00</code> 表示操作数 <code>7Bh</code>，大小为dword，即32位</li>
+</ul>
+<p>调试一下，修正 <code>mov     cs:num1, 7Bh</code> 的地址。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-43-54-2201d8f7a3b48b014fb6125113ce0a9d-PixPin_2026-03-10_22-43-51-c25cb8.png" alt="PixPin_2026-03-10_22-43-51.png"></p>
+<p>计算得出offset &#x3D; 0x00004ffd，并不是 <code>89</code>，因为我们的bof的各节是按页对齐，相比之前的磁盘文件形式，对齐后的文件体积会更大，计算出的偏移也会更大。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-44-42-435da229e1b7b005282eea4b1ceba64d-PixPin_2026-03-10_22-44-39-767212.png" alt="PixPin_2026-03-10_22-44-39.png"></p>
+<p>红框圈住的是 <code>兜底机制</code>，上面条件都不满足会进入到这里，这里不保证Offset的正确性。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-51-09-13c1d4116e02c3313a4cbae5fd3ade78-PixPin_2026-03-10_22-51-06-aa21ee.png" alt="PixPin_2026-03-10_22-51-06.png"></p>
+<p>剩余的 <code>IMAGE_REL_AMD64_ADDR32NB</code>、<code>IMAGE_REL_AMD64_ADDR64</code> 的重定位类型并不场景，就不过多介绍了。</p>
+<p>还有x86的部分，有需要的就参考一下Havoc的实现 <a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/CoffeeLdr.c#L423">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;CoffeeLdr.c at main · HavocFramework&#x2F;Havoc</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F10%2F22-55-16-37e551598a58590432c6fd1e61a044a6-PixPin_2026-03-10_22-55-13-991f6d.png" alt="PixPin_2026-03-10_22-55-13.png"></p>
+<h2 id="2-8-RunCoff"><a href="#2-8-RunCoff" class="headerlink" title="2.8 RunCoff"></a>2.8 RunCoff</h2><p><code>RunCoff</code> 只负责找到BOF入口点，注册VEH，然后把它安全地跑起来</p>
+<p>首先是找到BOF入口点：它遍历符号表，用 <code>_Strcmp </code> 把符号名和传进来的 <code>szBofEntryPoint</code> 比较。算出入口函数的运行时地址：<code>pvCoffeeEntryPoint</code> &#x3D;  <code>SecMap[].Ptr</code>（section被映射到内存后的基址） + <code>Symbol.Value</code>（该符号在所属section内的偏移）。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F18-44-49-37f7ba6d39b2d97daf65966293080450-PixPin_2026-03-11_18-44-45-10d7ef.png" alt="PixPin_2026-03-11_18-44-45.png"></p>
+<p>给 <code>.text</code> 节改执行权限：遍历<code>section</code>，找到名字哈希等于<code>.text</code>的代码节，然后调用<code>NtProtectVirtualMemory</code>把对应内存页改成<code>PAGE_EXECUTE_READ</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F18-51-18-b951f0bc28481be344ca631a6a6ad398-PixPin_2026-03-11_18-51-12-7fecda.png" alt="PixPin_2026-03-11_18-51-12.png"></p>
+<p>注册一个VEH 异常兜底：如果BOF跑崩了，不让整个Beacon一起崩溃，而是把线程执行流改到ExitThread上，尽量平滑退出。</p>
+<p>用伪造线程上下文的方式传入参数，执行入口点。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F18-53-43-6bd107b22f6b0d53efed253e7ad7f09a-PixPin_2026-03-11_18-53-41-9f5348.png" alt="PixPin_2026-03-11_18-53-41.png"></p>
+<h2 id="2-9-VectoredExceptionHandler"><a href="#2-9-VectoredExceptionHandler" class="headerlink" title="2.9 VectoredExceptionHandler"></a>2.9 VectoredExceptionHandler</h2><p>VEH，即向量化异常处理，主要用于系统监控、反调试、全局异常捕获。注册VEH，并将优先级设置为最先 （0&#x3D;最先，1&#x3D;最后）之后，本进程发生异常时，系统会先按VEH链依次调用已注册的处理函数；某个处理函数可以选择继续分发，也可以修改上下文后直接恢复执行。</p>
+<p><code>VectoredExceptionHandler</code>：发生异常就把线程上下文改成 ExitThread(0)，返回 <code>EXCEPTION_CONTINUE_EXECUTION</code>，线程从ExitThread(0) 开始跑并退出，loader主线程继续存活。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F19-02-12-6b2fd696a5ddbb3054e86b09dce512c4-PixPin_2026-03-11_19-02-10-0edf53.png" alt="PixPin_2026-03-11_19-02-10.png"></p>
+<p><strong>Cen4enCen</strong>提到某些BOF会抛出一个特殊的异常，该异常是 <code>0xE06D7363</code>，是MSVC C++ 异常常见的异常码。比如这个BOF：<a target="_blank" rel="noopener" href="https://github.com/outflanknl/C2-Tool-Collection/blob/main/BOF/Askcreds/SOURCE/Askcreds.c">C2-Tool-Collection&#x2F;BOF&#x2F;Askcreds&#x2F;SOURCE&#x2F;Askcreds.c at main · outflanknl&#x2F;C2-Tool-Collection</a></p>
+<p>不过我在win11上用 mingw编译上述的bof，并用<strong>Cen4enCen</strong>的coffeeloader复现时，并没有出现异常 <code>0xE06D7363</code>，于是我编写一个bof文件，主动去触发 <code>0xE06D7363</code> 异常，我这么做的目的是验证是否所有的 <code>0xE06D7363</code> 异常都不影响CS的inline-execute，结果beacon崩溃了。算了我不研究了，这种情况应该不多见。</p>
+<p>下图是win11上用 mingw编译上述的Askcreds.c，没有出现异常。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F22-22-27-a0355da64d85c409069849ff4646a379-PixPin_2026-03-11_22-22-23-033599.png" alt="PixPin_2026-03-11_22-22-23.png"></p>
+<p>如果我们使用CS的inline-execute命令去执行这个BOF，也不会出现任何的问题。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F22-23-44-ebcdcfc31863cc22e77db97ab4a55821-PixPin_2026-03-11_22-23-38-42d10a.png" alt="PixPin_2026-03-11_22-23-38.png"></p>
+<p>所以这种情况应该很少见，但为了兼容某些BOF所抛出的异常，不至于直接结束BOF文件，我们可以添加下面的一个判断逻辑：如果状态异常码为 <code>0xE06D7363</code>，返回 <code>EXCEPTION_CONTINUE_SEARCH</code> 表示：“我不处理，让后面的VEH&#x2F;SEH继续来”。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F19-17-50-b336b98f40800cf47d7743da2f3b1d60-PixPin_2026-03-11_19-17-48-082777.png" alt="PixPin_2026-03-11_19-17-48.png"></p>
+<h2 id="2-10-HitCoffeeEntryPoint"><a href="#2-10-HitCoffeeEntryPoint" class="headerlink" title="2.10 HitCoffeeEntryPoint"></a>2.10 HitCoffeeEntryPoint</h2><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F00-08-56-e5ad1a2b1ce89c98963cedd65cbbfc43-PixPin_2026-03-12_00-08-49-324936.png" alt="PixPin_2026-03-12_00-08-49.png"></p>
+<ol>
+<li><strong>初始化 CONTEXT 和对象属性</strong></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F23-52-27-7f908575a9a8aca0f59b1c5a126259a7-PixPin_2026-03-11_23-52-23-c9fb67.png" alt="PixPin_2026-03-11_23-52-23.png"></p>
+<ol start="2">
+<li><strong>创建一个挂起线程</strong></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F23-53-37-541255b53ef325d945aa65055d624482-PixPin_2026-03-11_23-53-35-abed37.png" alt="PixPin_2026-03-11_23-53-35.png"></p>
+<p>具体来说就是使用 <code>pfnNtCreateThreadEx</code> 在本进程内创建一个挂起的线程，线程的起始地址为 <code>win32Api.ulTpReleaseCleanupGroupMembers + 0x450</code>，这个起始地址随意，比如我可以修改为 <code>win32Api.pfnRtlExitUserThread</code> 等合法的地址，毕竟后面代码马上会用NtSetContextThread把真实起点改掉</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F23-54-50-73e918093c5dee880f4c61db58e2db94-PixPin_2026-03-11_23-54-46-71ef27.png" alt="PixPin_2026-03-11_23-54-46.png"></p>
+<ol start="3">
+<li><strong>取出挂起线程的当前上下文并伪造 BOF 的执行现场</strong></li>
+</ol>
+<p>我增加了x86的代码逻辑</p>
+<p>对于x64</p>
+<ul>
+<li>rip &#x3D; BOF的入口点</li>
+<li>rcx &#x3D; BOF的第一个参数（BOF执行所需的参数）</li>
+<li>rdx &#x3D; BOF的第二个参数（BOF执行所需的参数的大小）</li>
+<li>ctx.Dr0 &#x3D; ctx.Dr1 &#x3D; ctx.Dr2 &#x3D; ctx.Dr3 &#x3D; 0，去掉硬件断点痕迹</li>
+<li>rsp &#x3D; 返回地址，即RtlExitUserThread</li>
+</ul>
+<p>对于x86，首先压入返回地址，之后通过栈来传递参数，从右往做依次入栈。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F11%2F23-58-09-9aaaa08e363441c44eed125dedae587d-PixPin_2026-03-11_23-58-07-e87891.png" alt="PixPin_2026-03-11_23-58-07.png"></p>
+<p>除了上面的执行方式外，我们也可以函数指针的方式执行，havoc就是这种执行方式。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F00-05-54-9c88ab9856fd3938a24621d85fcdd134-PixPin_2026-03-12_00-05-43-7e0b46.png" alt="PixPin_2026-03-12_00-05-43.png"></p>
+<ol start="4">
+<li><strong>写回上下文并恢复线程</strong></li>
+</ol>
+<p>这里就是把刚才伪造好的寄存器状态写回线程，然后恢复运行。恢复之后，线程就会从你指定的BOF入口点开始执行。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F00-07-13-3152377bc0ac076a2633d05116aa7ca3-PixPin_2026-03-12_00-07-11-bf12f5.png" alt="PixPin_2026-03-12_00-07-11.png"></p>
+<h1 id="三、实验"><a href="#三、实验" class="headerlink" title="三、实验"></a>三、实验</h1><p>执行whoami.o</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F19-37-46-d4b03684b3950ad294d3c8e5cd853a03-PixPin_2026-03-12_19-37-39-39af1b.png" alt="PixPin_2026-03-12_19-37-39.png"></p>
+<p>执行Askcreds.o</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F12%2F19-38-44-24309f7630543ecfa1ac39e5638cff95-PixPin_2026-03-12_19-38-41-13e710.png" alt="PixPin_2026-03-12_19-38-41.png"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本文通过分析 <a target="_blank" rel="noopener" href="https://github.com/Cen4enCen/CenCoffLdr">Cen4enCen&#x2F;CenCoffLdr: A parser for COFF files.</a> 项目，学习现代红队的BOF加载器的原理和实现，并增加了x86的逻辑，对原项目进行扩展。</p>
+<p>文章写的很随意，毕竟我没有打算发在先知社区，大家就在我的博客看个乐子就行。</p>
+<p><strong>我计划</strong>：从现在开始，到7月中旬，在本博客里每隔一个月发表至少一篇文章，不限长短，当然长篇文章居多，就当是我的一次小爆发吧。7月后我将实施一个更宏大的目标，这里暂且保密。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/Cen4enCen/CenCoffLdr">Cen4enCen&#x2F;CenCoffLdr: A parser for COFF files.</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/CoffeeLdr.c">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;CoffeeLdr.c at main · HavocFramework&#x2F;Havoc</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/trustedsec/CS-Situational-Awareness-BOF">trustedsec&#x2F;CS-Situational-Awareness-BOF: Situational Awareness commands implemented using Beacon Object Files</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/outflanknl/C2-Tool-Collection/tree/main">outflanknl&#x2F;C2-Tool-Collection: A collection of tools which integrate with Cobalt Strike (and possibly other C2 frameworks) through BOF and reflective DLL loading techniques.</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/03/13/Beacon%E7%BA%A7%E8%81%94%E4%BB%A3%E7%90%86/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-03-13 20:47:16
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                        <b>#</b> 武器化
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2026/03/14/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E5%88%86%E6%9E%90BOF%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80"><span class="toc-text">一、前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81CoffeeLoader%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-text">二、CoffeeLoader的原理和代码实现</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-InitWin32Api"><span class="toc-text">2.1 InitWin32Api</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-BofPack"><span class="toc-text">2.2 BofPack</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-ParseTotalSize"><span class="toc-text">2.3 ParseTotalSize</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-CoffeeModuleStomping"><span class="toc-text">2.4 CoffeeModuleStomping</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-%E8%8A%82%E5%8C%BA%E6%98%A0%E5%B0%84%E4%B8%8Einit-Bss-Entry"><span class="toc-text">2.5 节区映射与init Bss Entry</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-CoffeeProcessSymbol"><span class="toc-text">2.6 CoffeeProcessSymbol</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89Beacon-API-%E7%AC%A6%E5%8F%B7"><span class="toc-text">（一）Beacon API 符号</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89%E6%99%AE%E9%80%9A%E5%AF%BC%E5%85%A5%E7%AC%A6%E5%8F%B7"><span class="toc-text">（二）普通导入符号</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89-bss-%E7%AC%A6%E5%8F%B7"><span class="toc-text">(三) .bss 符号</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-7-CoffeeProcessSection"><span class="toc-text">2.7 CoffeeProcessSection</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89%E5%A4%96%E9%83%A8%E5%87%BD%E6%95%B0%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text">（一）外部函数重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89%E6%9C%AC%E5%9C%B0-section-%E7%AC%A6%E5%8F%B7%E6%88%96-bss-%E7%AC%A6%E5%8F%B7"><span class="toc-text">（二）本地 section 符号或 .bss 符号</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-8-RunCoff"><span class="toc-text">2.8 RunCoff</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-9-VectoredExceptionHandler"><span class="toc-text">2.9 VectoredExceptionHandler</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-10-HitCoffeeEntryPoint"><span class="toc-text">2.10 HitCoffeeEntryPoint</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%AE%9E%E9%AA%8C"><span class="toc-text">三、实验</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + COffLoader%20For%20Windows%EF%BC%88BOFLoader%EF%BC%89 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F03%2F13%2FCOffLoader-For-Windows%25EF%25BC%2588BOFLoader%25EF%25BC%2589%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/03/13/COffLoader-For-Windows%EF%BC%88BOFLoader%EF%BC%89/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

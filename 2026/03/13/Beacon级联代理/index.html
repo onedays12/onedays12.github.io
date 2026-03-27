@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      Beacon级联代理 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Beacon级联代理</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-03-15 17:01:18
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E5%AE%89%E5%85%A8%E5%BC%80%E5%8F%91-C2/" title="安全开发_C2">
+                    <b>#</b> 安全开发_C2
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>文章首发于先知社区：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/91645">https://xz.aliyun.com/news/91645</a></p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/onedays12/BeaconCascading">https://github.com/onedays12/BeaconCascading</a></p>
+<p>不知道各位师傅是否对Beacon的级联感到好奇呢？Beacon级联（Beacon Cascading）是现代C2框架（如Cobalt Strike、Sliver、Havoc等）中最精妙的设计之一，在边缘出网主机上建立一个pivot（支点，其实对于第一个支点我更习惯称为网关），之后并从这个支点向内网纵深，扩大战果，继续建立支点，直至将内网不出网主机级联形成树状的控制代理链。其实Beacon的级联它对比于socks代理、端口转发那样作为一个独立的服务组件存在，它更像是从网络隧道概念中移植一小部分功能融入到整个Beacon的生命周期，让Beacon本身成为一个应用层路由器。</p>
+<h1 id="一、基础概念"><a href="#一、基础概念" class="headerlink" title="一、基础概念"></a>一、基础概念</h1><h2 id="1-1-级联协议"><a href="#1-1-级联协议" class="headerlink" title="1.1 级联协议"></a>1.1 级联协议</h2><p>当然并非所有的通信协议协议都能承当级联网络的基底，在现代C2框架中常常将TCP、SMB作为Windows内网域中的级联协议。</p>
+<p><strong>TCP Beacon</strong>之所以成为通用选择，不仅因为其全双工特性，更在于它的<strong>协议无状态性</strong>为封装提供了最大自由度，充当着不同协议的<strong>通用胶合层</strong>，适用在不同的操作系统。具体体现为当父Beacon作为gateway，将Team Server的HTTP&#x2F;DNS流量转换为内部私有协议，再通过TCP socket连接透传给子Beacon。除此之外，在AD域中也存在TCP+SMB的组合形成级联。</p>
+<p><strong>SMB Beacon</strong>（命名管道）的价值在于<strong>利用Windows域的信任基础设施</strong>，与TCP一样，SMB也可以充当着不同协议的<strong>通用胶合层</strong>，但它更多的是用在Windows上。在AD环境中，SMB流量比异常的TCP端口连接更”正常”——文件共享、组策略更新、认证票据交换都依赖445端口。更关键的是，SMB级联支持<strong>无端口监听</strong>：子Beacon通过连接父Beacon暴露的命名管道实现反向级联，这在主机层不留TCP监听端口，规避了端口扫描的风险。</p>
+<p>本人将以对网络代理一窍不通的小白身份初步学习网络代理方面的编程知识，力求以最简单有效的代码还原出级现代C2的级联功能。</p>
+<h2 id="1-2-特定术语"><a href="#1-2-特定术语" class="headerlink" title="1.2 特定术语"></a>1.2 特定术语</h2><p>为了使级联网络易于维护和管理，它应该满足两条规则，请记住两条规则是整个网络运行的底层根基！</p>
+<ol>
+<li><strong>规则1</strong>：一个节点有且只有一个父节点</li>
+<li><strong>规则2</strong>：一个节点可以有多个子节点</li>
+</ol>
+<p>看着这两条规则，是否能让各位想到数据结构上的<strong>树</strong>呢？没错最初的思路就起源于树的拓扑结构。为什么是树而非图呢？这很好理解：<strong>路由算法的恶梦</strong>，由于图允许节点拥有多个父节点，导致server与目标节点的路径不唯一，需要的路由算法代码量和复杂度高了好几倍，我只是学习一下级联网络而已没必要引入图这种复杂的数据结构。</p>
+<p>由上面的两条规则很容易就构造出一个级联网络拓扑图出来。<strong>注意</strong>：在实际的C2服务器编写中，监听器（listener）才是与各个gateway保持着物理连接的角色，为了描述方便我下图中的拓扑结构忽略了监听器。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/01/14-31-37-9831135e23791e9a2029348e3632fd94-Drawing%202026-02-01%2014.23.48.excalidraw-b753ee.png" alt="Drawing 2026-02-01 14.23.48.excalidraw.png"></p>
+<p>从图片中可以找到以下路径</p>
+<ol>
+<li>路径1：server&lt;-&gt;getway1&lt;-&gt;pivot1&lt;-&gt;pivot4</li>
+<li>路径2：server&lt;-&gt;getway1&lt;-&gt;pivot2</li>
+<li>路径3：server&lt;-&gt;getway2&lt;-&gt;pivot3</li>
+<li>路径4：server&lt;-&gt;getway3</li>
+</ol>
+<p>其中<strong>路径1</strong>是非常典型的<strong>三级网络</strong>，<strong>路径3</strong>是典型的<strong>二级网络</strong>，下文将围绕这两条路径编写代码和运行过程的分析，不过在进行代码编写之前，有必要说几个定义：</p>
+<p>（一）<strong>Gateway (网关节点)</strong>：与 Teamserver 建立<strong>直连连接</strong>的 Agent，作为整个代理树的根锚点，所有来自子树的流量必须经过Gateway上报。</p>
+<p>（二）<strong>Pivot (跳板节点）</strong>：通过父节点<strong>间接注册</strong>到 Server 的 Agent，处于代理链中间层或末端</p>
+<p>（三）<strong>寻路算法（路由算法）</strong>：基于<strong>源路由</strong> 思想的逐跳封装，即从目标节点从下往上寻找父亲节点，直到寻找到Gateway节点</p>
+<p>（四）<strong>连接上游（Upstream）</strong>：维护与父节点的<strong>唯一连接（很好的体现了规则1）</strong>，作为控制通道和数据出口，主要负责<code>接收来自上游的数据</code>、<code>识别指令</code>以及<code>下行转发</code></p>
+<p>（五）<strong>管理下游 (Children)</strong>：维护到<strong>多个子节点</strong>的连接池（体现了规则2），实现代理链的纵向扩展，主要负责 <code>上行封装</code> 以及 <code>本地自治</code></p>
+<p>（六）<strong>级联网络（多级代理）</strong>：一种基于<strong>树形拓扑</strong>构建的<strong>分层代理架构</strong>，通过严格遵循”单父多子”的约束规则，将原本直接暴露的C2通信链路重构为<strong>逐跳封装</strong>的代理链。</p>
+<h1 id="二、TCP级联"><a href="#二、TCP级联" class="headerlink" title="二、TCP级联"></a>二、TCP级联</h1><h2 id="2-1-CS的Connect命令"><a href="#2-1-CS的Connect命令" class="headerlink" title="2.1 CS的Connect命令"></a>2.1 CS的Connect命令</h2><p>在本篇文章我不会详细的介绍代码的编写，更侧重于流程分析数据流向，具体的源码就从github获取。</p>
+<p>TCP是C2常见的一种控制协议，在《<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/19054">C2通信协议解析（一）：HTTP(s)、mTLS、WebSocket、DNS-先知社区</a>》我就详细的介绍了TCP协议的流量分帧、命令下发、命令执行和结果回显等C2协议中必备的流程，而在本文中会介绍一种更高级的玩法——TCP级联。</p>
+<p>TCP级联与socks代理的实现非常相似，都具备数据转发的能力。对于TCP级联，sever知道全局拓扑，而对于socks代理，每个节点相当于一个代理服务器且只负责数据的透明传输，当然这两者于我而言并没有太大的差异。</p>
+<p>为了引出TCP级联的相关概念，又要请出安全界的大杀器——CobaltStrike了，它有一个神奇的命令 <code>connect</code>，可以通过tcp连接将处在隔离网段的目标形成级联网络，查看命令帮助。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">beacon&gt; help connect</span><br><span class="line">Use: connect [target]</span><br><span class="line">     connect [target] [port]</span><br><span class="line"></span><br><span class="line">Connect to a TCP Beacon and re-establish control of it. All requests for </span><br><span class="line">connected Beacon will go through this Beacon.</span><br><span class="line"></span><br><span class="line">Use &#x27;unlink&#x27; to disconnect from a TCP Beacon.</span><br></pre></td></tr></table></figure>
+
+<p>靶机环境</p>
+<p><strong>①靶机1</strong></p>
+<ul>
+<li>网段1（出网网段）：192.168.3.0&#x2F;24</li>
+<li>网段2： 192.168.52.0&#x2F;24</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F19-45-54-6801ad0b0668ad38b2d4f9ca45b25d51-PixPin_2026-02-02_19-45-52-9b7dd4.png" alt="PixPin_2026-02-02_19-45-52.png"></p>
+<p><strong>②靶机2</strong><br>网段2：192.168.52.0&#x2F;24<br>网段3：192.168.93.0&#x2F;24<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F19-46-24-eb58f7ca1ba334712c9ab632f1051624-PixPin_2026-02-02_19-46-23-151b2c.png" alt="PixPin_2026-02-02_19-46-23.png"></p>
+<p>③<strong>靶机3</strong><br>网段3：192.168.93.0&#x2F;24<br>网段4：192.168.174.0&#x2F;24</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F19-50-35-595c31f586c723e89c7903a87480c6d1-PixPin_2026-02-02_19-50-34-2e3f4b.png" alt="PixPin_2026-02-02_19-50-34.png"></p>
+<p>步骤</p>
+<p>（一）<strong>生成三个监听器</strong>：①http类型的监听器，server监听192.168.3.1:4444；②tcp bind类型监听器，beacon监听器0.0.0.0:4444；③tcp bind类型的监听器，beacon监听器0.0.0.0:5555</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F19-56-40-23ff3c95c1134b8e4939b41cce7294b4-20260202195639743-8f5e07.png"></p>
+<p>（二）<strong>生成三个beacon，并放置到相应的靶机上</strong>：http类型的beacon放置到靶机1中，监听4444端口的beacon靶机放置到靶机2中，监听5555端口的beacon放置到靶机2中</p>
+<p><strong>（三）级联操作</strong></p>
+<p>当靶机1上线到CS后，输入命令：<code>connect 192.168.52.3 4444</code></p>
+<p>靶机2上线到了CS，可以看到明显的级联标志。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F19-59-09-b8d74d4b9bef3203c2e2b8a0c9f09b49-PixPin_2026-02-02_19-59-07-491328.png" alt="PixPin_2026-02-02_19-59-07.png"></p>
+<p>在靶机2上，输入命令：<code>connect 192.168.93.3 5555</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F20-02-46-dd6fd2d94ae31fe93b1fb243bf4bc84a-PixPin_2026-02-02_20-02-43-7149e8.png" alt="PixPin_2026-02-02_20-02-43.png"></p>
+<p>此时他们的网络拓扑如下，箭头的指向可以清晰的看出是谁主动连接谁的。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F02%2F20-03-09-ee97e904ce2c79692727d36ba19189d5-PixPin_2026-02-02_20-03-05-6a7900.png" alt="PixPin_2026-02-02_20-03-05.png"></p>
+<p>上述的展示体现了TCP可以将不同隔离网络段的主机级联起来，还有也说明TCP确实可以充当不同C2协议类型的Beacon之间级联的桥梁，即server（listener）&lt;-&gt;HTTP&#x2F;DNS Beacon&lt;-通过TCP socket连接-&gt;TCP Beacon。</p>
+<h2 id="2-2-数据结构定义"><a href="#2-2-数据结构定义" class="headerlink" title="2.2 数据结构定义"></a>2.2 数据结构定义</h2><h3 id="（一）server"><a href="#（一）server" class="headerlink" title="（一）server"></a>（一）server</h3><p>如果对C2框架编写熟悉的师傅可能会了解到Teamserver结构体通常会定义一个键为agentid，值为Agent实例的map。而Agent实例里包含了很多Agent的信息，比如连接信息，目标主机的信息，进程的信息等等，这些信息都是为了Teamserver能够更好的管理、控制和维护agent，为了能够构造出级联网络，并根据路由算法找到目标节点，有必要在Agent结构体里增加一个 <code>Pivots</code> 类型的成员。</p>
+<p><code>Pivots</code> 结构体包含了一个节点的父亲节点和所有子节点。这样Server就可以凭借着存放所有Agent对象引用的优势，并进一步根据 <code>Pivots</code> 结构体知晓各个Agent的关系从而得到整张网络拓扑。</p>
+<p>具体在 <code>server.go</code> 中定义如下的结构体</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// --- Metadata 结构 ---</span></span><br><span class="line"><span class="keyword">type</span> AgentMetadata <span class="keyword">struct</span> &#123;  </span><br><span class="line">    AgentID   <span class="type">uint32</span> <span class="string">`json:&quot;agent_id&quot;`</span>  </span><br><span class="line">    Arch      <span class="type">string</span> <span class="string">`json:&quot;arch&quot;`</span>  </span><br><span class="line">    Hostname  <span class="type">string</span> <span class="string">`json:&quot;hostname&quot;`</span>  </span><br><span class="line">    Username  <span class="type">string</span> <span class="string">`json:&quot;username&quot;`</span>  </span><br><span class="line">    Process   <span class="type">string</span> <span class="string">`json:&quot;process&quot;`</span>  </span><br><span class="line">    PID       <span class="type">int</span>    <span class="string">`json:&quot;pid&quot;`</span>  </span><br><span class="line">    Timestamp <span class="type">int64</span>  <span class="string">`json:&quot;timestamp&quot;`</span>  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">type</span> AgentInfo <span class="keyword">struct</span> &#123;  </span><br><span class="line">    Metadata AgentMetadata  </span><br><span class="line">    Active   <span class="type">bool</span>  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">type</span> Pivots <span class="keyword">struct</span> &#123;  </span><br><span class="line">    Parent *Agent  </span><br><span class="line">    Links  []*Agent  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">type</span> Agent <span class="keyword">struct</span> &#123;  </span><br><span class="line">    AgentID <span class="type">uint32</span>   </span><br><span class="line">    Info    *AgentInfo  </span><br><span class="line">    Pivots  Pivots  </span><br><span class="line">    Conn    net.Conn  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">type</span> Teamserver <span class="keyword">struct</span> &#123;  </span><br><span class="line">    Agents <span class="keyword">map</span>[<span class="type">uint32</span>]*Agent</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>Teamserver</code>：通过map包含了所有agent的信息，其主要作用是C2服务器的结构体会有一个健为agentid，值为agent的map。当agent不在map中，就注册；如果有就下发相应的任务给agent</li>
+<li><code>Agent</code>：包含了全局唯一标识、元数据、支点信息和物理传输连接，其中仅Gateway持有与server的物理传输连接，而支点的物理传输连接为空，这并不意味着Agent不持有物理连接，只是对于 <code>server.go</code> 中的Agent结构体不拥有物理连接，而 <code>pivot.go</code> 的Agent是包含了上游物理连接和下游物理连接，这一切的原因都是取决与你是<strong>Server 视角还是Agent 视角</strong>。</li>
+<li><code>Pivots</code>：<ul>
+<li><code>Parent *Agent</code> 是一个指针，只能指向一个上级 Agent。当Server需要向某个深层 Pivot 发送命令时，通过 <code>Parent</code> 指针<strong>回溯到 Gateway</strong>，构建<strong>源路由路径</strong>，并根据路径打包任务包。</li>
+<li><code>Links []*Agent</code> 是一个切片，可以存储多个下级 Agent。Links的作用主要是当gateway掉线时，递归清理子树，保证路由通畅</li>
+</ul>
+</li>
+</ul>
+<p>在Server 视角的Agent结构体各字段的取值</p>
+<table>
+<thead>
+<tr>
+<th align="left">字段</th>
+<th align="left">Gateway（网关）</th>
+<th align="left">Pivot（跳板）</th>
+<th align="left">Leaf（叶子）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>AgentID</code></td>
+<td align="left">自生成 uint32</td>
+<td align="left">自生成 uint32</td>
+<td align="left">自生成 uint32</td>
+</tr>
+<tr>
+<td align="left"><code>Conn</code></td>
+<td align="left">✅ 持有TCP连接</td>
+<td align="left">❌ nil（通过父转发）</td>
+<td align="left">❌ nil</td>
+</tr>
+<tr>
+<td align="left"><code>Pivots.Parent</code></td>
+<td align="left"><code>nil</code>（根节点）</td>
+<td align="left">指向父Agent指针</td>
+<td align="left">指向父Agent指针</td>
+</tr>
+<tr>
+<td align="left"><code>Pivots.Links</code></td>
+<td align="left">包含所有子节点</td>
+<td align="left">可能包含子节点</td>
+<td align="left">空切片 <code>[]</code></td>
+</tr>
+</tbody></table>
+<p>总结起来，<code>server.go</code> 上的结构体定义能做到<strong>agent的注册与管理</strong>、<strong>级联网络维护</strong>、<strong>任务下发和结果处理</strong>，因为缺少具体的例子，在这里说的可能有点抽象难懂，结合下文的通过 <code>2.4 通过Connect命令级联的流程分析</code> 和 <code>2.5 通过Exec命令分析数据流向</code> 的流程分析能更好的理解这些结构体的作用。</p>
+<h3 id="（二）agent"><a href="#（二）agent" class="headerlink" title="（二）agent"></a>（二）agent</h3><p>在 <code>pivot.go</code> 文件中，定义了一个 <code>Agent</code> 结构体，作为一个支点，它应当持有上游物理连接和下游所有直连的子节点的物理连接，这样才能符合树的定义，所以需要在 <code>Agent</code> 结构体定义 <code>Upstream net.Conn</code> 和 <code>Children sync.Map // Key: uint32 (RouteID)</code> 保存 <code>net.Conn</code> 类型的连接。设计实现了 <strong>“每个节点只维护自己的邻居”</strong> 的分层路由，符合网络协议的分层思想（数据链路层只关心下一跳）。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> AgentMetadata <span class="keyword">struct</span> &#123;  </span><br><span class="line">    AgentID   <span class="type">uint32</span> <span class="string">`json:&quot;agent_id&quot;`</span>  </span><br><span class="line">    Arch      <span class="type">string</span> <span class="string">`json:&quot;arch&quot;`</span>  </span><br><span class="line">    Hostname  <span class="type">string</span> <span class="string">`json:&quot;hostname&quot;`</span>  </span><br><span class="line">    Username  <span class="type">string</span> <span class="string">`json:&quot;username&quot;`</span>  </span><br><span class="line">    Process   <span class="type">string</span> <span class="string">`json:&quot;process&quot;`</span>  </span><br><span class="line">    PID       <span class="type">int</span>    <span class="string">`json:&quot;pid&quot;`</span>  </span><br><span class="line">    Timestamp <span class="type">int64</span>  <span class="string">`json:&quot;timestamp&quot;`</span>  </span><br><span class="line">&#125;  </span><br><span class="line">  </span><br><span class="line"><span class="comment">// --- Agent 结构体 ---</span></span><br><span class="line"><span class="keyword">type</span> Agent <span class="keyword">struct</span> &#123;  </span><br><span class="line">    AgentID  <span class="type">uint32</span> <span class="comment">// 改为 uint32    Metadata AgentMetadata  </span></span><br><span class="line">    Upstream net.Conn  </span><br><span class="line">    Children sync.Map <span class="comment">// Key: uint32 (RouteID)  </span></span><br><span class="line">    writeMu  sync.Mutex  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>Children sync.Map // Key: uint32 (RouteID)</code> 令人感到好奇，为什么出现了<code>RouteID</code>并且以<code>RouteID</code>作为键呢？</p>
+<p>RouteID是一个很重要的概念，由父节点生成，作为 <code>Children sync.Map</code> 的键。我们不能用Agentid作为 <code>Children sync.Map</code> 的键，原因是父节点不能（不应该）直接解析子节点的metadat获取到agentid，任何来自下游节点的数据只做转发操作，具体注册以及网络拓扑的维护交由server来处理。</p>
+<p>其server.go中的 <code>RegisterPivot</code> 方法完成了routeid和agentid的映射。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F18-34-18-73791382b48110f901d6a82f191e0aa1-PixPin_2026-02-03_18-34-15-9fb406.png" alt="PixPin_2026-02-03_18-34-15.png"></p>
+<p>比如agent1的agentid &#x3D; 10000，agent2的agentid &#x3D; 10001，当agent1通过connect命令连接agent2后，在本地生成routeid &#x3D; 86697，当agent2完成上线server注册后，此时Server知道 <code>10001 ↔ 86697</code> 的映射，Agent1只知道 <code>86697 → 与agent2的conn</code> 的映射，<strong>权限分层是非常清晰的</strong>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F18-58-41-a8acb1487b157404c547c5e7e3ca02ff-Drawing%202026-02-03%2018.45.37.excalidraw-bcd591.png" alt="Drawing 2026-02-03 18.45.37.excalidraw.png"></p>
+<p>当然也不是绝对不能获取到agentid，只是要改一下addpivot的代码，具体来说就是agent1连接到agent2后，agent2立刻发送携带自己agentid的数据包给agent1，agent1以此id作为map存储conn，但是这样做会产生 <code>时序问题</code>，即阻塞等待，存在窗口期，而以routeid作为键在建立连接后就具备数据转发的能力。</p>
+<p><strong>以routeid作为键</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a *Agent)</span></span> AddPivot(addr <span class="type">string</span>) &#123;</span><br><span class="line">    conn, _ := net.Dial(<span class="string">&quot;tcp&quot;</span>, addr)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 立即生成，立即存储</span></span><br><span class="line">    routeID := <span class="type">uint32</span>(rand.Intn(<span class="number">90000</span>) + <span class="number">10000</span>)</span><br><span class="line">    a.Children.Store(routeID, conn)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 启动监听，等待子节点发送的任何数据</span></span><br><span class="line">    <span class="keyword">go</span> a.handleChild(routeID, conn)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 子节点发送的 REGISTER 包会被 handleChild 转发给 Server</span></span><br><span class="line">    <span class="comment">// Server 建立映射: routeID ↔ agentID</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>以agentid作为键</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a *Agent)</span></span> AddPivot(addr <span class="type">string</span>) &#123;</span><br><span class="line">    conn, _ := net.Dial(<span class="string">&quot;tcp&quot;</span>, addr)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 必须先等待子节点发送 AgentID</span></span><br><span class="line">    agentID := waitForAgentID(conn) <span class="comment">// 阻塞读取！</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 此时才能存储</span></span><br><span class="line">    a.Children.Store(agentID, conn)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 再启动常规处理</span></span><br><span class="line">    <span class="keyword">go</span> a.handleChild(agentID, conn)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 转发注册包给 Server（此时 Server 已知 agentID）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两个方案孰优孰劣就由各位师傅评说了。</p>
+<h2 id="2-3-数据包构造规则"><a href="#2-3-数据包构造规则" class="headerlink" title="2.3 数据包构造规则"></a>2.3 数据包构造规则</h2><p>在我的前几篇文章就说过，整个C2控制流程中会产生各种类型的数据包，agent上线会发送一个注册包，server会给agent下发任务包，agent执行完命令回返回结果包</p>
+<p>在本文我们简化一下数据包的构造，定义一个非常经典的TLV自定义协议结构<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F19-18-12-d407193dfdd2c38d881ed9d53f3f0c4a-Drawing%202026-02-03%2019.15.58.excalidraw-950c3c.png" alt="Drawing 2026-02-03 19.15.58.excalidraw.png"></p>
+<p>然后统一使用下面的代码代码构造与读取。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// --- 协议工具 ---</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">makePacket</span><span class="params">(cmdType <span class="type">byte</span>, payload []<span class="type">byte</span>)</span></span> []<span class="type">byte</span> &#123;</span><br><span class="line">	buf := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">4</span>+<span class="number">1</span>+<span class="built_in">len</span>(payload))</span><br><span class="line">	binary.BigEndian.PutUint32(buf[<span class="number">0</span>:<span class="number">4</span>], <span class="type">uint32</span>(<span class="number">1</span>+<span class="built_in">len</span>(payload)))</span><br><span class="line">	buf[<span class="number">4</span>] = cmdType</span><br><span class="line">	<span class="built_in">copy</span>(buf[<span class="number">5</span>:], payload)</span><br><span class="line">	<span class="keyword">return</span> buf</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReadPacket</span><span class="params">(conn net.Conn)</span></span> (<span class="type">byte</span>, []<span class="type">byte</span>, <span class="type">error</span>) &#123;</span><br><span class="line">	header := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">4</span>)</span><br><span class="line">	<span class="keyword">if</span> _, err := io.ReadFull(conn, header); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	length := binary.BigEndian.Uint32(header)</span><br><span class="line">	<span class="keyword">if</span> length &gt; <span class="number">10</span>*<span class="number">1024</span>*<span class="number">1024</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;packet too large&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	body := <span class="built_in">make</span>([]<span class="type">byte</span>, length)</span><br><span class="line">	<span class="keyword">if</span> _, err := io.ReadFull(conn, body); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> body[<span class="number">0</span>], body[<span class="number">1</span>:], <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这里补充一下协议常量（CMD_TYPE），代表着控制命令，每个控制命令是如何运转的下文会重点分析。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// --- 协议常量 ---</span></span><br><span class="line"><span class="keyword">const</span> (  </span><br><span class="line">    CMD_EXEC     = <span class="number">0x01</span>  </span><br><span class="line">    CMD_CONNECT  = <span class="number">0x02</span>  </span><br><span class="line">    CMD_FORWARD  = <span class="number">0x03</span>  </span><br><span class="line">    CMD_REGISTER = <span class="number">0x04</span>  </span><br><span class="line">    CMD_ACK      = <span class="number">0x05</span>  </span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-4-通过Connect命令级联的流程分析"><a href="#2-4-通过Connect命令级联的流程分析" class="headerlink" title="2.4 通过Connect命令级联的流程分析"></a>2.4 通过Connect命令级联的流程分析</h2><p>server的大致执行流程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">	-&gt;startListener（用协程启动监听器）</span><br><span class="line">		-&gt;RegisterGateway（注册直连agent）</span><br><span class="line">		-&gt;HandleAgent（每一个直连agent都启动一个协程）</span><br><span class="line">			-&gt;RemoveAgent(级联清理机制，确保HandleAgent函数无论正常还是异常都会执行RemoveAgent)</span><br><span class="line">			-&gt;ReadPacket（读取server与直连agent之间的数据）</span><br><span class="line">			-&gt;processMessage 处理来自 Agent 的消息（支持递归解析 FORWARD 包）</span><br><span class="line">	-&gt;runCLI（根据不同命令如exec、list、help走入到不同的分支）</span><br><span class="line">		-&gt;SendCommand，发生命令给直连agent</span><br></pre></td></tr></table></figure>
+
+<p>agent的大致执行流程</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">	-&gt;根据输入选择listen模式还是connect模式</span><br><span class="line">	-&gt;HandleUpstream（专门处理来自上游的命令）</span><br><span class="line">		-&gt;ReadPacket（读取来自上游的数据）</span><br><span class="line">		-&gt;根据命令进入不同的分支</span><br><span class="line">			-&gt;CMD_EXEC（执行系统命令）</span><br><span class="line">			-&gt;CMD_CONNECT（本节点去执行连接操作）</span><br><span class="line">				-&gt;AddPivot（在本节点中增加一个直连子节点）</span><br><span class="line">				-&gt;handleChild（启动一个协程专门处理来自下游的数据）</span><br><span class="line">			-&gt;CMD_ACK（无具体操作）</span><br><span class="line">			-&gt;CMD_FORWARD（转发数据包，级联的核心操作）</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>再次拿上文的图来作为示例分析</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/01/14-31-37-9831135e23791e9a2029348e3632fd94-Drawing%202026-02-01%2014.23.48.excalidraw-b753ee.png" alt="Drawing 2026-02-01 14.23.48.excalidraw.png"></p>
+<ol>
+<li>路径1：server&lt;-&gt;gatetway1&lt;-&gt;pivot1&lt;-&gt;pivot4</li>
+<li>路径3：server&lt;-&gt;gatetway2&lt;-&gt;pivot3</li>
+</ol>
+<h3 id="2-4-1-二级网络级联"><a href="#2-4-1-二级网络级联" class="headerlink" title="2.4.1 二级网络级联"></a>2.4.1 二级网络级联</h3><p>二级级联是三级级联的基础，三级级联的内容衔接二级级联的后面。</p>
+<h4 id="（一）gatetway注册和pivot1启动监听"><a href="#（一）gatetway注册和pivot1启动监听" class="headerlink" title="（一）gatetway注册和pivot1启动监听"></a>（一）gatetway注册和pivot1启动监听</h4><p>我们分别运行server.go、gateway.go和pivot1.go</p>
+<p>当gateway主动连接服务器的8888端口时后，接下来根据 <code>register</code> 方法构造一个注册包给server</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-37-08-8a591d8f8d654f5fb78f264fd0742eb0-PixPin_2026-02-03_23-37-04-9703eb.png" alt="PixPin_2026-02-03_23-37-04.png"></p>
+<p><code>register</code> 方法的主要逻辑就是收集metadata，使用 <code>WritePacket</code> 构造注册包并发送注册包。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-37-55-2a633701f7e63898d97dbfbe786e486c-PixPin_2026-02-03_23-37-54-a09abb.png" alt="PixPin_2026-02-03_23-37-54.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-41-41-b496950bbf51988446ddccffe61488bd-PixPin_2026-02-03_23-41-40-ed77b5.png" alt="PixPin_2026-02-03_23-41-40.png"></p>
+<p>此时注册包的结构为 <code>[len,占4B][CMD_REGISTER，占1B][data，占lenB]</code></p>
+<p>server的 <code>HandleAgent</code> 方法处理来自Agent的所有请求，此时接收到来自Agent的注册请求，将此Agent（此时扮演gateway）注册到服务器里。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F22-55-02-b5bafc1d9854d091fbaf17216ed22d38-PixPin_2026-02-03_22-54-56-f9eb9b.png" alt="PixPin_2026-02-03_22-54-56.png"></p>
+<p>注册的逻辑很简单，首先进行ID冲突检测与处理，创建Agent对象，对于直接连接到Teamserver 的Agent，保留 <code>Conn</code> 用于直接通信，对于非Gateway通过其他Agen 转发的节点，不保留直接连接。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F22-58-00-d2fc96defadb95817447ef0d5c8681d0-PixPin_2026-02-03_22-57-57-e82d2d.png" alt="PixPin_2026-02-03_22-57-57.png"></p>
+<p>紧着将agent对象存储到ts的map里，最后返回Agent对象引用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-03-41-99f605ca35bc8de1f73c7eb1d63f120a-PixPin_2026-02-03_23-03-38-11f80c.png" alt="PixPin_2026-02-03_23-03-38.png"></p>
+<p>请记住通过 <code>RegisterAgent</code> 注册的Agent称之为gateway（网关），在 <code>HandleAgent</code> 编写一个for循环不断地处理来自网关的所有回传数据，这其中包括了gateway执行命令的结果和来自下游的转发回传给server的数据。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-05-42-ffd1aa33ccc0cc56f86ec88174a038a5-PixPin_2026-02-03_23-05-38-df4d7b.png" alt="PixPin_2026-02-03_23-05-38.png"></p>
+<h4 id="（二）server下发connect命令连接pivot1"><a href="#（二）server下发connect命令连接pivot1" class="headerlink" title="（二）server下发connect命令连接pivot1"></a>（二）server下发connect命令连接pivot1</h4><p>在server的控制台处输入命令connect：<code>connect 133002885 127.0.0.1:9999</code> 让gateway主动连接pivot1的9999端口，<code>133002885</code> 是gateway的agentid，你想让那个agent执行命令就输入对应的agentid即可。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-52-06-8232c20df521a5cbc70fa5b26e902e4b-PixPin_2026-02-03_23-52-03-8673c3.png" alt="PixPin_2026-02-03_23-52-03.png"></p>
+<p>接下来通过 <code>SendCommand</code> 方法给gateway发送任务包。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-54-11-e153f21c530475def77332c0fc17bd74-PixPin_2026-02-03_23-54-09-cf9fdf.png" alt="PixPin_2026-02-03_23-54-09.png"></p>
+<p>这一部分是路由算法的精髓所在，且听我慢慢道来，首先通过 <code>GetPath</code> 返回一个<strong>从目标到gateway的节点链</strong>（需要反向遍历，即从父节点向上寻找）。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F03%2F23-56-57-f03df51d8cb59f3e1022acac33e4fedc-PixPin_2026-02-03_23-56-54-87edd3.png" alt="PixPin_2026-02-03_23-56-54.png"></p>
+<p>假设拓扑如下：</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/01/14-31-37-9831135e23791e9a2029348e3632fd94-Drawing%202026-02-01%2014.23.48.excalidraw-b753ee.png" alt="Drawing 2026-02-01 14.23.48.excalidraw.png"></p>
+<ul>
+<li>我需要寻找pivot1到gateway1的路径，则 <code>GetPath</code> 返回 <code>[pivot1, gateway1]</code></li>
+<li>我需要寻找pivot4到gateway1的路径，则 <code>GetPath</code> 返回 <code>[pivot4, pivot1, gateway1]</code></li>
+<li>我需要寻找pivot3到gateway2的路径，则 <code>GetPath</code> 返回 <code>[pivot3, gateway2]</code></li>
+</ul>
+<p>在本此调试中，我们需要给gateway发送任务包，则 <code>GetPath</code> 返回 <code>[gateway]</code>,也就是说任务包没有经过任何转发就到达了目的地。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F00-06-24-46b19b6fc6e5e93fa2b50073d35cbc13-PixPin_2026-02-04_00-06-22-205486.png" alt="PixPin_2026-02-04_00-06-22.png"></p>
+<p>接下来根据path逐层封装转发包。因为 <code>path =  [gateway]</code>，不符合循环条件，封装发生的前提是：<strong><code>len(path) &gt;= 2</code></strong>（至少有一个中间跳转节点），所以没有进行如何封装，packet为 <code>[len1][CMD_CONNECT][127.0.0.1:9999]</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F00-08-37-6867ba64f46edbf2cce48b327b5eccb9-PixPin_2026-02-04_00-08-34-e32274.png" alt="PixPin_2026-02-04_00-08-34.png"></p>
+<p>server将connect命令包发送到gateway，由gateway的 <code>HandleUpstream</code> 进行处理，进入 <code>CMD_CONNECT</code> 条件分支会给 <code>AddPivot</code> 启用一个 <code>goroutine</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F12-44-35-d73ec739a72af4472069983e1ee17ea9-PixPin_2026-02-04_12-44-33-e26326.png" alt="PixPin_2026-02-04_12-44-33.png"></p>
+<p><code>AddPivot</code> 负责与子节点建立TCP连接，并给 <code>handleChild</code> 方法启用一个 <code>goroutine</code> 专门处理来自下游节点的数据。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F12-49-36-3de27dc3f82f8e4f37803014e6a85904-PixPin_2026-02-04_12-49-32-bba9c6.png" alt="PixPin_2026-02-04_12-49-32.png"></p>
+<p>请注意对于Agent而言，<code>WritePacket</code> 方法都是向上游写数据，而对于Server的 <code>WritePacket</code> 方法就没有这方面的要求。下图就是agent的WritePacket方法。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F18-27-08-19045c5af5bd358cf4cf6d88a039cede-PixPin_2026-02-04_18-27-06-171f13.png" alt="PixPin_2026-02-04_18-27-06.png"></p>
+<h4 id="（三）pivot1注册"><a href="#（三）pivot1注册" class="headerlink" title="（三）pivot1注册"></a>（三）pivot1注册</h4><p>当gateway与pivot1建立连接后，pivot1会立刻调用 <code>register</code> 返回一个注册包给gateway。</p>
+<p>继续跟进 <code>handleChild</code> 方法，在前面我说过，任何Agent接收到来自下游子节点的数据都不应该解析，而应该转发给上游父亲节点。构造数据包：</p>
+<ul>
+<li>最内层packet1： <code>[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]</code></li>
+<li>最外层packet2： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B][data2]</code>，data2 &#x3D; packet1</li>
+<li>合起来： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]&#125;</code></li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F18-37-18-f2d79495b93c75039658dd4dcd5fe9be-PixPin_2026-02-04_18-37-12-154ac8.png" alt="PixPin_2026-02-04_18-37-12.png"></p>
+<p>当gateway转发了pivot1的注册包，则server可以从server与gateway的TCP连接中读取到该注册包，然后交由 <code>processMessage</code> 处理。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F18-49-41-e096a969a7bbf25dac699ab4ce9d7214-PixPin_2026-02-04_18-49-35-c29c07.png" alt="PixPin_2026-02-04_18-49-35.png"></p>
+<p>注册包的结构是：<code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]&#125;</code>，此时最外层的CMD_TYPE &#x3D; CMD_FORWARD，则会进入到CMD_FORWARD条件分支。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F18-54-33-7a745ea8fdb2c4e30308b668c5e9eee9-PixPin_2026-02-04_18-54-31-d43328.png" alt="PixPin_2026-02-04_18-54-31.png"></p>
+<p>又因为最内层的数据包为 <code>[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]</code>，CMD_TYPE &#x3D; CMD_REGISTER，进入到了注册分支，然后通过 <code>RegisterPivot</code> 注册到Server里。在这里注册的都是拥有父节点的支点，所以要传入routeID以便支点的agentid与父节点生成routeID建立映射关系，也就是说子节点知道自己在父节点的“门牌号”，当然我这里说的知道是server这一侧的Agent视角。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F18-58-19-5ddb98e00af5833dd9f59888be387f0a-PixPin_2026-02-04_18-58-17-bee36d.png" alt="PixPin_2026-02-04_18-58-17.png"></p>
+<p><code>RegisterPivot</code> 的主要逻辑是验证父节点存在（Pivot必须依附于已存在的Agent），检查 AgentID冲突，创建Pivot Agent对象，更新父节点的子节点列表，最后注册到server的全局map里。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F19-04-29-ef7bc28c38f399fc878a8048a497400c-PixPin_2026-02-04_19-04-27-9cedda.png" alt="PixPin_2026-02-04_19-04-27.png"></p>
+<p>至此二级网络的级联流程就分析完了，总结一下数据流向：</p>
+<ol>
+<li>gateway向server发生注册包： <code>[len,占4B][CMD_REGISTER，占1B][data，占lenB]</code></li>
+<li>server发送connect任务包给gateway：<code>[len1][CMD_CONNECT][127.0.0.1:9999]</code></li>
+<li>gateway向pivot1建立连接后，pivot1发送注册包给gateway：<code>[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]</code></li>
+<li>gateway转发pivot1的注册包给server，需要进行封装： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]&#125;</code></li>
+<li>server收到gateway的数据包后，逐层解封，最终完成pivot1的注册。</li>
+</ol>
+<h3 id="2-4-2-三级网络级联"><a href="#2-4-2-三级网络级联" class="headerlink" title="2.4.2 三级网络级联"></a>2.4.2 三级网络级联</h3><p>对于三级网络级联，其中前三步骤的分析与上文的二级网络级联一模一样，即<code>gatetway注册和pivot1启动监听</code>、<code>server下发connect命令连接pivot1</code>和<code>pivot1的注册</code>的与上文介绍的流程一致。</p>
+<p>在这里只分析 <code>pivot2启动监听和server下发connect命令连接pivot4</code> 和 <code>pivot2注册</code>。</p>
+<h4 id="（一）pivot2启动监听和server下发connect命令连接pivot2"><a href="#（一）pivot2启动监听和server下发connect命令连接pivot2" class="headerlink" title="（一）pivot2启动监听和server下发connect命令连接pivot2"></a>（一）pivot2启动监听和server下发connect命令连接pivot2</h4><p>在server的控制台处输入命令connect：<code>connect 211881096 127.0.0.1:10010</code> 让pivot1主动连接pivot2的10010端口，<code>211881096</code> 是pivot1的agentid。</p>
+<p><code>SendCommand</code> 方法给要给pivot1发送任务包，首先需要知道gateway通往pivot1的路由。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F21-34-45-60985fcca84d4bb16d359d5a1535a139-PixPin_2026-02-04_21-34-43-0de253.png" alt="PixPin_2026-02-04_21-34-43.png"></p>
+<p>通过调用GetPath获取到pivot1到达gateway的路径，该路径为：<code>path = [pivot1,gateway]</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F21-43-14-8d127e8c22a22c4d3db6c0b9f2fd045d-PixPin_2026-02-04_21-43-11-f234f8.png" alt="PixPin_2026-02-04_21-43-11.png"></p>
+<p>紧接着进行封装。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F21-43-57-2bb4d96a1ec731ba6819c13e90c70fb3-PixPin_2026-02-04_21-43-55-e59850.png" alt="PixPin_2026-02-04_21-43-55.png"></p>
+<p><strong>第一层</strong>：原始包packet1 &#x3D; <code>[len,占4B][CMD_CONNECT，占1B][data，占lenB]</code><br><strong>第二层</strong>：i &#x3D; 1，packet2 &#x3D; <code>[len,占4B][CMD_FORWARD，占1B][RouteID，占4B][packet1]</code>。</p>
+<p>i &#x3D; 2，不满足循环条件，所以server发给pivot1的任务包只需要经过一跳就到达目的地。</p>
+<p>server将connect命令包发送到gateway，由gateway的 <code>HandleUpstream</code> 进行处理，因为最外层的 <code>CMD_TYPE = CMD_FORWARD</code>,这意味着数据包会交由 <code>HandleUpstream</code> 的 <code>CMD_FORWARD</code> 的分支处理。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F21-58-15-6e048a3424ebb4c1694fbc1e5bb63d78-PixPin_2026-02-04_21-58-12-617d52.png" alt="PixPin_2026-02-04_21-58-12.png"></p>
+<p>进入到 <code>CMD_FORWARD</code> 的分支前，因数据包被剥离了一层，只剩下 <code>[RouteID，占4B][packet1]</code>。前面说过RouteID是由父节点生成，用于标识与子节点的物理连接，此时父节点为gateway，子节点为pivot1，也就是说gateway可通过 <code>Children.Load(routeID)</code> 找到与pivot1建立的conn，并通过conn将 <code>packet1 = [len,占4B][CMD_CONNECT，占1B][data，占lenB]</code> 转发到了pivot1。</p>
+<p>pivot1接收到gateway发来的packe1，因CMD_TYPE &#x3D; CMD_CONNECT，故通过给<code>AddPivot</code>启动一个 <code>runtime</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F22-21-09-7a5fb11f8bea04432a27f4e9f4aafbd4-PixPin_2026-02-04_22-21-07-261ad6.png" alt="PixPin_2026-02-04_22-21-07.png"></p>
+<p>pivot1调用 <code>AddPivot</code> 方法与pivot2建立连接，并生成RouteID标识这个连接（即 <code>a.Children.Store(routeID, conn)</code>），之后启动 <code>handleChild</code> 专门处理来自pivot2的数据。</p>
+<h4 id="（二）pivot2注册"><a href="#（二）pivot2注册" class="headerlink" title="（二）pivot2注册"></a>（二）pivot2注册</h4><p>当pivot1与pivot2建立连接后，pivot2立即发送自己的注册包。此时注册包的结构为packet1 &#x3D;  <code>[len1,占4B][CMD_REGISTER，占1B][data，占lenB]</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F22-27-10-fd3ef936139ab3f957a276cf5ddd1058-PixPin_2026-02-04_22-27-08-78bb1c.png" alt="PixPin_2026-02-04_22-27-08.png"></p>
+<p>pivot1接收到了pivot2发来的注册包，再进行封装得到： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data，占lenB]&#125;</code>，简化为packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code></p>
+<p>pivot1将封装后的数据包发送给gateway后，再进行封装得到packet3 &#x3D;  <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B]【[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data，占lenB]&#125;】</code>，简化得到packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F22-34-11-f489d102f9269d283552b6215325ea42-PixPin_2026-02-04_22-34-10-6a072a.png" alt="PixPin_2026-02-04_22-34-10.png"></p>
+<p>gateway将packet3转发给server后，因最外层的CMD_TYPE &#x3D; CMD_FORWARD，由processMessage方法的 <code>CMD_FORWARD</code> 分支进行处理。</p>
+<ul>
+<li>第一次进入到 <code>CMD_FORWARD</code> 分支，此时数据包的结构为：<code>[RouteID2，占4B][packet2]</code>。</li>
+<li>因为packet2的CMD_TYPE &#x3D; CMD_FORWARD，所以第二次调用processMessage方法并进入 <code>CMD_FORWARD</code> 分支进行处理，此时数据包结构为：<code>[RouteID1，占4B][packet1]</code>。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F22-46-22-c27633fa961b4a5299ece9e4db6c66ba-PixPin_2026-02-04_22-46-19-af22b7.png" alt="PixPin_2026-02-04_22-46-19.png"></p>
+<p>因packet1 &#x3D;  <code>[len1,占4B][CMD_REGISTER，占1B][data，占lenB]</code>，CMD_TYPE &#x3D; CMD_REGISTER，会进入到 <code>CMD_FORWARD</code> 分支下的 <code>CMD_REGISTER</code> 分支注册pivot2。请注意，我们只需要pivot1生成的RouteID1来标识与pivot2的连接，不需要gateway生成的RouteID2。RouteID2只在Gateway转发给数据 Pivot1时用到，对Pivot1的子节点管理完全透明，颇有种 <strong>“我的附庸的附庸，不是我的附庸”</strong> 的感觉？</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F04%2F22-53-48-8d41d1522c411242e393c47bf5be9771-PixPin_2026-02-04_22-53-46-42a29e.png" alt="PixPin_2026-02-04_22-53-46.png"></p>
+<p>至此三级网络的级联流程就分析完了，总结一下数据流向：</p>
+<ol>
+<li>gateway向server发生注册包： <code>[len,占4B][CMD_REGISTER，占1B][data，占lenB]</code></li>
+<li>server发送connect任务包给gateway：<code>[len1][CMD_CONNECT][127.0.0.1:9999]</code></li>
+<li>gateway向pivot1建立连接后，pivot1发送注册包给gateway：<code>[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]</code></li>
+<li>gateway转发pivot1的注册包给server，需要进行封装： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]&#125;</code></li>
+<li>server收到gateway的数据包后，逐层解封，最终完成pivot1的注册。</li>
+<li>server要发送connect任务包给pivot1：<code>[len,占4B][CMD_FORWARD，占1B][RouteID，占4B][127.0.0.1:10010]</code></li>
+<li>pivot1向pivot2建立连接后，pivot2发送注册包给pivot1：packet1 &#x3D;  <code>[len1,占4B][CMD_REGISTER，占1B][data，占lenB]</code></li>
+<li>pivot1转发给gateway前再封装：packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code></li>
+<li>gateway转发给server前再封装：packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code>。</li>
+<li>server收到gateway的数据包后，逐层解封，最终完成pivot2的注册。</li>
+</ol>
+<h2 id="2-5-通过Exec命令分析数据流向"><a href="#2-5-通过Exec命令分析数据流向" class="headerlink" title="2.5 通过Exec命令分析数据流向"></a>2.5 通过Exec命令分析数据流向</h2><p>假设此时有这样的级联结构：server-&gt;gataway-&gt;pivot1-&gt;pivot2。</p>
+<p>目标：server给pivot2发送Exec命令。</p>
+<h3 id="（一）server构造Exec的任务包"><a href="#（一）server构造Exec的任务包" class="headerlink" title="（一）server构造Exec的任务包"></a>（一）server构造Exec的任务包</h3><p>在server的控制台上输入：<code>exec agentid ipconfig</code> server通过 <code>SendCommand</code> 方法构造Exec的任务包</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-32-01-d7d3431e9daf9338f6a454f39cb8f9fa-PixPin_2026-02-05_22-31-55-55f78d.png" alt="PixPin_2026-02-05_22-31-55.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F12-30-51-f0af7efc39cac1bcf0233aa195a1f4ea-PixPin_2026-02-05_12-30-48-9928f1.png" alt="PixPin_2026-02-05_12-30-48.png"></p>
+<p> <code>SendCommand</code> 通过GetPath算出 <code>path = [pivot2,pivot1,gateway]</code></p>
+<p>根据path长度来判断是否需要构造 <code>CMD_FORWARD</code> 包。当len(path)&gt;&#x3D;2时，即server和目标存在中间节点时，则需要构造 <code>CMD_FORWARD</code> 包。</p>
+<p><strong>第一层</strong>：原始包packet1 &#x3D; <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code><br><strong>第二层</strong>：i &#x3D; 1，packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code>。<br><strong>第三层</strong>：i &#x3D; 2，packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code></p>
+<p>当i &#x3D; 3时不满足循环条件，所以任务包需要经过2跳就能达到pivot2。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F12-32-57-1d60f7e6755d29274c9398f1c4aea391-PixPin_2026-02-05_12-32-54-d21f44.png" alt="PixPin_2026-02-05_12-32-54.png"></p>
+<h3 id="（二）gateway和pivot1转发任务包"><a href="#（二）gateway和pivot1转发任务包" class="headerlink" title="（二）gateway和pivot1转发任务包"></a>（二）gateway和pivot1转发任务包</h3><p>gateway收到server发送的数据包，packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code>， 因其CMD_TYPE &#x3D; CMD_FORWARD，故从数据包中获取RouteID2，通过 <code>a.Children.Load(routeID)</code> 拿到gateway与pivot1的conn，之后转发packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code> 给pivot1。</p>
+<p>pivot1同理转发数据packet1 &#x3D; <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code> 给pivot2。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-10-39-598aac46ed1dc44bf4ad0d04f31b6421-PixPin_2026-02-05_22-10-37-80e5b3.png" alt="PixPin_2026-02-05_22-10-37.png"></p>
+<h3 id="（三）pviot2执行命令返回结果包"><a href="#（三）pviot2执行命令返回结果包" class="headerlink" title="（三）pviot2执行命令返回结果包"></a>（三）pviot2执行命令返回结果包</h3><p>pivot2解析packet1 &#x3D; <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code>，因其CMD_TYPE &#x3D; CMD_EXEC，故执行系统命令。执行完后调用 <code>a.WritePacket(CMD_EXEC, []byte(result))</code> 将结果打包成结果包packet_res1 &#x3D;  <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code>，传给pivot1。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-15-32-b57f1c2b877385c76ccb99a02016316a-PixPin_2026-02-05_22-15-30-04e053.png" alt="PixPin_2026-02-05_22-15-30.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-16-30-a89a903d7db4bf64a8c0720ed883d732-PixPin_2026-02-05_22-16-27-df9ee0.png" alt="PixPin_2026-02-05_22-16-27.png"></p>
+<h3 id="（四）中间节点封装结果包并转发给上游"><a href="#（四）中间节点封装结果包并转发给上游" class="headerlink" title="（四）中间节点封装结果包并转发给上游"></a>（四）中间节点封装结果包并转发给上游</h3><p>pviot1收到pivot2的结果包，随后封装成 packet_res2 &#x3D;  <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1][packet_res1]</code>，传给gateway。</p>
+<p>gateway收到pivot1的结果包，随后封装成 packet_res3 &#x3D;  <code>[len2,占4B][CMD_FORWARD，占1B][RouteID2][packet_res2]</code>，传给server。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-21-08-11957da5ab7e37016190b41c513bdefa-PixPin_2026-02-05_22-21-03-6a7d0a.png" alt="PixPin_2026-02-05_22-21-03.png"></p>
+<p>server的HandleAgent收到gateway的数据包，调用processMessage进行处理。</p>
+<ul>
+<li><strong>第一次进入processMessage的CMD_FORWARD分支</strong>：此时innerBody &#x3D; packet_res1 &#x3D;  <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code>，fromAgentID &#x3D; gateway的agentid，遍历gateway的子节点列表，直到找到 <code>child.RouteID == routeID</code> 的子节点，也就是究竟是谁发了数据包给gateway，本例中是pivot1，然后actualSourceID &#x3D; pivot1的agentid，因actualSourceID不为0，故递归调用processMessage。</li>
+<li><strong>第二次调用processMessage的CMD_FORWARD分支</strong>：此时innerBody &#x3D; pivot2命令执行的结果， fromAgentID &#x3D; pivot1的agentid，遍历pivot1的子节点列表，直到找到 <code>child.RouteID == routeID</code> 的子节点，也就是究竟是谁发了数据包给pivot1，本例中是pivot2，然后actualSourceID &#x3D; pivot2的agentid ，因actualSourceID不为0，故递归调用processMessage。</li>
+<li><strong>第三次调用processMessage，进入到CMD_EXEC分支</strong>：fromAgentID &#x3D; pivot2的agentid，CMD_TYPE &#x3D; CMD_EXEC，打印结果。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-26-20-947a273f91a434f7f2e0fe885ee881e4-PixPin_2026-02-05_22-26-16-8b5ba3.png" alt="PixPin_2026-02-05_22-26-16.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F05%2F22-52-48-8eba9ddfdb7a7f02d30026e14f565845-PixPin_2026-02-05_22-52-45-159af0.png" alt="PixPin_2026-02-05_22-52-45.png"></p>
+<p>TCP级联分析至此结束！</p>
+<h2 id="2-6-彩蛋"><a href="#2-6-彩蛋" class="headerlink" title="2.6 彩蛋"></a>2.6 彩蛋</h2><p>在已沦陷的目标上创建TCP监听器</p>
+<p>不知道各位是否是对已有会话右键后会看到“Pivoting-Listener”的功能感到好奇，这里我先不回答这个功能是干什么的，我想再提另一个问题：在我们日常的Socket编程中，我们有意的将通信双方区分为服务端和客户端，在安全领域中延伸出了正向连接和反向连接的概念。前文中我们都是让子Beacon创建TCP监听器，然后父Beacon去连接子Beacon，这就是正向连接，刚好对应bind tcp类型的监听器，难道就没有在父Beacon上创建TCP监听器，然后子Beacon去连接父Beacon，也就是所谓的反向连接吗？</p>
+<p>有的有的，包有的，这就是我在开头提到的“Pivoting-Listener”的功能，这样正向连接和反向连接都有了，才能说的上真正的级联网络，CS的强大无需多言，不过现在要让我实现，我只能说精力有限，实在没空弄了，这篇文章都是我墨迹了几个月才写的。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/15-55-18-3a93ce72270c341f632e3e6cfe70deff-20260224155518-a39abd.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/16-05-47-c5c474dd12777f21e615956a561fb71a-20260224160546-59858e.png"></p>
+<h1 id="三、SMB级联"><a href="#三、SMB级联" class="headerlink" title="三、SMB级联"></a>三、SMB级联</h1><h2 id="3-1-基本概念"><a href="#3-1-基本概念" class="headerlink" title="3.1 基本概念"></a>3.1 基本概念</h2><p>SMB（Server Message Block）是Windows网络环境中用于文件共享、打印机共享和进程间通信的核心协议，默认运行在445端口。在AD域环境中，SMB流量是”正常”的——文件共享、组策略更新、认证票据交换都依赖这个协议，这使得基于SMB的隐蔽通信具有天然的优势。</p>
+<p>TCP通过Socket进行通信，那么SMB又是通过什么通信的呢？这里不得不提及 <code>命名管道（Named Pipe）</code> 的概念。SMB Beacon的核心机制是命名管道（Named Pipe），这是Windows进程间通信（IPC）的一种机制，命名规则为：<code>\\.\pipe\</code> + 任意可见字符，比如：<code>\\.\pipe\agent</code>，看起来奇奇怪怪的，搞不懂为什么windows要这么命名。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">\\.\pipe\agent</span><br><span class="line">│ │ │      │</span><br><span class="line">│ │ │      └── 管道名称（用户自定义）</span><br><span class="line">│ │ └────── 保留关键字，表示命名管道文件系统（NPFS）</span><br><span class="line">│ └──────── 点号表示本地计算机</span><br><span class="line">└────────── 反斜杠表示UNC路径的开始</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="left">组件</th>
+<th align="left">含义</th>
+<th align="left">类比</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>\\</code></td>
+<td align="left">UNC路径起始</td>
+<td align="left">像<code>http://</code></td>
+</tr>
+<tr>
+<td align="left"><code>.</code></td>
+<td align="left">本地计算机</td>
+<td align="left">像<code>localhost</code></td>
+</tr>
+<tr>
+<td align="left"><code>pipe</code></td>
+<td align="left">保留关键字，指向NPFS</td>
+<td align="left">像<code>/dev/</code>设备目录</td>
+</tr>
+<tr>
+<td align="left"><code>agent</code></td>
+<td align="left">用户定义的管道名</td>
+<td align="left">像文件名</td>
+</tr>
+</tbody></table>
+<p><strong>父Beacon创建管道（服务端）</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在内存中创建命名管道实例</span></span><br><span class="line">HANDLE hPipe = CreateNamedPipe(</span><br><span class="line">    <span class="string">&quot;\\\\.\\pipe\\msagent_12a4&quot;</span>,  <span class="comment">// 随机生成的管道名</span></span><br><span class="line">    PIPE_ACCESS_DUPLEX,           <span class="comment">// 双向访问</span></span><br><span class="line">    PIPE_TYPE_MESSAGE | PIPE_WAIT,<span class="comment">// 消息类型，阻塞模式</span></span><br><span class="line">    <span class="number">10</span>,                           <span class="comment">// 最大实例数</span></span><br><span class="line">    <span class="number">65535</span>, <span class="number">65535</span>,                 <span class="comment">// 缓冲区大小</span></span><br><span class="line">    <span class="number">0</span>, <span class="literal">NULL</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p><strong>子Beacon连接管道（客户端）</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 通过SMB连接到远程命名管道</span></span><br><span class="line">HANDLE hPipe = CreateFile(</span><br><span class="line">    <span class="string">&quot;\\\\父主机名\\pipe\\msagent_12a4&quot;</span>,  <span class="comment">// 注意这里是父主机名！</span></span><br><span class="line">    GENERIC_READ | GENERIC_WRITE,</span><br><span class="line">    <span class="number">0</span>, <span class="literal">NULL</span>, OPEN_EXISTING, <span class="number">0</span>, <span class="literal">NULL</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>大部分情况下，beacon由C&#x2F;C++编写，这意味着我们可以方便的调用WindowsAPI创建、打开、读取、写入、关闭命名管道，无论是访问本地命名管道还是远程，都可以使用同一套API。</p>
+<ol>
+<li>服务器端创建管道：CreateNamedPipe。</li>
+<li>服务器端等待连接：ConnectNamedPipe。</li>
+<li>客户端打开&#x2F;连接管道：CreateFile</li>
+<li>读写操作：ReadFile&#x2F;WriteFile</li>
+<li>关闭管道：CloseHandle</li>
+</ol>
+<p>但是也有少部分C2会采用其他高级语言编写，比如Silver的implant采用go语言，iom的malefic采用rust，这些语言调用WindowsAPI还是有很大的区别的。对于C&#x2F;C++，API调用可以通过直接调用Windows.h，原生类型匹配，直接映射，而对于Go和Rust，如果使用 <code>syscall</code> 或者 <code>golang.org/x/sys/windows</code> 里的windows API时总是遇到一些奇奇怪怪的问题，比如明明向管道写了数据，却读不出等等，光是排查的时间就花费了几天，最后忍无可忍换成了 <code>github.com/Microsoft/go-winio</code>，这个库的api用法很像net包，且<strong>实现 <code>net.Conn</code> 接口</strong>，复用Go成熟的网络编程模型，如果对Go的net包的设计哲学感兴趣，可以去看看这篇iom的M09ic写的<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/2h6kXmaMDJntLENYj_nMwg">攻防场景中的网络侧对抗革命 (上)—rem</a>。</p>
+<p>举一个简单的伪代码例子。</p>
+<p><strong>服务端</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建监听器，类似于 net.Listen</span></span><br><span class="line">listener, err := winio.ListenPipe(pipeName, <span class="literal">nil</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待连接</span></span><br><span class="line">conn, err := listener.Accept()</span><br><span class="line"></span><br><span class="line"><span class="comment">// 写数据</span></span><br><span class="line">conn.Write(data)</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 连接服务器的命名管道</span></span><br><span class="line">conn, err := winio.DialPipe(fullPath, &amp;timeout)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读取数据</span></span><br><span class="line">n, err := conn.Read(buf)</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-2-CS的SMB级联"><a href="#3-2-CS的SMB级联" class="headerlink" title="3.2 CS的SMB级联"></a>3.2 CS的SMB级联</h2><p>CobaltSrike的SMB级联通常配合AD域的横向移动使用，即利用ntlm hash + psexec + smb协议进行横向移动，当然CS也将SMB的级联功能独立出来，做成一个单独的命令 <code>link</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/15-31-39-829c15bd4038b2d803f9ff7ec0281ecc-20260224153138-d12345.png"></p>
+<p>帮助信息解释的很清楚了：连接到一个 SMB Beacon，重新建立对它的控制。连接成功后，所有对该 Beacon 的请求都将通过当前这个 Beacon 转发。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/15-33-57-e64e0b329106c9736118b9d3d945167d-20260224153356-85c925.png"></p>
+<p>不过我并未使用link命令成功级联，具体原因未知，我也查阅了网上的很多资料，大多都是通过 <code>spawn</code> 命令选择smb监听器派生出一个会话。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/17-56-03-8619655db533fae1906e876d2eaa2457-20260224175603-f36652.png"></p>
+<p>级联成功</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/17-57-01-309d06df6f026fa93e2db68b2bd0c808-20260224175701-ff36a1.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/17-58-27-8d56dcb8ba2d61f638a086a80d1a573a-20260224175826-833189.png"></p>
+<p>我又实验了在放置http beacon的目标主机上放置smb beacon，然后通过已经建立的http会话去连接smb beacon，结果也是成功的。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/18-01-37-28aea333b94fa094b9b1ce0070a635e8-20260224180137-e268a2.png"></p>
+<p>然后我在同网段的另一个主机上放置smb beacon，却始终连不上。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/02/24/18-04-17-b64496d8ff07083e71b15961d1f31c72-20260224180417-4dd2e2.png"></p>
+<p>实在搞不懂，我也不想再研究了，生气了(＃｀д´)ﾉ，当然可能是系统环境的问题，我的代码是成功实现了smb级联，感兴趣的可以去看看。</p>
+<h2 id="3-3-设计构思"><a href="#3-3-设计构思" class="headerlink" title="3.3 设计构思"></a>3.3 设计构思</h2><p>一般我们都是通过HTTPS的Beacon上线到CS的服务器，建立初始立足点，然后就开始了信息收集，如果该环境存在域，则可以各种域的攻击手段dump出ntlm hash，并使用pth将SMB Beacon传输到目标主机上，之后就建立起：server &lt;-http&lt;-&gt; HTTPS Beacon &lt;-&gt; 命名管道 &lt;-&gt; SMB Beacon的级联网络。</p>
+<p>对于SMB级联，我没有在数据结构上做出太大的变化，甚至我们还能套用TCP级联中的代码编写逻辑，真正实现一套框架走天下的原则。</p>
+<p>我重写设计了gateway，它不想TCP级联那样，每个agent完全复用一套代码。作为唯一与外界通信的立足点，smb级联中的gateway通过HTTP协议与作为上游的服务器通信，而gateway与下游的agent通信的方式却是smb协议，这也导致了gateway不能与smb agent在代码编写中保持一致性。</p>
+<p>现在想想，TCP级联中的gateway也应当通过HTTP协议与服务器通信，而TCP协议只作为不同类型Beacon（HTTP、DNS、WebSocket等）内置的功能，比如在CS中，每个Beacon都有Connect命令，这也意味着不同类型的gateway beacon能够通过tcp和smb协议级联下游beacon，从而实现多级代理链，这正是现代C2框架设计的精髓所在——<strong>将传输层与协议层解耦，实现”协议无关的级联能力”</strong>，所以我的TCP级联设计是不太符合实战角度。</p>
+<p>除了上面所说的 <code>协议无关的级联能力</code> 外，我认为每个agent还应当设计一个“<strong>缓冲区队列</strong>”专门用来存储下游节点发送的数据。我说过：任何agent发送的数据通过层层向上转发，最终转发到server，并由server来处理结果。但是由于<strong>睡眠混淆技术</strong>的出现，又给级联网络带来了<strong>时间差</strong>的问题，导致<strong>异步通信的混乱</strong></p>
+<p>比如说存在这样的类型的smb级联网络</p>
+<ol>
+<li>server &lt;-http&lt;-&gt; HTTPS Beacon（gateway） &lt;-&gt; 命名管道 &lt;-&gt; SMB pivot1 &lt;-&gt;  命名管道 &lt;-&gt; SMB pivot2。</li>
+<li>server &lt;-http&lt;-&gt; HTTPS Beacon（gateway） &lt;-&gt; 命名管道 &lt;-&gt; SMB pivot3。</li>
+</ol>
+<p>当pivot1和pivot3同时主动向gateway发送数据，但gateway只能转发其中一个节点的数据给server，那么另一个节点的数据包就会被gateway丢弃。</p>
+<p>这时你会想到用互斥锁，这能解决一部分时间差的问题，但是当父节点从睡眠中苏醒，接收到了多个下游节点发送的数据包，即使加了锁，同一时间抢不到锁的下游节点数据依然会被抛弃，或者导致下游节点被阻塞挂起</p>
+<p>缓冲区队列就像一个蓄水池，当父节点处于长睡眠状态时，下游多个子Pivot节点可能已经完成了多个任务（比如截屏、传文件）。父节点醒来后，需要一个队列来按顺序批量读取这些缓存的数据。</p>
+<p>我在代码中使用了 <code>QueuePacket</code> 将数据放到队列里。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F08%2F23-18-02-1c5094a7924ef03e40510f0b29a69d44-PixPin_2026-02-08_23-18-00-cae0af.png" alt="PixPin_2026-02-08_23-18-00.png"></p>
+<p>在 <code>ConnectPivot</code> 的读管道循环中，一旦下游有任何数据，立刻将其推入 <code>OutBuffer</code> 缓冲队列；而在 <code>CheckIn</code> 轮询时，直接加锁、<strong>一次性读取并清空缓存区 (<code>a.OutBuffer.Reset()</code>)</strong>，然后将其打包进一个 HTTP POST 请求发送。这完美解决了由于睡眠时间差导致的下游数据堆积和并发冲突问题。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-42-51-c6b4536b69c27abb8a5bb53f90da30c0-PixPin_2026-02-25_18-42-45-03e485.png" alt="PixPin_2026-02-25_18-42-45.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-43-39-5cee9050dc5a1e2fee70fe89577d01ca-PixPin_2026-02-25_18-43-33-85d0ab.png" alt="PixPin_2026-02-25_18-43-33.png"></p>
+<p>不过代码中我只给gateway增加了<strong>缓冲队列</strong>，而普通的pivot没有增加，因为在写到这里的时候我并没有意识到下游节点也会使用<strong>睡眠混淆技术</strong>，也会产生时间差问题，进一步地，tcp级联也需要缓冲队列，然后我也懒得加补全代码，各位师傅感兴趣可以自己加上。</p>
+<h2 id="3-4-三级网络级联"><a href="#3-4-三级网络级联" class="headerlink" title="3.4 三级网络级联"></a>3.4 三级网络级联</h2><p>在上文就详细介绍过TCP级联的大致流程，smb级联没有太大的区别，下面我就以文字叙述整个流程。</p>
+<ol>
+<li>gateway通过HTTP向server发生注册包： <code>[len,占4B][CMD_REGISTER，占1B][data，占lenB]</code>。之后gateway通过轮询的方式向server请求任务。</li>
+<li>server发送link任务包给gateway：<code>[len1][CMD_SMB][\\.\pipe\pivot1]</code>，让gateway主动去连接pivot1创建的命名管道。</li>
+<li>gateway向pivot1建立连接后，pivot1发送注册包给gateway：<code>[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]</code></li>
+<li>gateway转发pivot1的注册包给server，需要进行封装： <code>[len2,占4B][CMD_FORWARD，占1B][RouteID，占4B]&#123;[len1,占4B][CMD_REGISTER，占1B][data1，占lenB]&#125;</code></li>
+<li>server收到gateway的数据包后，逐层解封，最终完成pivot1的注册。</li>
+<li>server要发送connect任务包给pivot1：<code>[len,占4B][CMD_FORWARD，占1B][RouteID，占4B][127.0.0.1:10010]</code></li>
+<li>pivot1向pivot2建立连接后，pivot2发送注册包给pivot1：packet1 &#x3D;  <code>[len1,占4B][CMD_REGISTER，占1B][data，占lenB]</code></li>
+<li>pivot1转发给gateway前再封装：packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code></li>
+<li>gateway转发给server前再封装：packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code>。</li>
+<li>server收到gateway的数据包后，逐层解封，最终完成pivot2的注册。</li>
+</ol>
+<p>gateway上线server</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-52-41-35faf86035507a7362a1dfaee4ff0faf-PixPin_2026-02-25_18-52-37-9030f8.png" alt="PixPin_2026-02-25_18-52-37.png"></p>
+<p>pivot1上线server</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-53-33-593405852127c4f2890f8ac30f3bee8c-PixPin_2026-02-25_18-53-30-076c2e.png" alt="PixPin_2026-02-25_18-53-30.png"></p>
+<p>pivot2上线server</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-54-15-54bf511ec1f023a73afe45fad76b3f64-PixPin_2026-02-25_18-54-12-b02c2d.png" alt="PixPin_2026-02-25_18-54-12.png"></p>
+<p>网络拓扑</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F18-55-15-5b242fbe8e93bb82989c37e2f6e17db8-PixPin_2026-02-25_18-55-13-ab5b3e.png" alt="PixPin_2026-02-25_18-55-13.png"></p>
+<h2 id="3-5-通过EXEC分析数据流向"><a href="#3-5-通过EXEC分析数据流向" class="headerlink" title="3.5 通过EXEC分析数据流向"></a>3.5 通过EXEC分析数据流向</h2><p>假设此时有这样的级联结构：server-&gt;gataway-&gt;pivot1-&gt;pivot2。</p>
+<p>目标：server给pivot2发送Exec命令。</p>
+<p><strong>①server 构造Exec的任务包</strong></p>
+<p><strong>第一层</strong>：原始包packet1 &#x3D; <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code><br><strong>第二层</strong>：i &#x3D; 1，packet2 &#x3D; <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code>。<br><strong>第三层</strong>：i &#x3D; 2，packet3 &#x3D; <code>[len3,占4B][CMD_FORWARD，占1B][RouteID2，占4B][packet2]</code></p>
+<p><strong>②gateway接收到server的数据包</strong>，发现是 <code>CMD_FORWARD</code>，故根据RouteID2找到与子节点pivot1的连接，并将 <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1，占4B][packet1]</code> 发送给pivot1。</p>
+<p><strong>③pivot1接收到gateway的数据包</strong>，发现是 <code>CMD_FORWARD</code>，故根据RouteID1找到与子节点pivot2的连接，并将 <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code> 发送给pivot2。</p>
+<p><strong>④pviot2执行命令返回结果包</strong>，封装成packet_res1 &#x3D;  <code>[len1,占4B][CMD_EXEC，占1B][data，占lenB]</code>，传给pivot1。</p>
+<p><strong>⑤中间节点封装结果包并转发给上游</strong></p>
+<p>pviot1收到pivot2的结果包，随后封装成 packet_res2 &#x3D;  <code>[len2,占4B][CMD_FORWARD，占1B][RouteID1][packet_res1]</code>，传给gateway。</p>
+<p>gateway收到pivot1的结果包，随后封装成 packet_res3 &#x3D;  <code>[len2,占4B][CMD_FORWARD，占1B][RouteID2][packet_res2]</code>，传给server。</p>
+<p>让某个agent执行命令的效果图</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F02%2F25%2F19-25-16-74f6253b64664add3c9142feba9f0404-PixPin_2026-02-25_19-25-09-2f2ace.png" alt="PixPin_2026-02-25_19-25-09.png"></p>
+<h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>本来也没想写这么多，真正动笔写的时候才发现可以写这么多内容，算是写嗨了，大篇幅的自言自语，就是不知道各位师傅能否看懂呢？让我评价本文，它可以排在SRDI的后面，位于我心目中第二的位置。</p>
+<p>这篇文章的主题是从2025年9月开始确立，但动笔写大纲是2026年1月28日，然后从2026年1月30日开始动笔写，期间经过了年前两个星期的加班，一个普通的春节，最终摸到了2月底才写完。</p>
+<p>级联网络这个主题可以说非常具体挑战性的，无论是从最初的拓扑网络的建设还是路由算法的建立，亦或是连接的管理与维护，都对笔者在<strong>分布式系统基础、网络协议栈细节以及数据流向等</strong>方面的理解提出了极高的要求，不过随着AI越来越强大了，帮助我完成了很多不可能完成的挑战。</p>
+<p>最后的最后，如果这篇文章对你有所启发，<strong>别忘了点赞、收藏和关注啊啊啊啊！</strong></p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li>CobaltStrike</li>
+<li>sliver：<a target="_blank" rel="noopener" href="https://github.com/BishopFox/sliver">BishopFox&#x2F;sliver: Adversary Emulation Framework</a></li>
+<li>havoc：<a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Pivot.c">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;Pivot.c at main · HavocFramework&#x2F;Havoc</a></li>
+<li>AdaptixC2：<a target="_blank" rel="noopener" href="https://github.com/Adaptix-Framework/AdaptixC2">Adaptix-Framework&#x2F;AdaptixC2: AdaptixC2 is a highly modular advanced redteam toolkit</a></li>
+<li>Merlin：<a target="_blank" rel="noopener" href="https://github.com/Ne0nd0g/merlin">Ne0nd0g&#x2F;merlin: Merlin is a cross-platform post-exploitation HTTP&#x2F;2 Command &amp; Control server and agent written in golang.</a></li>
+<li>Stowaway： <a target="_blank" rel="noopener" href="https://github.com/ph4ntonn/Stowaway">ph4ntonn&#x2F;Stowaway: 👻Stowaway – Multi-hop Proxy Tool for pentesters</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2025/12/24/2025/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-03-15 17:01:18
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E5%AE%89%E5%85%A8%E5%BC%80%E5%8F%91-C2/" title="安全开发_C2">
+                        <b>#</b> 安全开发_C2
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2026/03/13/COffLoader-For-Windows%EF%BC%88BOFLoader%EF%BC%89/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="toc-text">一、基础概念</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E7%BA%A7%E8%81%94%E5%8D%8F%E8%AE%AE"><span class="toc-text">1.1 级联协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E7%89%B9%E5%AE%9A%E6%9C%AF%E8%AF%AD"><span class="toc-text">1.2 特定术语</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81TCP%E7%BA%A7%E8%81%94"><span class="toc-text">二、TCP级联</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-CS%E7%9A%84Connect%E5%91%BD%E4%BB%A4"><span class="toc-text">2.1 CS的Connect命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%AE%9A%E4%B9%89"><span class="toc-text">2.2 数据结构定义</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89server"><span class="toc-text">（一）server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89agent"><span class="toc-text">（二）agent</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E6%95%B0%E6%8D%AE%E5%8C%85%E6%9E%84%E9%80%A0%E8%A7%84%E5%88%99"><span class="toc-text">2.3 数据包构造规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-%E9%80%9A%E8%BF%87Connect%E5%91%BD%E4%BB%A4%E7%BA%A7%E8%81%94%E7%9A%84%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90"><span class="toc-text">2.4 通过Connect命令级联的流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-1-%E4%BA%8C%E7%BA%A7%E7%BD%91%E7%BB%9C%E7%BA%A7%E8%81%94"><span class="toc-text">2.4.1 二级网络级联</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89gatetway%E6%B3%A8%E5%86%8C%E5%92%8Cpivot1%E5%90%AF%E5%8A%A8%E7%9B%91%E5%90%AC"><span class="toc-text">（一）gatetway注册和pivot1启动监听</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89server%E4%B8%8B%E5%8F%91connect%E5%91%BD%E4%BB%A4%E8%BF%9E%E6%8E%A5pivot1"><span class="toc-text">（二）server下发connect命令连接pivot1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%EF%BC%88%E4%B8%89%EF%BC%89pivot1%E6%B3%A8%E5%86%8C"><span class="toc-text">（三）pivot1注册</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-2-%E4%B8%89%E7%BA%A7%E7%BD%91%E7%BB%9C%E7%BA%A7%E8%81%94"><span class="toc-text">2.4.2 三级网络级联</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89pivot2%E5%90%AF%E5%8A%A8%E7%9B%91%E5%90%AC%E5%92%8Cserver%E4%B8%8B%E5%8F%91connect%E5%91%BD%E4%BB%A4%E8%BF%9E%E6%8E%A5pivot2"><span class="toc-text">（一）pivot2启动监听和server下发connect命令连接pivot2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89pivot2%E6%B3%A8%E5%86%8C"><span class="toc-text">（二）pivot2注册</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-%E9%80%9A%E8%BF%87Exec%E5%91%BD%E4%BB%A4%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE%E6%B5%81%E5%90%91"><span class="toc-text">2.5 通过Exec命令分析数据流向</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%80%EF%BC%89server%E6%9E%84%E9%80%A0Exec%E7%9A%84%E4%BB%BB%E5%8A%A1%E5%8C%85"><span class="toc-text">（一）server构造Exec的任务包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%BA%8C%EF%BC%89gateway%E5%92%8Cpivot1%E8%BD%AC%E5%8F%91%E4%BB%BB%E5%8A%A1%E5%8C%85"><span class="toc-text">（二）gateway和pivot1转发任务包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E4%B8%89%EF%BC%89pviot2%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E5%8C%85"><span class="toc-text">（三）pviot2执行命令返回结果包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%88%E5%9B%9B%EF%BC%89%E4%B8%AD%E9%97%B4%E8%8A%82%E7%82%B9%E5%B0%81%E8%A3%85%E7%BB%93%E6%9E%9C%E5%8C%85%E5%B9%B6%E8%BD%AC%E5%8F%91%E7%BB%99%E4%B8%8A%E6%B8%B8"><span class="toc-text">（四）中间节点封装结果包并转发给上游</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-%E5%BD%A9%E8%9B%8B"><span class="toc-text">2.6 彩蛋</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81SMB%E7%BA%A7%E8%81%94"><span class="toc-text">三、SMB级联</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">3.1 基本概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-CS%E7%9A%84SMB%E7%BA%A7%E8%81%94"><span class="toc-text">3.2 CS的SMB级联</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-%E8%AE%BE%E8%AE%A1%E6%9E%84%E6%80%9D"><span class="toc-text">3.3 设计构思</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4-%E4%B8%89%E7%BA%A7%E7%BD%91%E7%BB%9C%E7%BA%A7%E8%81%94"><span class="toc-text">3.4 三级网络级联</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-5-%E9%80%9A%E8%BF%87EXEC%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE%E6%B5%81%E5%90%91"><span class="toc-text">3.5 通过EXEC分析数据流向</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-text">后记</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Beacon%E7%BA%A7%E8%81%94%E4%BB%A3%E7%90%86 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F03%2F13%2FBeacon%25E7%25BA%25A7%25E8%2581%2594%25E4%25BB%25A3%25E7%2590%2586%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/03/13/Beacon%E7%BA%A7%E8%81%94%E4%BB%A3%E7%90%86/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

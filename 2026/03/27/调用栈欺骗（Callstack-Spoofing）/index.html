@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      调用栈欺骗（Callstack Spoofing） 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">调用栈欺骗（Callstack Spoofing）</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-03-27 18:49:09
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                    <b>#</b> 防御规避
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h1 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h1><p>调用栈欺骗（Call Stack Spoofing），也常被称为堆栈欺骗，是一种通过伪造栈帧与返回链来干扰栈回溯结果的技术。虽然并不新鲜，但最近受到了更多关注，在安全研究、对抗测试以及一些开源加载器项目中，这类手法经常被提及。如果各位师傅关注github上各种顶级黑客发布的项目，就经常会看到这个技术，比如说最近很火的 <a target="_blank" rel="noopener" href="https://github.com/JoasASantos/SysWhispers4">SysWhispers4</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F17-41-16-9b8acd93afb502f23f28ba3d5d6228e8-PixPin_2026-03-22_17-40-47-3129ff.png" alt="PixPin_2026-03-22_17-40-47.png"></p>
+<p>又比如<a target="_blank" rel="noopener" href="https://github.com/boku7/BokuLoader">boku7&#x2F;BokuLoader</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F22-13-07-31dd90145348dd3954bc9fe4cd1449fb-PixPin_2026-03-19_22-13-03-3551d8.png" alt="PixPin_2026-03-19_22-13-03.png"></p>
+<p>调用栈欺骗的种类分为</p>
+<ul>
+<li><strong>被动欺骗</strong>：它只能在植入程序处于休眠状态时发生，详见：<a target="_blank" rel="noopener" href="https://github.com/mgeeky/ThreadStackSpoofer">mgeeky&#x2F;ThreadStackSpoofer</a> 和<a target="_blank" rel="noopener" href="https://github.com/Cobalt-Strike/CallStackMasker">Cobalt-Strike&#x2F;CallStackMasker</a></li>
+<li><strong>主动欺骗</strong>：在调用敏感API前就主动构造一条假的可回溯调用链。详见：<a target="_blank" rel="noopener" href="https://github.com/klezVirus/SilentMoonwalk">klezVirus&#x2F;SilentMoonwalk</a>、<a target="_blank" rel="noopener" href="https://github.com/susMdT/LoudSunRun">susMdT&#x2F;LoudSunRun</a></li>
+</ul>
+<p><strong>调用栈欺骗，欺骗什么？又或者说想隐藏什么呢？</strong> </p>
+<p>就如Elastic Security这篇文章所说的那样 <a target="_blank" rel="noopener" href="https://www.elastic.co/security-labs/call-stacks-no-more-free-passes-for-malware">Call Stacks: No More Free Passes For Malware — Elastic Security Labs</a></p>
+<p>Elastic EDR将调用栈作为对Windows端点的重要遥测数据，通过调用栈，能得到“谁在做什么事”信息，这种信息赋予了它无与伦比的能力来揭露恶意活动。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F25%2F21-29-01-1adda9f468aa38d85efce58cc66e342a-PixPin_2026-03-25_21-27-32-e4d98d.png" alt="PixPin_2026-03-25_21-27-32.png"></p>
+<p>我举几个例子让各位师傅感受一下。</p>
+<p>beacon.dll通过反射dll加载上线，这意味着RDI内部会使用到一些unbacked memory。可以看到下图发起sleep调用的来自unbacked memory，这些内存并没关联到磁盘上文件，看起来非常的可疑。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F20%2F00-54-17-f44377a269ce95e94699dfbc9b90378f-PixPin_2026-03-20_00-54-12-9c6fa5.png" alt="PixPin_2026-03-20_00-54-12.png"></p>
+<p>所以一些项目就会使用到<strong>被动欺骗</strong>，在植入物程序处于休眠状态时发生，伪造其调用栈，让调用栈不出现unbacked memory。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F20%2F00-57-34-fd6682fc7f05d1e33a6ca143daee6939-PixPin_2026-03-20_00-57-32-8b1aee.png" alt="PixPin_2026-03-20_00-57-32.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F15-15-04-af89b36e9bacedce500444998b24f1a3-PixPin_2026-03-21_15-14-59-060c20.png" alt="PixPin_2026-03-21_15-14-59.png"></p>
+<p>也有一些项目，直接从URDI入手，消除可疑的调用栈。就比如 <a target="_blank" rel="noopener" href="https://github.com/boku7/BokuLoader">boku7&#x2F;BokuLoader</a> 在RDI内部实现主动合成帧（synthetic frames）技术。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F14-23-43-2e33739ef2c7ed40a2dccb73718743af-PixPin_2026-03-21_14-23-41-eb711e.png" alt="PixPin_2026-03-21_14-23-41.png"></p>
+<p>堆栈欺骗的核心实现， <code>spoof_synthetic_callstack</code> 汇编函数，代码没截全。BokuLoader使用的堆栈欺骗技术主要来源于LoudSunRun和SilentMoonwalk，下文会重点分析这两个项目。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F14-37-18-708d720d3e26e28e20198f59c9953d9e-PixPin_2026-03-21_14-37-16-3f9cd1.png" alt="PixPin_2026-03-21_14-37-16.png"></p>
+<p>又比如这样一种情况，unbacked memory -&gt; KernelBase!LoadLibraryA，从未备份的内存中调用LoadLibraryA这样的敏感API，对于部分EDR（如Elastic EDR）直接kill。下图来自<strong>cen4encen</strong>师傅的 <a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/18238">Elastic EDR 规则检测下的对抗-先知社区</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F23-58-39-894e778320c8d1c93bb8e22eb9ef2124-PixPin_2026-03-19_23-58-38-cec285.png" alt="PixPin_2026-03-19_23-58-38.png"></p>
+<p>当然并不是说出现unbacked memory就会被EDR查杀，具体情况具体分析。</p>
+<p><strong>调用栈欺骗的核心</strong>：是让AV&#x2F;或EDR等检查工具看到的<strong>调用来源</strong>是<strong>合法</strong>的系统代码。</p>
+<h1 id="二、被动欺骗"><a href="#二、被动欺骗" class="headerlink" title="二、被动欺骗"></a>二、被动欺骗</h1><h2 id="2-1-ThreadStackSpoofer"><a href="#2-1-ThreadStackSpoofer" class="headerlink" title="2.1 ThreadStackSpoofer"></a>2.1 ThreadStackSpoofer</h2><p>项目地址： <a target="_blank" rel="noopener" href="https://github.com/mgeeky/ThreadStackSpoofer">mgeeky&#x2F;ThreadStackSpoofer</a></p>
+<p>当shellcode（如 Cobalt Strike Beacon）调用Sleep进入休眠时，会被Hook重定向到MySleep，在MySleep实现栈欺骗。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-40-50-e80724d467858bdb964ee7b478ccbe7d-PixPin_2026-03-21_16-40-38-8a7e9a.png" alt="PixPin_2026-03-21_16-40-38.png"></p>
+<h3 id="1-main"><a href="#1-main" class="headerlink" title="1. main"></a>1. main</h3><p>main函数的主流程就3个：</p>
+<ul>
+<li>读shellcode文件</li>
+<li>HookSleep函数</li>
+<li>注入shellcode并执行，由于sleep被hook了，所以会重定向到自定义的MySleep，在MySleep完成调用栈欺骗。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F15-43-35-1535f12e59874232bd0ec3059bf1ed3c-PixPin_2026-03-21_15-43-33-863911.png" alt="PixPin_2026-03-21_15-43-33.png"></p>
+<h3 id="2-hookSleep"><a href="#2-hookSleep" class="headerlink" title="2. hookSleep"></a>2. hookSleep</h3><p>重点分析一下hookSleep函数</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F15-48-24-fc993c0d66c8da290c5ba46692e686be-PixPin_2026-03-21_15-48-22-81358c.png" alt="PixPin_2026-03-21_15-48-22.png"></p>
+<ul>
+<li>previousBytes用来接收 Sleep 被覆盖前的原始字节</li>
+<li>previousBytesSize 备份长度。</li>
+<li>origSleep保留Sleep原函数地址，供后续直接调用（实际上代码没有用到）</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F15-52-02-e3c11a9569f9b283008da10b0cfb4f0c-PixPin_2026-03-21_15-51-59-89c04b.png" alt="PixPin_2026-03-21_15-51-59.png"></p>
+<h3 id="3-进入fastTrampoline"><a href="#3-进入fastTrampoline" class="headerlink" title="3. 进入fastTrampoline"></a>3. 进入fastTrampoline</h3><p>构造跳转指令，其中addr等待后续填充为MySleep的地址。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F15-58-21-63589afe9ce2577d1736908fc9a3deb0-PixPin_2026-03-21_15-58-19-54afb8.png" alt="PixPin_2026-03-21_15-58-19.png"></p>
+<p>当 <code>installHook == true</code> 且 <code>buffers != NULL</code>，说明需要备份Sleep原始字节。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">memcpy(buffers-&gt;previousBytes,   <span class="comment">// → g_hookedSleep.sleepStub</span></span><br><span class="line">addressToHook,            <span class="comment">// → kernel32!Sleep 起始地址</span></span><br><span class="line">buffers-&gt;previousBytesSize); <span class="comment">// 16 字节</span></span><br></pre></td></tr></table></figure>
+
+<p>备份好Sleep的前16个字节后，修改内存保护并写入跳板Trampoline。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-04-57-7378005ceef175879a27c3bc76224c0e-PixPin_2026-03-21_16-04-54-282c6a.png" alt="PixPin_2026-03-21_16-04-54.png"></p>
+<p>刷新指令缓存，让我们的Hook立即生效，最后恢复原内存保护。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-11-15-81c7335851fae4f407ad2c5bb214a6d5-PixPin_2026-03-21_16-11-12-be0c05.png" alt="PixPin_2026-03-21_16-11-12.png"></p>
+<p>Hook前</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-16-29-5d085dfb4e784e340a13b037a1e52fb3-PixPin_2026-03-21_16-16-27-8cff7d.png" alt="PixPin_2026-03-21_16-16-27.png"></p>
+<p>Hook后</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-19-07-e7c876aeaa10ae3b2183bc5cd92f54e0-PixPin_2026-03-21_16-19-02-f38092.png" alt="PixPin_2026-03-21_16-19-02.png"></p>
+<h3 id="4-执行shellcode，重定向到我们的MySleep"><a href="#4-执行shellcode，重定向到我们的MySleep" class="headerlink" title="4. 执行shellcode，重定向到我们的MySleep"></a>4. 执行shellcode，重定向到我们的MySleep</h3><p>怎么执行shellcode，代码的注释给出了详细的原因，最终使用创建线程的方式执行shellcode</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-28-29-d080cda2a1e0aef0c719341e2c059a36-PixPin_2026-03-21_16-28-28-70b855.png" alt="PixPin_2026-03-21_16-28-28.png"></p>
+<p>翻译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">//</span><br><span class="line">// ThreadStackSpoofer 早期版本提供的示例：</span><br><span class="line">//      https://github.com/mgeeky/ThreadStackSpoofer/blob/ec0237c5f8b1acd052d57562a43f40a20752b5ca/ThreadStackSpoofer/main.cpp#L417 </span><br><span class="line">// 展示了如何从临时挂钩的 ntdll!RtlUserThreadStart+0x21 位置启动我们的 shellcode。</span><br><span class="line">// </span><br><span class="line">// 那种方法存在一定缺陷，原因是：一旦我们在模块内引入挂钩，</span><br><span class="line">// 即使立即卸载挂钩，系统仍会在共享库的内存分配区域（由 MEM_IMAGE/MEM_MAPPED 内存池组成）</span><br><span class="line">// 中分配一页（4096字节）类型为 MEM_PRIVATE 的内存。</span><br><span class="line">// </span><br><span class="line">// 像 Moneta 这样的内存扫描器对扫描内存映射的 PE DLL 非常敏感，</span><br><span class="line">// 当发现这些区域中存在大量标记为 MEM_PRIVATE 的内存时，</span><br><span class="line">// 会将其（正确地！）识别为&quot;代码被修改&quot;的异常特征。</span><br><span class="line">// </span><br><span class="line">// 对于 kernel32!Sleep 我们无法规避这种检测，但对于 ntdll 可以。</span><br><span class="line">// 与其从合法的用户线程回调函数中运行 shellcode，</span><br><span class="line">// 不如直接创建一个指向我们方法的线程，然后从该方法跳转到 shellcode。</span><br><span class="line">// </span><br><span class="line">// 经过与 @waldoirc 的讨论，我们得出结论：为了不引入新的 IOC（失陷指标），</span><br><span class="line">// 最好从 EXE 自身的代码空间启动 shellcode，</span><br><span class="line">// 从而避免基于 `ntdll!RtlUserThreadStart+0x21` 在某些环境中成为突出异常点的检测。</span><br><span class="line">// 感谢 @waldoirc 与我们进行的长时间深入讨论！</span><br><span class="line">//</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-MySleep（具体栈欺骗实现）"><a href="#5-MySleep（具体栈欺骗实现）" class="headerlink" title="5. MySleep（具体栈欺骗实现）"></a>5. MySleep（具体栈欺骗实现）</h3><p>定位当前栈帧的返回地址</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-44-47-ac0cc37fa2a5f7761b67eea4be2ce985-PixPin_2026-03-21_16-44-44-a11e08.png" alt="PixPin_2026-03-21_16-44-44.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-45-28-ed9c746b011859986641d5d5583462e1-PixPin_2026-03-21_16-45-25-a84bae.png" alt="PixPin_2026-03-21_16-45-25.png"></p>
+<p>清零返回地址，即截断调用栈，具体来说就是Windows 调用栈展开（stack unwinding）依赖RtlVirtualUnwind遍历帧链，当它尝试用返回地址0x0去查找对应的RUNTIME_FUNCTION（异常处理表）时，找不到任何合法记录，展开算法就此终止，不再继续往上追溯。后面的主动欺骗的项目也会用到这个性质。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-46-33-bb61fa62981cda18ddef81917fde1a17-PixPin_2026-03-21_16-46-30-91d0fd.png" alt="PixPin_2026-03-21_16-46-30.png"></p>
+<p>截断后的调用栈，很明显，我们的shellcode栈帧被隐藏了</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-54-52-1c44168c8bfd76072394c74d4cd88a1c-PixPin_2026-03-21_16-54-50-12a5d0.png" alt="PixPin_2026-03-21_16-54-50.png"></p>
+<p>执行真正的休眠后的调用栈。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F17-15-03-5977ff3119a19f6bf41fbd5aa003bb5b-PixPin_2026-03-21_17-15-01-542a73.png" alt="PixPin_2026-03-21_17-15-01.png"></p>
+<p><strong>为什么用SleepEx？</strong> 因为Sleep已经被Trampoline覆盖，再调用会无限递归回到MySleep。直接调用SleepEx（未被Hook）是安全的。</p>
+<p>恢复返回地址，SleepEx返回后，栈仍然完好（我们只改了返回地址槽的值，没动rsp）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F17-17-52-284648ec13452872278d8eeba65b926b-PixPin_2026-03-21_17-17-49-946bd7.png" alt="PixPin_2026-03-21_17-17-49.png"></p>
+<p>Hook Sleep的作用不止调用栈欺骗，比如就像<strong>fdx</strong>师傅在这篇文章<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/13924">初探堆栈欺骗之静态欺骗-先知社区</a>所说的那样，我们还做非常多的事情:&gt;</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F16-56-44-217cf970355ac4a04faea597a11234d5-PixPin_2026-03-21_16-56-41-fdb155.png" alt="PixPin_2026-03-21_16-56-41.png"></p>
+<p>其中在Sleep期间更改shellcode内存属性，以绕过卡巴斯基的内存扫描。具体做法是Beacon进入睡眠就取消它内存的可执行属性，等Beacon线程醒来时触发异常交由VEH异常处理函数恢复内存的可执行属性，然后Beacon执行完成后又进入睡眠一直重复上述过程，具体实现请看<strong>WBGlIl</strong>师傅的这篇文章<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/8898">cs bypass卡巴斯基内存查杀 2-先知社区</a></p>
+<h2 id="2-2-CallStackMasker"><a href="#2-2-CallStackMasker" class="headerlink" title="2.2 CallStackMasker"></a>2.2 CallStackMasker</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/Cobalt-Strike/CallStackMasker">Cobalt-Strike&#x2F;CallStackMasker</a></p>
+<p>官方博客：<a target="_blank" rel="noopener" href="https://www.cobaltstrike.com/blog/behind-the-mask-spoofing-call-stacks-dynamically-with-timers">Behind the Mask: Spoofing Call Stacks Dynamically with Timers | Cobalt Strike Blog</a></p>
+<p>核心目标是让线程在休眠时伪装成系统进程的调用栈，项目有静态模式和动态模式。</p>
+<h3 id="1-初始化伪造调用栈"><a href="#1-初始化伪造调用栈" class="headerlink" title="1. 初始化伪造调用栈"></a>1. 初始化伪造调用栈</h3><p>首先分析静态模式</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-08-48-5d79cebe8da26599349d85664843d1ba-PixPin_2026-03-21_22-08-34-45f7c5.png" alt="PixPin_2026-03-21_22-08-34.png"></p>
+<p><code>InitialiseStaticCallStackSpoofing</code> 简要步骤：</p>
+<ol>
+<li><code>InitialiseSpoofedCallstack</code>：对每个栈帧（共4帧）：加载&#x2F;获取DLL基址、计算伪造返回地址（函数地址 + offset）、解析UNWIND_INFO得到帧栈大小（什么是UNWIND_INFO，下文分析LoudSunRun的时候会解释或者让AI解释也可以）</li>
+<li><code>CalculateStaticStackSize</code>：累加所有帧的栈大小 + 8（返回地址的大小），得到总缓冲区大小</li>
+<li>分配对应大小的堆内存（无可执行属性）</li>
+<li><code>CreateFakeStackInBuffer</code>：按栈布局将伪造返回地址逐帧写入堆缓冲区，末尾写0x0终止栈展开<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-09-34-0462b5cc86b0bcc2edffff4be0e12bfa-PixPin_2026-03-21_22-09-32-64d3ac.png" alt="PixPin_2026-03-21_22-09-32.png"></li>
+</ol>
+<p>硬编码的4帧伪造调用栈，如下图</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-10-56-730d151039a3e9a641e1306fe31cb9b6-PixPin_2026-03-21_22-10-52-2d163a.png" alt="PixPin_2026-03-21_22-10-52.png"></p>
+<p>最终产出得到一块模拟真实栈布局的内存，供后续<code>MaskCallStack</code>用<code>memcpy</code>覆盖线程真实栈。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-28-21-10c921eee445edb0a2baccd4cec3190b-PixPin_2026-03-21_22-28-18-c62852.png" alt="PixPin_2026-03-21_22-28-18.png"></p>
+<p>我们将线程的起始地址设置为 <code>localspl.dll!InitializePrintMonitor2 + 0xb20</code>，在线程创建事件中的起始地址是合法的地址。我也不懂为什么在Process Hacker里看到的线程起始地址是 <code>localspl.dll!DeviceObject::DeviceCreateCallback+0x190</code>，反正线程的起始地址看起来是合法的</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-48-22-74db212e539bb1c278f5d2e37b2a8172-PixPin_2026-03-21_22-48-19-fd1262.png" alt="PixPin_2026-03-21_22-48-19.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-34-53-e545a28d709f40385970a4660b6b9802-PixPin_2026-03-21_22-34-51-61c974.png" alt="PixPin_2026-03-21_22-34-51.png"></p>
+<p>下面分析动态模式</p>
+<p>InitialiseDynamicCallStackSpoofing在系统中找到一个真实的、正在WaitForSingleObjectEx中休眠的线程，克隆其调用栈 + 起始地址，填充 thread.{dwPid, dwTid, totalRequiredStackSize, pFakeStackBuffer}。说实话，InitialiseDynamicCallStackSpoofing的代码太过复杂，我不太想在本文展开，有需要的就去看源代码了解。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F22-55-53-117308c1c0065dc6a96617834708b727-PixPin_2026-03-21_22-55-52-da7a64.png" alt="PixPin_2026-03-21_22-55-52.png"></p>
+<h3 id="2-以伪造的startAddr为起始地址，挂起状态创建新线程"><a href="#2-以伪造的startAddr为起始地址，挂起状态创建新线程" class="headerlink" title="2. 以伪造的startAddr为起始地址，挂起状态创建新线程"></a>2. 以伪造的startAddr为起始地址，挂起状态创建新线程</h3><p>创建一个线程起始点为 <code>localspl.dll!InitializePrintMonitor2 + 0xb20</code> 线程，随后取线程上下文，将RIP修改为真正执行的函数go，写回上下文，线程将从go函数开始执行。在系统进程监测工具来看起始地址合法的，但起始地址被我们重定向到go函数了</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F23-02-17-3a8dd0c7a3a6b109100969ceb3e92afe-PixPin_2026-03-21_23-02-14-86a562.png" alt="PixPin_2026-03-21_23-02-14.png"></p>
+<h3 id="3-ResumeThread-恢复线程执行，线程开始跑go"><a href="#3-ResumeThread-恢复线程执行，线程开始跑go" class="headerlink" title="3. ResumeThread 恢复线程执行，线程开始跑go"></a>3. <code>ResumeThread</code> 恢复线程执行，线程开始跑go</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F23-07-09-1df27d2e08e8ac9b947b64c885122872-PixPin_2026-03-21_23-07-07-dfd90d.png" alt="PixPin_2026-03-21_23-07-07.png"></p>
+<h3 id="4-退出主线程，工作由新线程接管"><a href="#4-退出主线程，工作由新线程接管" class="headerlink" title="4. 退出主线程，工作由新线程接管"></a>4. 退出主线程，工作由新线程接管</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F23-07-23-fcd2a305e7dec5eb7a398095d1722aa2-PixPin_2026-03-21_23-07-20-47db25.png" alt="PixPin_2026-03-21_23-07-20.png"></p>
+<h3 id="5-MaskCallStack（具体栈欺骗实现）"><a href="#5-MaskCallStack（具体栈欺骗实现）" class="headerlink" title="5. MaskCallStack（具体栈欺骗实现）"></a>5. MaskCallStack（具体栈欺骗实现）</h3><p>该睡眠技术来自：<a target="_blank" rel="noopener" href="https://github.com/Cracked5pider/Ekko">Cracked5pider&#x2F;Ekko</a>，既然能实现睡眠 + 混淆，那也可以实现睡眠 + 调用栈欺骗，当然也能够实现睡眠 + 混淆 + 调用栈欺骗，只不过没有本项目实现混淆这一功能而已。</p>
+<ul>
+<li>pNtContinue：Timer ROP链的”执行跳板”</li>
+<li>hTimerQueue：承载4个定时任务的容器</li>
+<li>hEvent：用于阻塞主线程 + 定时唤醒</li>
+<li>pCopyOfStack：堆上栈备份缓冲区，大小 &#x3D; totalRequiredStackSize</li>
+</ul>
+<p>ChildSP，AI的解释是：<strong>被调用函数（子函数）视角下的栈帧起始位置</strong>。</p>
+<p>按我的理解是：ChildSP表示当前栈帧RSP的值，也就是当前栈帧的栈顶地址。</p>
+<p>看下图，执行 <code>add     rsp, 38h</code> 指令前，当前栈帧<code>ntdll!LdrpDoDebuggerBreak</code>的<code>ChildSP  = RSP = 000000D8149BF260 </code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F01-52-39-e9d590b8e5daf55c1d622cb03336df99-PixPin_2026-03-22_01-52-37-ab96c3.png" alt="PixPin_2026-03-22_01-52-37.png"></p>
+<p>执行 <code>add     rsp, 38h</code> 指令后，当前栈帧 <code>ntdll!LdrpDoDebuggerBreak</code> 的<code>ChildSP  = RSP = 000000D8149BF298</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F01-54-23-496fbca7ea47b8df6a217d795a02f7ce-PixPin_2026-03-22_01-54-22-47a55f.png" alt="PixPin_2026-03-22_01-54-22.png"></p>
+<p>执行ret指令后，返回到 <code>LdrpInitializeProcess</code> ，当前栈帧 <code>ntdll!LdrpInitializeProcess</code> 的<code>ChildSP  = RSP = 000000D8149BF2A0</code> </p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F01-55-11-129c926ff79c03554c11dc568d22584d-PixPin_2026-03-22_01-55-08-1adf7e.png" alt="PixPin_2026-03-22_01-55-08.png"></p>
+<p>回归正文，MaskCallStack调用GetChildSP获取当前MaskCallStack栈帧的RSP的值，GetChildSP的具体原理是：</p>
+<ul>
+<li>MaskCallStack函数 call GetChildSP函数会在 RSP - 8 的位置留下返回地址</li>
+<li>GetChildSP函数通过 <code>_AddressOfReturnAddress()</code> 拿到这个位置，加8跳过这个槽位，即获得当前MaskCallStack栈帧的RSP的值</li>
+</ul>
+<p>可能这难以理解，我画一个解释一下</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F00-26-42-3217783b54c851ff1f057d8c40e78f07-Drawing%202026-03-21%2023.43.31.excalidraw-ef61f2.png" alt="Drawing 2026-03-21 23.43.31.excalidraw.png"></p>
+<p>或者调试验证一下</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F00-28-23-fea986336ffbb5d3af18b37f88ee4f5e-PixPin_2026-03-22_00-28-21-7ad526.png" alt="PixPin_2026-03-22_00-28-21.png"></p>
+<p>定位NtWaitForSingleObject系统调用时的RSP，即执行完 <code>call NtWaitForSingleObject</code> 后，RSP的值</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pRsp	= 当前MaskCallStack的栈顶 - KERNELBASE!WaitForSingleObjectEx栈帧的大小 - NtWaitForSingleObject的返回地址</span><br><span class="line">	   		= 	(PCHAR)pChildSP - spoofedCallStack.front().totalStackSize - 0x8;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F15-22-58-258878ccd55b91e8f55f981440695704-PixPin_2026-03-22_15-22-54-901843.png" alt="PixPin_2026-03-22_15-22-54.png"></p>
+<p>画个图吧，有点难以理解</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F15-21-33-7357b29982c23bb56cf729e38f2bba92-Drawing%202026-03-22%2015.09.51.excalidraw-af4198.png" alt="Drawing 2026-03-22 15.09.51.excalidraw.png"></p>
+<p>利用 <code>CreateTimerQueueTimer</code> 创建一个定时器，在指定的延迟时间后<strong>Timer线程</strong>首次触发回调函数RtlCaptureContext采集当前<strong>Timer线程</strong>的CONTEXT，主要是为了下文ROP链的构造。WaitForSingleObject(hEvent, 0x32) 等待上下文捕获完成。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F15-34-05-0a9260a2fdee6eb94a0213ef9033f130-PixPin_2026-03-22_15-34-03-eb0753.png" alt="PixPin_2026-03-22_15-34-03.png"></p>
+<p>基于捕获的CONTEXT备份四份</p>
+<ul>
+<li>ropBackUpStack：备份真实栈<ul>
+<li>Rip &#x3D; memcpy</li>
+<li>Rcx &#x3D; pCopyOfStack (dst)</li>
+<li>Rdx &#x3D; pRsp(src: 真实栈起始)</li>
+<li>R8  &#x3D; totalRequiredStackSize</li>
+</ul>
+</li>
+<li>ropSpoofStack：写入伪造栈<ul>
+<li>Rip &#x3D; memcpy</li>
+<li>Rcx &#x3D; pRsp(dst: 覆盖真实栈)</li>
+<li>Rdx &#x3D; pFakeStackBuffer(src: 预制好的假栈)</li>
+<li>R8  &#x3D; totalRequiredStackSize</li>
+</ul>
+</li>
+<li>ropRestoreStack：恢复真实栈<ul>
+<li>Rip &#x3D; memcpy</li>
+<li>Rcx &#x3D; pRsp(dst)</li>
+<li>Rdx &#x3D; pCopyOfStack (src: 之前备份的真实栈)</li>
+</ul>
+</li>
+<li>ropSetEvent：发出完成信号<ul>
+<li>Rip &#x3D; SetEvent</li>
+<li>Rcx &#x3D; hEvent</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F15-52-51-809dd3b4e8e32bd0bdbb502d28a10598-PixPin_2026-03-22_15-52-49-8ccd7d.png" alt="PixPin_2026-03-22_15-52-49.png"></p>
+<p><strong>为什么会有rop.Rsp -&#x3D; 8 ?</strong> NtContinue不是通过call的方式调用目标函数，而是直接设置上下文rip &#x3D; 目标函数地址的方式劫持线程执行流程，故目标函数执行完后没有返回地址（因为不是正常的call func）。回顾一下下，我们捕获的上下文是RtlCaptureContext执行瞬间的Timer线程状态，也就是call RtlCaptureContext之前的上下文，此时ctx.rsp指向的是RtlCaptureContext返回地址的上方，不 -8 字节，程序不能正常返回，直接奔溃。</p>
+<p>ok，口说无凭，我们来看看RtlCaptureContext的汇编代码，只用关注我框红的地方。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F23%2F12-43-34-a946cb9dd41ecdcb798caee139262938-PixPin_2026-03-23_12-43-26-a034f0.png" alt="PixPin_2026-03-23_12-43-26.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F23%2F12-44-29-4b41738f37bd1004e2568223fee37f86-PixPin_2026-03-23_12-44-27-89dfe0.png" alt="PixPin_2026-03-23_12-44-27.png"></p>
+<p>执行 <code>lea     rax, [rsp+8+arg_0]</code> 前，经过了一次pushfq，最终RSP如下图所示。执行 <code>lea     rax, [rsp+8+arg_0]</code> 后，RSP指向原始调用者的栈顶，其中arg_0的值是8。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F23%2F12-49-01-cecdf95c235905ad73fc6b9bc8e5688e-Drawing%202026-03-23%2012.45.38.excalidraw-628579.png" alt="Drawing 2026-03-23 12.45.38.excalidraw.png"></p>
+<p>回调函数返回地址返回到哪里？这里我也不同懂，应该是返回到调用者内部了吧？</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F16-57-19-9350c7c40697b37e864c8aa0a8368d81-PixPin_2026-03-22_16-57-16-895ef6.png" alt="PixPin_2026-03-22_16-57-16.png"></p>
+<p>所以借用的是RtlCaptureContext的返回地址，让目标函数执行完后能回到Timer线程的原始执行流，Timer再触发下一个NtContinue。</p>
+<p>当然这一切的前提是所有回调函数都共享同一个返回地址，且Timer线程的栈内容没有被破坏（实际上我们也没破坏）</p>
+<p>利用CreateTimerQueueTimer + NtContinue组合实现间接执行目标函数的功能，本来Timer线程在执行NtContinue，不过我们将预设好的上下文作为参数给NtContinue，其中Rip被设置成memcpy或SetEvent等目标函数的地址，实际上形成了这样一种执行关系：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Timer -&gt; 回调NtContinue -&gt; 恢复执行目标函数</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F17-10-03-143fadc605f880371eae25b9559bb07b-PixPin_2026-03-22_17-10-01-d33840.png" alt="PixPin_2026-03-22_17-10-01.png"></p>
+<p>伪造前</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F17-14-40-9ad9f73863361c73d45fe0d97a663ba4-PixPin_2026-03-22_17-14-37-95d10e.png" alt="PixPin_2026-03-22_17-14-37.png"></p>
+<p>伪造后</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F17-15-59-6716f7de72d40a9f88140913063bbecd-PixPin_2026-03-22_17-15-56-282882.png" alt="PixPin_2026-03-22_17-15-56.png"></p>
+<p>我还能说什么呢（what can i say），这就是顶级黑客的艺术，确实能让我研究学习一阵子，膜拜就完事了。</p>
+<h1 id="三、主动欺骗"><a href="#三、主动欺骗" class="headerlink" title="三、主动欺骗"></a>三、主动欺骗</h1><p>我会重点分析LoudSunRun的实现，毕竟未来我会将其融入到我的SRDI项目中，又或者其他项目？</p>
+<h2 id="3-1-LoudSunRun"><a href="#3-1-LoudSunRun" class="headerlink" title="3.1 LoudSunRun"></a>3.1 LoudSunRun</h2><p>LoudSunRun基于SilentMoonWalk和CallStackSpoofer（也称VulcanRaven）实现了<strong>合成栈帧（synthetic frames）</strong>。</p>
+<p>因为LoudSunRun实现比较简单，但该有的技术都包含进去了，而且也比较好调试，所以我就只分析LoudSunRun，其余的SilentMoonWalk和VulcanRaven我就不再这里分析。</p>
+<p>项目地址： <a target="_blank" rel="noopener" href="https://github.com/susMdT/LoudSunRun">susMdT&#x2F;LoudSunRun</a></p>
+<h3 id="1-初始化局部变量"><a href="#1-初始化局部变量" class="headerlink" title="1. 初始化局部变量"></a>1. 初始化局部变量</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-04-02-786be7052bb49d66206ecc7c1e37c4d6-PixPin_2026-03-18_19-03-58-a56d2f.png" alt="PixPin_2026-03-18_19-03-58.png"></p>
+<p>其中最最重要的就是这两个变量</p>
+<ul>
+<li><code>ReturnAddress</code>：临时保存伪造栈帧要用的返回地址。  </li>
+<li><code>PRM p</code>：最核心的参数结构，后面会传给Spoof。</li>
+</ul>
+<p><code>PRM p</code>是这个项目里最关键的<strong>上下文</strong>，作用是把C代码准备好的数据传给汇编里的Spoof，同时也让Spoof 在执行前后有地方保存和恢复现场。下图是它的结构体定义。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-07-36-55d3bd4cf8c511b6d5ca58ddc906cbfb-PixPin_2026-03-18_19-07-33-f7e294.png" alt="PixPin_2026-03-18_19-07-33.png"></p>
+<h3 id="2-查找跳板gadget"><a href="#2-查找跳板gadget" class="headerlink" title="2. 查找跳板gadget"></a>2. 查找跳板gadget</h3><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F14-14-44-96dfabe6b177cbce43a97c4b59a75e35-PixPin_2026-03-21_14-14-40-0da690.png" alt="PixPin_2026-03-21_14-14-40.png"></p>
+<p>调用 <code>FindGadget</code> 在 <code>kernel32.dll</code> 的前0x200000字节里搜索字节序列 <code>FF 23</code>，即<code>jmp [rbx]</code>。<br>这个gadget地址保存到 p.trampoline，在后续的Spoof中会使用到。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-12-28-04097d54407e1541e852173714b256c1-PixPin_2026-03-18_19-12-26-0e5885.png" alt="PixPin_2026-03-18_19-12-26.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-15-22-be3840c9af0a015a8915a9ebd08aaa17-PixPin_2026-03-18_19-15-20-d3ffab.png" alt="PixPin_2026-03-18_19-15-20.png"></p>
+<h3 id="3-计算BaseThreadInitThunk、RtlUserThreadStart和trampoline伪造栈帧所需大小"><a href="#3-计算BaseThreadInitThunk、RtlUserThreadStart和trampoline伪造栈帧所需大小" class="headerlink" title="3. 计算BaseThreadInitThunk、RtlUserThreadStart和trampoline伪造栈帧所需大小"></a>3. 计算BaseThreadInitThunk、RtlUserThreadStart和trampoline伪造栈帧所需大小</h3><p>首先我们将 <code>BaseThreadInitThunk + 0x14</code> 和 <code>RtlUserThreadStart + 0x21</code> 这两个地址当作“回溯时希望看到的返回点”，然后调用 <code>CalculateFunctionStackSizeWrapper</code> 去解析它对应函数的unwind信息，得到该帧需要占用的栈空间，分别存进：<code>p.BTIT_ss</code> 、<code>p.BTIT_retaddr</code>、<code>p.RUTS_ss</code>、<code>p.RUTS_retaddr</code>、<code>p.Gadget_ss</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-22-59-dc59c18c391e01331a3a5062b79c70dc-PixPin_2026-03-18_19-22-57-87488e.png" alt="PixPin_2026-03-18_19-22-57.png"></p>
+<p>在这里重点分析一下 <code>CalculateFunctionStackSizeWrapper</code> 函数的流程，它的作用其实很简单但也很关键：把某个返回地址转换成这个函数栈帧大概需要多大，方便我们在Spoof中伪造相同大小的栈帧。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-24-43-911a36117ea98b9ce0236d83537332d9-PixPin_2026-03-18_19-24-42-ff259f.png" alt="PixPin_2026-03-18_19-24-42.png"></p>
+<p>上图代码的流程：</p>
+<ul>
+<li>检查传入地址是否为空</li>
+<li>用 <code>RtlLookupFunctionEntry</code> 查这个地址属于哪个函数，根据传入的代码地址，去PE文件的 <code>.pdata</code> 节中找到对应的 <code>RUNTIME_FUNCTION</code> 记录。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-34-02-b208c9632f5b2a9c0cd9f923b7e858ba-PixPin_2026-03-18_19-33-57-c61907.png" alt="PixPin_2026-03-18_19-33-57.png"></p>
+<p><code>RUNTIME_FUNCTION</code> 记录中的 <code>UnwindInfo</code> 字段是我们栈伪造所需的关键信息。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F19-34-59-1f77e3adbb7c822a4cd9e99730dbe81e-PixPin_2026-03-18_19-34-57-f0c971.png" alt="PixPin_2026-03-18_19-34-57.png"></p>
+<ul>
+<li>最后交给 <code>CalculateFunctionStackSize</code> 解析目标函数栈所需要的大小。</li>
+</ul>
+<p><code>CalculateFunctionStackSize</code>的<strong>核心作用</strong>是：根据某个函数的RUNTIME_FUNCTION和对应的UNWIND_INFO，推导这个函数<strong>在栈上总共占了多少空间</strong>。</p>
+<p>Windows x64 下，很多函数的栈展开信息都记录在 <code>.pdata</code>里。这个函数就是在读这些unwind元数据，而不是反汇编函数体。算出来的totalStackSize后面会被Spoof用来伪造对应大小的栈帧。</p>
+<p>每个<code>unwind-&gt;UnwindCode</code>中都含有unwindOperation和operationInfo字段共同描述这个函数prolog里做过什么保存&#x2F;分配动作，unwindOperation有下面的几种取值：</p>
+<ul>
+<li><code>UWOP_PUSH_NONVOL</code>：表示push了一个非易失寄存器，比如rbx&#x2F;rbp&#x2F;rdi。每次push占8字节。如果 OpInfo &#x3D;&#x3D; 5，也就是推入的是rbp，它还会额外记录。</li>
+<li><code>UWOP_SAVE_NONVOL</code>：这类不是push，而是把寄存器保存到“已经分配好的栈空间偏移处”，所以它本身不新增栈大小。</li>
+<li><code>UWOP_ALLOC_SMALL</code>：表示函数执行过小块栈分配，比如sub rsp, xx。</li>
+<li><code>UWOP_ALLOC_LARGE</code>：表示大块栈分配，代码先前移取出后续slot（即unwind-&gt;UnwindCode的下一个元素），再把结果加到totalStackSize。它分两种编码格式：  <ul>
+<li>operationInfo &#x3D;&#x3D; 0：大小在下一个slot，单位是8字节，所以要 * 8  </li>
+<li>operationInfo &#x3D;&#x3D; 1：大小在后两个slot，组合成更大的值</li>
+</ul>
+</li>
+<li><code>UWOP_SET_FPREG</code>：这表示函数建立了帧指针，比如把rbp设成栈帧基址。这里没有直接增加栈大小，只做了 <code>stackFrame.setsFramePointer = true;</code>。</li>
+</ul>
+<p>涉及到栈大小变化的操作，就直接累加到totalStackSize。</p>
+<p><strong>循环里的index为什么有时会多加？</strong></p>
+<p>有些unwind code不是只占 1 个slot。<br>比如UWOP_SAVE_NONVOL、UWOP_ALLOC_LARGE会占后续额外slot，所以分支内部会先index +&#x3D; 1，循环结尾又统一再 index +&#x3D; 1。这样才能跳到下一条真正的新记录。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F20-01-51-e8141089d5c5c30eeeee50313d3c54d3-PixPin_2026-03-18_20-01-47-e25c3d.png" alt="PixPin_2026-03-18_20-01-47.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F20-02-15-82e7af5b95c0473a3f02db355631fc43-PixPin_2026-03-18_20-02-07-70ccbb.png" alt="PixPin_2026-03-18_20-02-07.png"></p>
+<p><strong>链式unwind信息</strong></p>
+<p>某些函数的展开信息不是一份独立描述完的，需要沿链继续累加。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F20-03-25-7caa186198b0ea0c828f78070d7987c3-PixPin_2026-03-18_20-03-21-d06d07.png" alt="PixPin_2026-03-18_20-03-21.png"></p>
+<p><strong>最后为什么还要 +8</strong></p>
+<p>这是把“返回地址”那 8 字节也算进去。因为从栈展开视角看，一个完整帧不仅有局部变量和保存寄存器，还要包含栈上的返回地址槽位。</p>
+<p><strong>总结</strong>：<code>CalculateFunctionStackSize</code> 最终返回的是“函数自己的栈分配 + 保存寄存器到栈上占用 + 返回地址”</p>
+<h3 id="4-Spoof（具体栈欺骗实现）"><a href="#4-Spoof（具体栈欺骗实现）" class="headerlink" title="4. Spoof（具体栈欺骗实现）"></a>4. Spoof（具体栈欺骗实现）</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">pop    rax                         ; Real return address in rax</span><br><span class="line"></span><br><span class="line">mov    r10, rdi                    ; Store OG rdi in r10</span><br><span class="line">mov    r11, rsi                    ; Store OG rsi in r11</span><br><span class="line"></span><br><span class="line">mov    rdi, [rsp + 32]             ; Storing struct in the rdi</span><br><span class="line">mov    rsi, [rsp + 40]             ; Storing function to call</span><br></pre></td></tr></table></figure>
+
+<p>注意 <code>pop    rax</code> 之后，rsp不再指向返回地址，而是影子空间，<code>rsp ~ rsp + 20h</code> 这一部空间是属于影子空间，故Spoof栈参数如下</p>
+<ul>
+<li>[rsp + 20h] &#x3D; 第5个参数，即 <code>PRM p</code> 的地址</li>
+<li>[rsp + 28h] &#x3D; 第6个参数，pPrintf指针</li>
+<li>[rsp + 30h] &#x3D; 第7个参数，在本例中为0</li>
+</ul>
+<p>spoof的第1个参数到第4个参数分别存放在rcx，rdx，r8，r9中，第5至第10被称为栈参数。栈参数需要按从<strong>右往左</strong>的顺序依次压入栈中。这一部是windows x64调用约定的内容，感兴趣的可以去微软官方文档看看。</p>
+<p>从第1至第4，第8至第10是间接调用的函数的参数，即bruh函数的参数，后面还需要将brush的栈参数复制到伪造栈中，下文会解释。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-38-59-8801b7ca10bfd016ee79261c9385c9eb-PixPin_2026-03-19_19-38-53-dd39e5.png" alt="PixPin_2026-03-19_19-38-53.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-37-27-3f1ad27125a38fc823b5edda3eecb737-PixPin_2026-03-19_19-37-22-bac5ba.png" alt="PixPin_2026-03-19_19-37-22.png"></p>
+<p>保存部分非易失性寄存器，此时rdi &#x3D; <code>PRM p</code> 的地址，根据偏移将这些部分非易失性寄存器保存起来，等到fixup的时候再恢复。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">; ---------------------------------------------------------------------</span><br><span class="line">; Storing our original registers</span><br><span class="line">; ---------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">mov [rdi + 24], r10                ; Storing OG rdi into param</span><br><span class="line">mov [rdi + 88], r11                ; Storing OG rsi into param</span><br><span class="line">mov [rdi + 96], r12                ; Storing OG r12 into param</span><br><span class="line">mov [rdi + 104], r13                ; Storing OG r13 into param</span><br><span class="line">mov [rdi + 112], r14                ; Storing OG r14 into param</span><br><span class="line">mov [rdi + 120], r15                ; Storing OG r15 into param</span><br><span class="line"></span><br><span class="line">mov r12, rax                       ; OG code used r12 for ret addr</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F18%2F23-09-31-645ba227b94ed2ab6e4632718cf976b1-PixPin_2026-03-18_23-09-28-7d910d.png" alt="PixPin_2026-03-18_23-09-28.png"></p>
+<p>注意最后一个指令是：<code>mov r12, rax</code>，所以r12存储返回地址（返回到main函数的地址）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">; ---------------------------------------------------------------------</span><br><span class="line">; Prepping to move stack args</span><br><span class="line">; ---------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">xor r11, r11            ; r11 will hold the # of args that have been &quot;pushed&quot;</span><br><span class="line">mov r13, [rsp + 30h]     ; r13 will hold the # of args total that will be pushed</span><br><span class="line"></span><br><span class="line">mov r14, 200h           ; r14 will hold the offset we need to push stuff</span><br><span class="line">add r14, 8</span><br><span class="line">add r14, [rdi + 56]     ; stack size of RUTS</span><br><span class="line">add r14, [rdi + 48]     ; stack size of BTIT</span><br><span class="line">add r14, [rdi + 32]     ; stack size of our gadget frame</span><br><span class="line">sub r14, 20h            ; first stack arg is located at +0x28 from rsp, so we sub 0x20 from the offset. Loop will sub 0x8 each time</span><br><span class="line"></span><br><span class="line">mov r10, rsp            </span><br><span class="line">add r10, 30h            ; offset of stack arg added to rsp</span><br><span class="line"></span><br><span class="line">looping:</span><br><span class="line"></span><br><span class="line">    xor r15, r15            ; r15 will hold the offset + rsp base</span><br><span class="line">    cmp r11, r13            ; comparing # of stack args added vs # of stack args we need to add</span><br><span class="line">    je finish</span><br><span class="line"></span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    ; Getting location to move the stack arg to</span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    </span><br><span class="line">    sub r14, 8          ; 1 arg means r11 is 0, r14 already 0x28 offset.</span><br><span class="line">    mov r15, rsp        ; get current stack base</span><br><span class="line">    sub r15, r14        ; subtract offset</span><br><span class="line">    </span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    ; Procuring the stack arg</span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    </span><br><span class="line">    add r10, 8</span><br><span class="line">    push [r10]</span><br><span class="line">    pop [r15]     ; move the stack arg into the right location</span><br><span class="line"></span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    ; Increment the counter and loop back in case we need more args</span><br><span class="line">    ; ---------------------------------------------------------------------</span><br><span class="line">    add r11, 1</span><br><span class="line">    jmp looping</span><br></pre></td></tr></table></figure>
+
+<p>首先我们看下面这一部分</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F18-48-10-7658711024af81b2ff90e52bce9eaedc-PixPin_2026-03-19_18-48-06-8e9819.png" alt="PixPin_2026-03-19_18-48-06.png"></p>
+<p>这一部分汇编指令的目的是计算<strong>未来目标函数栈参数位置相对当前 rsp 的偏移量</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">r14 = 200h					// 320字节的工作空间</span><br><span class="line">	+= 8          	       		// push 0</span><br><span class="line">	+= RUTS_ss			// RtlUserThreadStart 假帧的大小</span><br><span class="line">	+= BTIT_ss				// BaseThreadInitThunk 假帧的大小</span><br><span class="line">	+= Gadget_ss		// gadget 假帧的大小</span><br><span class="line">	- 0x20						// 减去32字节的影子空间</span><br></pre></td></tr></table></figure>
+
+<p>这一部分可能有点难以理解，我画一个图来辅助解释</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F21%2F14-13-37-dce4c7ff8678b801f056d9daf4cad2c3-Drawing%202026-03-19%2018.55.08.excalidraw-047ab3.png" alt="Drawing 2026-03-19 18.55.08.excalidraw.png"></p>
+<p>在本例中，通过 <code>Spoof</code> 间接调用 <code>bruh</code>，而 <code>bruh</code> 拥有7个参数，这意味着前4个参数存储在rcx，rdx，r8，r9中，而从第5个参数开始需要将参数存放到栈上，所以这些参数也称栈参数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-25-24-c5607e02acd35e1992aa6bbf0753bf4c-PixPin_2026-03-19_19-25-20-ccc971.png" alt="PixPin_2026-03-19_19-25-20.png"></p>
+<p>bruh函数的第5至第7个参数即Spoof函数的第8至第10个参数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-38-59-8801b7ca10bfd016ee79261c9385c9eb-PixPin_2026-03-19_19-38-53-dd39e5.png" alt="PixPin_2026-03-19_19-38-53.png"></p>
+<p>执行完下面的指令后，r10指向spoof的第7个参数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-54-55-72db2a895d2297bb8438179863e06c19-PixPin_2026-03-19_19-54-53-6082cd.png" alt="PixPin_2026-03-19_19-54-53.png"></p>
+<ul>
+<li>r15指向目标函数当前这次要写入的栈参数位置</li>
+<li>r11表示已经复制了多少个栈参数</li>
+<li>r13表示目标函数总共有多少个额外栈参数</li>
+<li>r10初始先指向Spoof的第 7 个参数，循环里add r10, 8后才依次指向第8、第9、第10个参数，也就是目标函数的栈参数。</li>
+</ul>
+<p>接下来就是通过一个循环，<strong>预先搬运目标函数的额外栈参数到指定位置上</strong></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F19-57-02-0b23475a755021f86f2b92c50785547e-PixPin_2026-03-19_19-57-01-0a3482.png" alt="PixPin_2026-03-19_19-57-01.png"></p>
+<p>执行 <code>sub    rsp, 200h</code> 前的调用栈</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-14-38-874a023583c16d6422077d0259d62785-PixPin_2026-03-19_20-14-33-2feb11.png" alt="PixPin_2026-03-19_20-14-33.png"></p>
+<p>执行后的调用栈</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-14-59-7bd53dd990e52cdddcbf74f4f50291d2-PixPin_2026-03-19_20-14-54-64789e.png" alt="PixPin_2026-03-19_20-14-54.png"></p>
+<p><code>push 0</code> 的作用是给伪造调用链的最顶层放一个“终止标记”，让栈回溯走到这里就停下来。执行 <code>push 0</code> 后的调用栈</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-15-32-ab4880b729c60517538d783323f374d1-PixPin_2026-03-19_20-15-30-7de267.png" alt="PixPin_2026-03-19_20-15-30.png"></p>
+<p>伪造RtlUserThreadStart + 0x14  frame后</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-16-03-7e3494af7822322442291577f34664b5-PixPin_2026-03-19_20-16-02-2efffd.png" alt="PixPin_2026-03-19_20-16-02.png"></p>
+<p>伪造BaseThreadInitThunk + 0x21  frame后</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-16-34-97dfdf61b6008498cc490da2a0d644d6-PixPin_2026-03-19_20-16-32-bc1202.png" alt="PixPin_2026-03-19_20-16-32.png"></p>
+<p>伪造Gadget frame后</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-17-10-ce684a00b862e027d5279973bd215a14-PixPin_2026-03-19_20-17-09-4fedbe.png" alt="PixPin_2026-03-19_20-17-09.png"></p>
+<p>调用目标函数后的调用栈（已经伪造三层栈帧了）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F20-17-58-408b1b5ab08e759d37a31150f44a1a75-PixPin_2026-03-19_20-17-56-a3e781.png" alt="PixPin_2026-03-19_20-17-56.png"></p>
+<p>目标函数结束，恢复原先的调用栈</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F21-57-14-e4387ee6a8b2e21aafb43b583158ccf5-PixPin_2026-03-19_21-57-11-e31137.png" alt="PixPin_2026-03-19_21-57-11.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F19%2F21-58-16-b2f861bb37b0c258ebee7a103a792e3f-PixPin_2026-03-19_21-58-09-4d616c.png" alt="PixPin_2026-03-19_21-58-09.png"></p>
+<h2 id="3-2-BYOUD"><a href="#3-2-BYOUD" class="headerlink" title="3.2 BYOUD"></a>3.2 BYOUD</h2><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/klezVirus/BYOUD">klezVirus&#x2F;BYOUD</a></p>
+<p>博客： <a target="_blank" rel="noopener" href="https://klezvirus.github.io/posts/Byoud/#bring-your-own-unwind-data">Fantastic unwind information and where to find them | klezVirus</a></p>
+<p>PS：看完感叹神乎其技。</p>
+<p><strong>核心思想</strong>：通过修改&#x2F;注入PE的.pdata，欺骗基于调用栈回溯的EDR，使其认为代码在合法的调用链中执行，从而绕过检测。</p>
+<p>该项目一共有7种欺骗技术，以后有机会我再把BYOUD所有欺骗技术再研究一遍，这里不想把文章写的太长影响观感。</p>
+<p>UNWIND_DATA_TAMPER</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F19-56-33-70fcef0e8e42514d78bcda985851ab5c-PixPin_2026-03-22_19-56-29-94e484.png" alt="PixPin_2026-03-22_19-56-29.png"></p>
+<p>UNWIND_DATA_HIJACK</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F22%2F19-57-40-d67312e7b2ff0931101c8aed2f9158e2-PixPin_2026-03-22_19-57-34-05f27a.png" alt="PixPin_2026-03-22_19-57-34.png"></p>
+<p>剩余的5种欺骗就不演示，感兴趣的可以自己运行，并观察调用栈。如果想了解这7种调用栈欺骗原理，我更推荐阅读<strong>klezVirus</strong>写的那篇博客，如果各位师傅觉得我写的还行，那未来我也会出篇文章一起学习（感觉像挖坑）</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>ThreadStackSpoofer通过截断shellcode栈帧的方式隐藏调用栈。</p>
+<p>CallStackMasker通过睡眠 + 合成栈帧的方式伪造调用栈</p>
+<p>LoudSunRun通过合成栈帧的方式在调用敏感函数前伪造调用栈。</p>
+<p>BYOUD（很新的一个项目，刚发布不到一个星期）：通过修改&#x2F;注入PE的.pdata，欺骗基于调用栈回溯的EDR，使其认为代码在合法的调用链中执行，从而绕过检测。</p>
+<p>这篇文章写的一般，感觉像流水账，计划是在4月初发的，不过写都写了就发出来，给师傅当个乐子看。</p>
+<p>现代红队主流的防御规避技术我已经学了差不多了，还剩几个没写，我还能写啥呢？下篇文章的主题各位师傅猜一下呗。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/boku7/BokuLoader">boku7&#x2F;BokuLoader: A proof-of-concept Cobalt Strike Reflective Loader which aims to recreate, integrate, and enhance Cobalt Strike’s evasion features!</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/klezVirus/ThreadPoolExecChain">klezVirus&#x2F;ThreadPoolExecChain：一个简单的POC，展示如何通过尾部调用串联多个回调，人工构建调用栈</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kyleavery/AceLdr">kyleavery&#x2F;AceLdr: Cobalt Strike UDRL for memory scanner evasion.</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/JoasASantos/SysWhispers4">JoasASantos&#x2F;SysWhispers4：通过直接和间接系统调用Windows NT 3.1 24H2的AV&#x2F;EDR规避x64 ·x86 ·魔兽世界64 ·ARM64</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/klezVirus/SilentMoonwalk">klezVirus&#x2F;SilentMoonwalk: PoC Implementation of a fully dynamic call stack spoofer</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/klezVirus/Moonwalk--">klezVirus&#x2F;Moonwalk–: Moonwalk++: Simple POC Combining StackMoonwalking and Memory Encryption</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kapla0011/KaplaStrike">kapla0011&#x2F;KaplaStrike: A Cobalt Strike RL built with Crystal Palace — module overloading, NtContinue entry transfer, call stack spoofing, sleep masking, and static signature removal.</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/0xNinjaCyclone/AsmLdr">0xNinjaCyclone&#x2F;AsmLdr：具备复杂规避功能的动态壳码加载器</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/klezVirus/BYOUD">klezVirus&#x2F;BYOUD：带上你自己的 Unwind 数据框架</a></li>
+<li><a target="_blank" rel="noopener" href="https://dtsec.us/2023-09-15-StackSpoofin/">栈欺骗入门</a></li>
+<li><a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/13979">再探堆栈欺骗之动态欺骗-先知社区</a></li>
+<li><a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/14029">三探堆栈欺骗之Custom Call Stacks-先知社区</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mgeeky/ThreadStackSpoofer">mgeeky&#x2F;ThreadStackSpoofer</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Cobalt-Strike/CallStackMasker">Cobalt-Strike&#x2F;CallStackMasker</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/klezVirus/BYOUD">klezVirus&#x2F;BYOUD</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/susMdT/LoudSunRun">susMdT&#x2F;LoudSunRun</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/03/14/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E5%88%86%E6%9E%90BOF%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-03-27 18:49:09
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                        <b>#</b> 防御规避
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E8%A8%80"><span class="toc-text">一、前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%A2%AB%E5%8A%A8%E6%AC%BA%E9%AA%97"><span class="toc-text">二、被动欺骗</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-ThreadStackSpoofer"><span class="toc-text">2.1 ThreadStackSpoofer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-main"><span class="toc-text">1. main</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-hookSleep"><span class="toc-text">2. hookSleep</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%BF%9B%E5%85%A5fastTrampoline"><span class="toc-text">3. 进入fastTrampoline</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%89%A7%E8%A1%8Cshellcode%EF%BC%8C%E9%87%8D%E5%AE%9A%E5%90%91%E5%88%B0%E6%88%91%E4%BB%AC%E7%9A%84MySleep"><span class="toc-text">4. 执行shellcode，重定向到我们的MySleep</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-MySleep%EF%BC%88%E5%85%B7%E4%BD%93%E6%A0%88%E6%AC%BA%E9%AA%97%E5%AE%9E%E7%8E%B0%EF%BC%89"><span class="toc-text">5. MySleep（具体栈欺骗实现）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-CallStackMasker"><span class="toc-text">2.2 CallStackMasker</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BC%AA%E9%80%A0%E8%B0%83%E7%94%A8%E6%A0%88"><span class="toc-text">1. 初始化伪造调用栈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BB%A5%E4%BC%AA%E9%80%A0%E7%9A%84startAddr%E4%B8%BA%E8%B5%B7%E5%A7%8B%E5%9C%B0%E5%9D%80%EF%BC%8C%E6%8C%82%E8%B5%B7%E7%8A%B6%E6%80%81%E5%88%9B%E5%BB%BA%E6%96%B0%E7%BA%BF%E7%A8%8B"><span class="toc-text">2. 以伪造的startAddr为起始地址，挂起状态创建新线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-ResumeThread-%E6%81%A2%E5%A4%8D%E7%BA%BF%E7%A8%8B%E6%89%A7%E8%A1%8C%EF%BC%8C%E7%BA%BF%E7%A8%8B%E5%BC%80%E5%A7%8B%E8%B7%91go"><span class="toc-text">3. ResumeThread 恢复线程执行，线程开始跑go</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%80%80%E5%87%BA%E4%B8%BB%E7%BA%BF%E7%A8%8B%EF%BC%8C%E5%B7%A5%E4%BD%9C%E7%94%B1%E6%96%B0%E7%BA%BF%E7%A8%8B%E6%8E%A5%E7%AE%A1"><span class="toc-text">4. 退出主线程，工作由新线程接管</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-MaskCallStack%EF%BC%88%E5%85%B7%E4%BD%93%E6%A0%88%E6%AC%BA%E9%AA%97%E5%AE%9E%E7%8E%B0%EF%BC%89"><span class="toc-text">5. MaskCallStack（具体栈欺骗实现）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E4%B8%BB%E5%8A%A8%E6%AC%BA%E9%AA%97"><span class="toc-text">三、主动欺骗</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-LoudSunRun"><span class="toc-text">3.1 LoudSunRun</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F"><span class="toc-text">1. 初始化局部变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%9F%A5%E6%89%BE%E8%B7%B3%E6%9D%BFgadget"><span class="toc-text">2. 查找跳板gadget</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%AE%A1%E7%AE%97BaseThreadInitThunk%E3%80%81RtlUserThreadStart%E5%92%8Ctrampoline%E4%BC%AA%E9%80%A0%E6%A0%88%E5%B8%A7%E6%89%80%E9%9C%80%E5%A4%A7%E5%B0%8F"><span class="toc-text">3. 计算BaseThreadInitThunk、RtlUserThreadStart和trampoline伪造栈帧所需大小</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-Spoof%EF%BC%88%E5%85%B7%E4%BD%93%E6%A0%88%E6%AC%BA%E9%AA%97%E5%AE%9E%E7%8E%B0%EF%BC%89"><span class="toc-text">4. Spoof（具体栈欺骗实现）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-BYOUD"><span class="toc-text">3.2 BYOUD</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack%20Spoofing%EF%BC%89 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F03%2F27%2F%25E8%25B0%2583%25E7%2594%25A8%25E6%25A0%2588%25E6%25AC%25BA%25E9%25AA%2597%25EF%25BC%2588Callstack-Spoofing%25EF%25BC%2589%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/03/27/%E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack-Spoofing%EF%BC%89/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

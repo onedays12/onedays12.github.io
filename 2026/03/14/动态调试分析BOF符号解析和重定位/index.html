@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      动态调试分析BOF符号解析和重定位 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">动态调试分析BOF符号解析和重定位</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-03-14 21:02:24
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E6%9D%82%E8%B0%88/" title="杂谈">
+                    <b>#</b> 杂谈
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>本文将结合Visual Studio动态调试过程，重点从内存映射、符号解析和重定位三个方面对COffLoader的工作流程进行详细阐述，这篇文章是对《COffLoader For Windows（BOFLoader）》的补充。</p>
+<h1 id="一、COFF文件结构"><a href="#一、COFF文件结构" class="headerlink" title="一、COFF文件结构"></a>一、COFF文件结构</h1><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/14-36-05-5521bbfd16ec983158db51e0f3d3801e-20260314143605-e83744.png"></p>
+<p><code>COFF_FILE_HEADER</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">typedef <span class="keyword">struct</span> _COFF_FILE_HEADER</span><br><span class="line">&#123;</span><br><span class="line">    UINT16  Machine;               <span class="comment">// 目标机器架构，例如 x86 / x64</span></span><br><span class="line">    UINT16  NumberOfSections;      <span class="comment">// 节区数量</span></span><br><span class="line">    UINT32  TimeDateStamp;         <span class="comment">// 时间戳，记录目标文件生成时间</span></span><br><span class="line">    UINT32  PointerToSymbolTable;  <span class="comment">// 符号表在文件中的偏移</span></span><br><span class="line">    UINT32  NumberOfSymbols;       <span class="comment">// 符号表项数量</span></span><br><span class="line">    UINT16  SizeOfOptionalHeader;  <span class="comment">// 可选头大小；对普通 COFF OBJ 通常为 0</span></span><br><span class="line">    UINT16  Characteristics;       <span class="comment">// 文件属性标志</span></span><br><span class="line">&#125; COFF_FILE_HEADER, *PCOFF_FILE_HEADER;</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+
+<p><code>COFF_SECTION</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">typedef <span class="keyword">struct</span> _COFF_SECTION</span><br><span class="line">&#123;</span><br><span class="line">    CHAR    Name[<span class="number">8</span>];                <span class="comment">// 节名，例如 .text / .data / .bss</span></span><br><span class="line">    UINT32  VirtualSize;            <span class="comment">// 节的虚拟大小，OBJ 中通常意义不强</span></span><br><span class="line">    UINT32  VirtualAddress;         <span class="comment">// 节的虚拟地址，OBJ 中通常未真正映射</span></span><br><span class="line">    UINT32  SizeOfRawData;          <span class="comment">// 节原始数据大小</span></span><br><span class="line">    UINT32  PointerToRawData;       <span class="comment">// 节原始数据在文件中的偏移</span></span><br><span class="line">    UINT32  PointerToRelocations;   <span class="comment">// 重定位表在文件中的偏移</span></span><br><span class="line">    UINT32  PointerToLineNumbers;   <span class="comment">// 行号表偏移，现代场景中很少使用</span></span><br><span class="line">    UINT16  NumberOfRelocations;    <span class="comment">// 当前节的重定位项数量</span></span><br><span class="line">    UINT16  NumberOfLinenumbers;    <span class="comment">// 行号项数量，通常不用</span></span><br><span class="line">    UINT32  Characteristics;        <span class="comment">// 节属性标志，例如代码/数据/可读/可写```</span></span><br><span class="line"></span><br><span class="line">&#125; COFF_SECTION, *PCOFF_SECTION;</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+
+<p><code>COFF_RELOC</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">typedef <span class="keyword">struct</span> _COFF_RELOC</span><br><span class="line">&#123;</span><br><span class="line">    UINT32  VirtualAddress;    <span class="comment">// 需要修补的位置，相对于所在节起始地址的偏移</span></span><br><span class="line">    UINT32  SymbolTableIndex;  <span class="comment">// 关联的符号在符号表中的索引</span></span><br><span class="line">    UINT16  Type;              <span class="comment">// 重定位类型，例如 REL32 / ADDR64</span></span><br><span class="line">&#125; COFF_RELOC, *PCOFF_RELOC;</span><br><span class="line">#pragma pack(pop)</span><br><span class="line">COFF_SYMBOL</span><br><span class="line"></span><br><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">typedef <span class="keyword">struct</span> _COFF_SYMBOL</span><br><span class="line">&#123;</span><br><span class="line">    union</span><br><span class="line">    &#123;</span><br><span class="line">        CHAR    Name[<span class="number">8</span>];       <span class="comment">// 短符号名，长度不超过 8 字节时直接存这里</span></span><br><span class="line">        UINT32  Value[<span class="number">2</span>];      <span class="comment">// 长符号名时使用，指向字符串表中的偏移信息</span></span><br><span class="line">    &#125; First;</span><br><span class="line"></span><br><span class="line">    UINT32 Value;              <span class="comment">// 符号值；通常表示节内偏移，或 .bss 符号大小等</span></span><br><span class="line">    UINT16 SectionNumber;      <span class="comment">// 所属节编号；为 0 时通常表示未定义外部符号</span></span><br><span class="line">    UINT16 Type;               <span class="comment">// 符号类型</span></span><br><span class="line">    UINT8  StorageClass;       <span class="comment">// 存储类别，例如外部符号、静态符号</span></span><br><span class="line">    UINT8  NumberOfAuxSymbols; <span class="comment">// 关联辅助符号数量</span></span><br><span class="line">&#125; COFF_SYMBOL, *PCOFF_SYMBOL;</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+
+<p>COFFEE</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">typedef <span class="keyword">struct</span> _COFFEE</span><br><span class="line">&#123;</span><br><span class="line">    PVOID             Data;      <span class="comment">// 原始 BOF/COFF 文件数据缓冲区</span></span><br><span class="line">    PCOFF_FILE_HEADER Header;    <span class="comment">// 指向 COFF 文件头</span></span><br><span class="line">    PCOFF_SECTION     Section;   <span class="comment">// 当前正在处理的节表项</span></span><br><span class="line">    PCOFF_RELOC       Reloc;     <span class="comment">// 当前正在处理的重定位项</span></span><br><span class="line">    PCOFF_SYMBOL      Symbol;    <span class="comment">// 指向符号表起始位置</span></span><br><span class="line">    PVOID             ImageBase; <span class="comment">// BOF 映射到内存后的基址</span></span><br><span class="line">    SIZE_T            BofSize;   <span class="comment">// 映射后的 BOF 总大小</span></span><br><span class="line">    PSECTION_MAP      SecMap;    <span class="comment">// 节区映射表，记录每个节的运行时地址和大小</span></span><br><span class="line">    PULONG_PTR        GOT;       <span class="comment">// GOT 表基址，保存外部函数真实地址</span></span><br><span class="line">    SIZE_T            GOTSize;   <span class="comment">// GOT 表大小</span></span><br><span class="line">    PULONG_PTR        BSS;       <span class="comment">// 自建 .bss 区基址</span></span><br><span class="line">    SIZE_T            BSSSize;   <span class="comment">// .bss 区大小</span></span><br><span class="line">&#125; COFFEE, *PCOFFEE;</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#pragma pack(push,<span class="number">1</span>)</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+<p>表示结构体按1字节对齐，这个可是有大用处的，对于自定义文件结构，按1字节对齐不易出错。</p>
+<p>不按1字节对齐，则可能出现下面的错误</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-20-31-cdd963e3447ac2d98e629da85e289306-20260314202030-9e9141.png"></p>
+<p>本文会使用下面的BOF</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include <span class="string">&quot;beacon.h&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> num1;</span><br><span class="line">char* str1;</span><br><span class="line"></span><br><span class="line">DECLSPEC_IMPORT <span class="type">int</span> WINAPI USER32$MessageBoxA(</span><br><span class="line">    HWND hWnd,</span><br><span class="line">    LPCSTR lpText,</span><br><span class="line">    LPCSTR lpCaption,</span><br><span class="line">    UINT uType</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">#define MessageBoxA USER32$MessageBoxA</span><br><span class="line"></span><br><span class="line">void <span class="keyword">go</span>(char* args, <span class="type">int</span> <span class="built_in">len</span>)</span><br><span class="line">&#123;</span><br><span class="line">    num1 = <span class="number">123</span>;</span><br><span class="line">    str1 = <span class="string">&quot;Hello from BOF2!&quot;</span>;</span><br><span class="line">    BeaconPrintf(CALLBACK_OUTPUT, <span class="string">&quot;%d %s&quot;</span>, num1, str1);</span><br><span class="line"></span><br><span class="line">    MessageBoxA(</span><br><span class="line">        NULL,</span><br><span class="line">        str1,</span><br><span class="line">        <span class="string">&quot;BOF2&quot;</span>,</span><br><span class="line">        MB_OK | MB_ICONINFORMATION</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>其汇编代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">.text$mn:<span class="number">0000000000000000</span></span><br><span class="line">.text$mn:<span class="number">0000000000000000</span>                 mov     [rsp+arg_8], edx ; $LN3</span><br><span class="line">.text$mn:<span class="number">0000000000000004</span>                 mov     [rsp+arg_0], rcx</span><br><span class="line">.text$mn:<span class="number">0000000000000009</span>                 sub     rsp, <span class="number">28</span>h</span><br><span class="line">.text$mn:<span class="number">000000000000000</span>D                 mov     cs:num1, <span class="number">7</span>Bh ; <span class="string">&#x27;&#123;&#x27;</span></span><br><span class="line">.text$mn:<span class="number">0000000000000017</span>                 lea     rax, $SG74380   ; <span class="string">&quot;Hello from BOF2!&quot;</span></span><br><span class="line">.text$mn:<span class="number">000000000000001</span>E                 mov     cs:str1, rax</span><br><span class="line">.text$mn:<span class="number">0000000000000025</span>                 mov     r9, cs:str1</span><br><span class="line">.text$mn:<span class="number">000000000000002</span>C                 mov     r8d, cs:num1</span><br><span class="line">.text$mn:<span class="number">0000000000000033</span>                 lea     rdx, $SG74381   ; <span class="string">&quot;%d %s&quot;</span></span><br><span class="line">.text$mn:<span class="number">000000000000003</span>A                 xor     ecx, ecx</span><br><span class="line">.text$mn:<span class="number">000000000000003</span>C                 call    cs:__imp_BeaconPrintf</span><br><span class="line">.text$mn:<span class="number">0000000000000042</span>                 mov     r9d, <span class="number">40</span>h ; <span class="string">&#x27;@&#x27;</span></span><br><span class="line">.text$mn:<span class="number">0000000000000048</span>                 lea     r8, $SG74382    ; <span class="string">&quot;BOF2&quot;</span></span><br><span class="line">.text$mn:<span class="number">000000000000004</span>F                 mov     rdx, cs:str1</span><br><span class="line">.text$mn:<span class="number">0000000000000056</span>                 xor     ecx, ecx</span><br><span class="line">.text$mn:<span class="number">0000000000000058</span>                 call    cs:__imp_USER32$MessageBoxA</span><br><span class="line">.text$mn:<span class="number">000000000000005</span>E                 nop</span><br><span class="line">.text$mn:<span class="number">000000000000005</span>F                 add     rsp, <span class="number">28</span>h</span><br><span class="line">.text$mn:<span class="number">0000000000000063</span>                 retn</span><br><span class="line">.text$mn:<span class="number">0000000000000063</span> <span class="keyword">go</span>              endp</span><br><span class="line">.text$mn:<span class="number">0000000000000063</span></span><br><span class="line">.text$mn:<span class="number">0000000000000063</span> ; </span><br></pre></td></tr></table></figure>
+
+<p>⚠注意：只分析x64的情况!</p>
+<h1 id="二、内存映射"><a href="#二、内存映射" class="headerlink" title="二、内存映射"></a>二、内存映射</h1><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/14-11-30-dd187d692f734df8d4f481250d2f63d2-20260314141129-03d944.png"></p>
+<ol>
+<li>首先找到节的地址，此时节还是以磁盘文件形式存在。</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pCoffee-&gt;Section = (PVOID)(((ULONG_PTR)pCoffee-&gt;Data) + sizeof(COFF_FILE_HEADER) + (ULONG_PTR)(sizeof(COFF_SECTION) * dwSecCnt));</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>将映射后的节的大小和地址存放到 <code>SecMap</code> 里，Size表示这个节当前按原始数据拷贝的大小。Ptr表示这个节被映射到内存后的起始地址</li>
+</ol>
+<p>后面所有重定位，都会靠 SecMap把“节号 + 节内偏移”换算成“真实运行时地址”。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pCoffee-&gt;SecMap[dwSecCnt].Size = pCoffee-&gt;Section-&gt;SizeOfRawData;</span><br><span class="line">pCoffee-&gt;SecMap[dwSecCnt].Ptr = pNextBase;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>pNextBase指针移动 <code>pCoffee-&gt;Section-&gt;SizeOfRawData</code> 字节的大小，随后pNextBase按页对齐，页的大小为4096B，即0x1000B。</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">((ULONG_PTR)pNextBase) += pCoffee-&gt;Section-&gt;SizeOfRawData;</span><br><span class="line">((ULONG_PTR)pNextBase) = PAGE_ALLIGN(pNextBase);</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>将磁盘文件形式的节数据复制到新的运行时地址。</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_Memcpy(pCoffee-&gt;SecMap[dwSecCnt].Ptr, (PVOID)((ULONG_PTR)pCoffee-&gt;Data + pCoffee-&gt;Section-&gt;PointerToRawData), pCoffee-&gt;Section-&gt;SizeOfRawData);</span><br></pre></td></tr></table></figure>
+
+<ol start="5">
+<li>所有节数据复制完后，紧接着放<code>GOT</code>和<code>BSS</code></li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pCoffee-&gt;GOT = pNextBase;</span><br><span class="line">pCoffee-&gt;BSS = (PVOID)((ULONG_PTR)pNextBase + pCoffee-&gt;GOTSize);</span><br></pre></td></tr></table></figure>
+
+<p>前面的文章我说过，<code>GOT</code> 的大小是所有函数符号在汇编中出现的次数，而 <code>BSS</code> 的大小则是bss变量符号在汇编中出现的次数。随然会冗余统计大小，但这无伤大雅。</p>
+<p>loader没有单独给.bss建section，而是自己在尾部划了一块匿名内存出来当 .bss。</p>
+<p>下图是mingw编译的obj文件</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/14-45-01-12c6e8ce2d52839931ea76aca5791548-20260314144500-e6758e.png"></p>
+<p>下图是msvc编译的obj文件，可以明显看出没有.bss节</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/14-47-24-15a47a7b51cdc0039132db1ffae6cb06-20260314144724-035ee3.png"></p>
+<p>下图是<strong>Cen4enCen</strong>师傅的解释</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/14-48-36-851d97ed396df383f4d7f7327ba278f4-20260314144836-2090e6.png"></p>
+<p>这里请先记住GOT和BSS的地址，下文将正式开启VS调试，请各位坐好。</p>
+<h1 id="三、符号解析"><a href="#三、符号解析" class="headerlink" title="三、符号解析"></a>三、符号解析</h1><ol>
+<li>首先在 <code>CoffeeProcessSection</code> 调式出 <code>pCoffSymbol</code>，因为每一个重定位项都对应一个符号。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-13-22-bdea64e0f152e5c2415e123fe9a01ce9-20260314151322-e6bdaa.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-13-55-e2a6edf3f601ce7f4cb47fdc81f766a7-20260314151355-ab3e59.png"></p>
+<ol start="2">
+<li>将符号名提取到pSymbolName。如果符号名是短名，则从 <code>pCoffSymbol-&gt;First.Name</code> 获取；如果是长名，则去符号字符串表里拿。</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-19-51-65ca0006e978fbfe1338adc55a971463-20260314151951-2f2d22.png"></p>
+<p>提取出的符号名为 <code>num1</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-20-56-722082289c742ab022544d5dddfa0079-20260314152055-2c1438.png"></p>
+<ol start="3">
+<li>判断符号是<strong>外部符号</strong>还是<strong>本地符号</strong>。只有<strong>外部符号</strong>才需要通过 <code>CoffeeProcessSymbol</code> 解析出函数地址或者在bss中的偏移地址。</li>
+</ol>
+<p>本地符号：</p>
+<ul>
+<li><code>SectionNumber &gt; 0</code>：表示当前目标文件中的某个节给出定义。其值表示在节映射表 <code>SecMap</code> 的第几个节。请注意 <code>SecMap</code> 是以0为起始索引。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-49-40-b76d597297a05bccf4ece8185f2a6a13-20260314154940-99a412.png"></p>
+<p>外部符号需要同时满足：</p>
+<ul>
+<li><code>StorageClass == IMAGE_SYM_CLASS_EXTERNAL</code>：表示这个符号是“外部符号”。但“外部符号”不一定意味着“未定义”，因为有些外部符号也可能已经在当前obj的某个节里给出定义。</li>
+<li><code>SectionNumber == 0x0</code>：这个符号没有定义在当前目标文件的任何节中</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/15-53-04-2b05bb449d23a6681712c76f6a3b442a-20260314155303-d23e7a.png"></p>
+<ol start="4">
+<li>对于函数符号，给出最终函数地址；对于bss变量，则返回它在BSS段中的偏移</li>
+</ol>
+<p>终于到CoffeeProcessSymbol了，请注意我的CoffeeProcessSymbol和<strong>Cen4enCen</strong>师傅的代码是不一样的，毕竟要适配x86。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-50-37-0ffe5fd2d7b005fead07d02efaab06c5-20260314195037-c06791.png"></p>
+<p>因为 <code>num1</code> 是bss变量，故 <code>dwImportPrefixSize</code> 和 <code>dwBeaconPrefixSize</code> 都为0。所以会来到下面的这个分支。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/18-20-31-9f3e6a71c9486b3f6e36853282c04b56-20260314182031-60b53a.png"></p>
+<p>因为 <code>pCoffSymbol</code> 是第一次出现，没有被记录，故BssEntry记录这个符号在<code>bss节的偏移</code>和 <code>pvSysmbolAddr</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/18-26-33-144680e1c47c433743f7ac1b518adbf8-20260314182633-ebd80c.png"></p>
+<p>最后返回 <code>num1</code> 这个bss变量在bss节中的偏移，为4，跳过前面的“哨兵”。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-03-33-756a6949537f355a69157aafef2ac6a8-20260314190333-375d35.png"></p>
+<p>下面看第二次出现 <code>num1</code> 符号时，代码会不再记录已经记录过的 <code>pCoffSymbol</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/18-28-58-f09d912c9f4c5f0e644752dbec54464c-20260314182858-105f48.png"></p>
+<p>接下来分析函数符号如何解析。函数符号有两类，一类是Beacon API，另一类是Windows API。</p>
+<p>首先分析Beacon API，<code>dwImportPrefixSize = 6</code>，即 <code>__imp_</code> 的长度，表示这是需要导入的外部函数符号。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-51-12-6d569a9d68e01e0205a6b5d99cf30850-20260314195112-014ba5.png"></p>
+<p><code>dwImportPrefixSize = 0xc</code> ，即 <code>__imp_Beacon</code> 的长度，表示这是需要导入的Beacon API。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-51-41-b71776cc2a4140cb9304cfa239ac659b-20260314195141-cb6dbc.png"></p>
+<p>因 <code>dwBeaconPrefixSize != 0</code>，进入到这个条件分支。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-52-00-6ce217acfdea9c58b922615757f8d19e-20260314195159-8b100d.png"></p>
+<p>把BOF中引用的Beacon API名字，经过去前缀和哈希匹配后，映射到当前 Loader自己实现的Beacon API函数地址。你可以把它理解成一个“Beacon 运行时导入表解析器”。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-56-22-9ff9e2d886a520a75784c02bf093ad8f-20260314195622-3d900f.png"></p>
+<p>另一种就是 <code>__imp_libraryName$functionName</code> , <code>__imp_functionName</code></p>
+<ul>
+<li>先判断是不是标准BOF导入格式。即存在 <code>$</code>。</li>
+<li>去掉 <code>__imp_ </code> 前缀，准备拆库名和函数名。</li>
+<li>规范化DLL名</li>
+<li>先算DLL名哈希</li>
+<li>如果是标准格式，就先找模块，再找导出函数</li>
+<li>处理函数名</li>
+<li>构造 ANSI_STRING，调LdrGetProcedureAddress解析真实函数地址</li>
+<li>不是标准模式，则从LdrApi里找。</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/19-59-37-b59a1a0e54918bea0630b3a37253d038-20260314195937-e30ff5.png"></p>
+<p>代码太多了，略过一些步骤，看最终的返回结果。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-07-38-c2a0577718644a563523e9ee52fc7a93-20260314200737-3a3cef.png"></p>
+<p>非标准模式</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-04-29-4ae82dc7fc60eeeb9b0daae620a76109-20260314200428-58dbe6.png"></p>
+<h1 id="四、重定位"><a href="#四、重定位" class="headerlink" title="四、重定位"></a>四、重定位</h1><p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-31-39-615fcb69d87cf9e01ff35cdad7ed1410-20260314203138-6d12f8.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-31-47-e1b3954a3bd5fa824b705af33993ccc2-20260314203147-9b0bba.png"></p>
+<p>对于 <code>num1</code> 这个bss变量，重定位的时候，会来到这段代码</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-32-59-039a82650540e1b747105e53a6e318a4-20260314203258-4aa844.png"></p>
+<p>BSS节的地址是 <code>0x00007ffcebb77010</code>，通过 <code>CoffeeProcessSection</code> 得出 <code>num1</code> 在BSS节内偏移0x4的位置。</p>
+<p>则 <code>ulBssAddr = 0x00007ffcebb77010 + 4 = 0x00007ffcebb77014</code> 是 <code>num1</code> 这个bss变量的地址。</p>
+<p>修正的目的是得出重定位字段地址与bss变量地址之间的差值。</p>
+<p>公式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Offset = Target - NextIP - extra</span><br></pre></td></tr></table></figure>
+
+<p>对于 <code>num1</code> 这个变量</p>
+<p>Target &#x3D; ulBssAddr &#x3D; 0x00007ffcebb77014</p>
+<p>NextIP &#x3D; pvRelocAddr + 4。<code>pvRelocAddr</code> 是重定位字段的地址，具体看下图</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-42-00-abf8042f5874e5f2c616281983fbec65-20260314204200-e8dd56.png"></p>
+<p>重定位字段的地址 <code>pvRelocAddr = 0x00007ffcebb7200f</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-42-26-d34d1123ae9877c3161e6fab5d9999cc-20260314204225-92ef36.png"></p>
+<p>这个汇编指令看着是不是很眼熟呢？其实就是BOF文件的text节里的指令。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-43-23-77dad95f5f71d9e9e2cbb57e80a31fd5-20260314204322-4c7cd1.png"></p>
+<p>Type &#x3D; IMAGE_REL_AMD64_REL32_4，extra &#x3D; 8 - 4 &#x3D; 4</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-46-47-2c7e8c35faeb3a5bade714a69be36620-20260314204647-83dd40.png"></p>
+<p>我们手工计算一下偏移：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Offset = Target - NextIP - extra</span><br><span class="line">Offset = 0x00007ffcebb77014 - (0x00007ffcebb7200f + 4) - (8 - 4)</span><br><span class="line">Offset = 0x4FFD</span><br></pre></td></tr></table></figure>
+
+<p>代码计算出来的偏移</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-51-22-3d823aabb719a226548d7f3236da0e38-20260314205121-c9a94f.png"></p>
+<p>最后看重定位字段有没有被修正</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/03/14/20-53-16-151b44f06738d3564e9e288f3fd2edd4-20260314205316-8e5252.png"></p>
+<p>外部函数符号的重定位和BSS变量的重定位是一样的分析过程，在此略过，本篇文章结束。</p>
+<p>本篇文章是对上一篇文章的补充扩展，如果有不懂或者本文哪里有解释错误地方，可以和我探讨！</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/03/13/COffLoader-For-Windows%EF%BC%88BOFLoader%EF%BC%89/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-03-14 21:02:24
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E6%9D%82%E8%B0%88/" title="杂谈">
+                        <b>#</b> 杂谈
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/2026/03/27/%E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack-Spoofing%EF%BC%89/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81COFF%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="toc-text">一、COFF文件结构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84"><span class="toc-text">二、内存映射</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90"><span class="toc-text">三、符号解析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text">四、重定位</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E5%88%86%E6%9E%90BOF%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F03%2F14%2F%25E5%258A%25A8%25E6%2580%2581%25E8%25B0%2583%25E8%25AF%2595%25E5%2588%2586%25E6%259E%2590BOF%25E7%25AC%25A6%25E5%258F%25B7%25E8%25A7%25A3%25E6%259E%2590%25E5%2592%258C%25E9%2587%258D%25E5%25AE%259A%25E4%25BD%258D%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/03/14/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E5%88%86%E6%9E%90BOF%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
