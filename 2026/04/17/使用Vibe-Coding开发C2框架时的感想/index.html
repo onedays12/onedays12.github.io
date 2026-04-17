@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title"></div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-04-17 14:44:15
+        </span>
+        
+      </div>
+      <div class="markdown-body">
+        <p>最近闲的没事，使用AI开发了一整套的C2框架，前端GUI界面使用wails3 + Vue，后端使用Go的gin框架，并用Go开发了植入物。</p>
+<p>在我最初的计划了，我并没有打算这么早就着手开发C2框架，奈何AI的进化速度让人感慨万千，以前“古法编程”的时代一去不返，手搓底层通信协议、处理死锁、或者设计复杂的系统架构，往往要耗费几天甚至几周的时间，现在有了AI的辅助，开发效率简直是降维打击。</p>
+<p>我目前主要使用的AI是Codex-GPT5.4和Gemini 3.1，不要问我为什么不用Claude，不是不想用，是用不起也用不了。</p>
+<p>codex-GPT5.4用来做框架的设计、复杂场景的规划和排除纠错，编码也还行，但是GPT5.4它有一个问题，就是喜欢将代码复杂化，不够精简。</p>
+<p>Gemini 3.1前端设计优秀，代码编写的效率和准确度也很好（虽然比不上Claude），只要提示词足够优秀，基本上一次就能把功能实现完整。这个两个模型我都是混着来的，并没有说5.4就不能用来编码，Gemini 3.1就不能设计之类的见解。</p>
+<p>就比如在<strong>开发大文件上传和下载</strong>，我就先用GPT5.4帮我规划一遍，然后我提取计划中有用的信息，设计了下面的提示词给Gemini 3.1，并附上：理解需求，列出当前要如何实现大文件上传和下载的规划，由我来确认，确认完后才能开始编码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">一、数据结构设计：</span><br><span class="line"></span><br><span class="line">核心数据结构：分块元数据 (Chunk Metadata)</span><br><span class="line">type FileChunk struct &#123;</span><br><span class="line">    TaskID     string `json:&quot;task_id&quot;`      // 关联的具体文件传输任务</span><br><span class="line">    FileID     string `json:&quot;file_id&quot;`      // 文件的唯一标识，使用file的hash值作为FileID</span><br><span class="line">    ChunkIndex int    `json:&quot;chunk_index&quot;`  // 当前是第几个分块</span><br><span class="line">    TotalChunks int   `json:&quot;total_chunks&quot;` // 总分块数</span><br><span class="line">    Data       []byte `json:&quot;data&quot;`         // 加密后的分块数据载荷 (如 512KB)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">注意：使用项目自带的packet.go中的打包和解包逻辑，不要用json序列化和反序列化。</span><br><span class="line"></span><br><span class="line">二、 设计 (Download：目标主机 -&gt; 前端)</span><br><span class="line">1.前端 (Frontend)</span><br><span class="line">	- 发起请求：通过api.sendCommand发送命令请求，命令常量是CommandDownload=28，CommandUpload 29</span><br><span class="line">	- 状态查询：当server每处理完一个分块元数据，就通过websocket向指定用户发送事件，处理完后，就发送完成事件，计算出接收到的数据大小，并发送这些信息给前端（不是文件数据）</span><br><span class="line">	- 获取成品：server成功将文件数据块拼接后，将其存储在本地磁盘中。server会向前端提供GET /api/v1/list_download查询server上可以已经从beacon上获取的文件，GET /api/v1/download获取指定的文件。</span><br><span class="line">2.服务端 (Server)  </span><br><span class="line">	- 任务生成：接收前端指令，将下载任务放入目标 Beacon 的任务队列和数据库中。</span><br><span class="line">	- 状态中心与落盘：Server 需要在本地硬盘static/download维护一个“正在传输的文件”</span><br><span class="line">	- 接收与拼接：当网关 Beacon将传来的分块数据提交给Server时，Server解析出 `ChunkIndex`，按照偏移量（Offset）将 `Data` 追加写入到本地的临时文件中，如果所有分块接收完毕，计算一次完整文件的Hash以校验完整性，最后将任务标记为完成。</span><br><span class="line">3.植入物 (Beacon)</span><br><span class="line">	- 任务初始化：唤醒后拿到下载任务。打开目标文件，计算出文件总大小和总分块数（如按 512KB 切分）。</span><br><span class="line">	- 异步读取（Go 语言语境）：绝对不能用 `os.ReadFile` 把文件一次性读进内存。应当使用 `os.Open` 配合 `io.Reader`，每次只读取固定大小的 buffer。</span><br><span class="line">	- 分发策略：- **单次心跳带多块**：如果 Beacon 睡眠时间较长，可以在一次心跳中，打包上传 2~5 个 Chunks，以提高整体下载速度。</span><br><span class="line">	  </span><br><span class="line">4.注意事项</span><br><span class="line">①防死锁与清理：在 Beacon 端读写大文件时，如果突然断网或 Server 重启，文件句柄可能会一直处于打开状态（导致被系统锁定）。Beacon 内部需要一个超时回收机制：如果某个文件传输任务超过 N 分钟没有收到新的数据块，自动关闭文件句柄并删除传输了一半的残缺文件。</span><br><span class="line">②块大小动态调整 (Dynamic Chunk Size)：对于带宽较大的直连 HTTP Beacon，块大小可以设置为 1MB；但对于通过 SMB 命名管道级联的 Beacon，块太大容易阻塞管道中的心跳包或其他高优先级命令，建议保持在 256KB 到 512KB 之间。</span><br><span class="line">③你可以按照项目的实际需求，优化、补充和完善</span><br><span class="line">④补了上传 ACK 协议</span><br><span class="line">⑤增加了上传聚合运行态</span><br><span class="line"></span><br><span class="line">三、前端传来的参数是这样的</span><br><span class="line"></span><br><span class="line">完整前端流程</span><br><span class="line"></span><br><span class="line">1. 前端下发 CommandDownload=28</span><br><span class="line">2. WebSocket 收到 FILE_TRANSFER_COMPLETE</span><br><span class="line">3. 从事件里的 download_url 或 file_id 获取文件</span><br><span class="line">4. 调用 GET /api/v1/download?file_id=&lt;file_id&gt;</span><br><span class="line">   </span><br><span class="line">每个 FileChunk 成功处理后：FILE_TRANSFER_PROGRESS</span><br><span class="line">最后一个 FileChunk 成功完成后：FILE_TRANSFER_PROGRESS + FILE_TRANSFER_COMPLETE</span><br><span class="line">任一 FileChunk 处理失败：FILE_TRANSFER_ERROR</span><br></pre></td></tr></table></figure>
+
+<p>两个模型帮我编写了99%的代码，至于剩下的1%就是保留咱们的古法编程，不是不小心的，是故意的，古法编程，匠心独具。</p>
+<p>除了那一点点的古法编程，在AI编程辅助的时代下，我还能干什么？我是亲生经历，看着AI帮我逐步开发出C2框架，再到后面随着项目越来越复杂，很多意想不到bug随之发生，我还有花大量的时间去排查纠错。</p>
+<p>为什么不用AI来排查纠错呢？理由如下</p>
+<ol>
+<li>随之对上下文越来越大，AI会越来越笨，不知道自己做了什么事情，忘记前面我提过的需求和一些约定。</li>
+<li>耗费token</li>
+<li>如果你连问题都提不出来或者提出问题不够具体，等待你的是两种结果：一：AI思考很久，并把问题解决了；二：提出了一些自以为是的解决方案，把项目搞的一团槽，最后还是要自己亲自出马，亲手调试排查问题。</li>
+</ol>
+<p>我也看到了网上有很多言论说程序即将失业，就连最近的Claude模型都能挖掘出大型系统的0day漏洞，事实上也如此，我认识的朋友在顶级安全实验室，用着Claude挖掘出十几个0day。</p>
+<p>我认为，AI大爆发时代确实淘汰了一部分初级程序员和坚持古法编程的程序员，对于部分白帽子来说也有很大的影响，但同时拔高了顶级程序员和安全研究者的上限。对于顶级程序员来说，他们经验丰富，具备框架设计的能力，能看懂代码，知道什么地方容易出bug并能快速调试排查。对于安全研究者来说，他们可以把自己的挖掘漏洞经验写成一份详细的提示词喂给AI，让AI来挖掘漏洞，效率翻倍。</p>
+<p>有些外行用AI开发出一个不能交付的前端页面，然后说程序员即将完蛋，是也可能不是？反正我不做过多评价。</p>
+<p>不过AI的出现，确实带来了一个难以逾越的鸿沟，它不仅没有填平技术上的差距，反而像一个放大器，把这道鸿沟劈得更深、更宽了。</p>
+<p>初级程序员的知识断层。以前，新手是通过手敲大量的基础代码（比如基础的 CRUD、搭建环境、写简单的脚本）来培养代码感和试错直觉的。现在，AI直接把这块“垫脚石”抽走了，导致地基不稳。</p>
+<p>高级级程序员的杠杆效应。这样有经验的开发者来说，AI则是物理外挂，脑海中已经有了清晰的系统架构和战术意图。</p>
+<p>这也就是所谓强者恒强，弱者恒弱？算了，不想讨论那么多，直接看我做的C2框架效果（现在还是开发阶段，UI可能变，接口可能变，反正一切都可能变）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-27-35-a0493526f05b7e6d146af13d1d3ba24f-PixPin_2026-04-17_14-27-34-8b7160.png" alt="PixPin_2026-04-17_14-27-34.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-27-48-ba7c5bbec806dcb2206ada508041462c-PixPin_2026-04-17_14-27-46-3751f8.png" alt="PixPin_2026-04-17_14-27-46.png"></p>
+<p>右键菜单栏</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-29-33-9d19d1d7f6763cae76bb94253d821c91-PixPin_2026-04-17_14-29-24-4f2986.png" alt="PixPin_2026-04-17_14-29-24.png"></p>
+<p>控制台（帮助信息中有的命令就是已经实现的）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-28-28-1fa68729c32118270262a71fdc383413-PixPin_2026-04-17_14-28-22-a1de78.png" alt="PixPin_2026-04-17_14-28-22.png"></p>
+<p>文件浏览器</p>
+<p>监听器</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-30-58-2118727c128b99c9ff502ab6f611b06e-PixPin_2026-04-17_14-30-56-bdd721.png" alt="PixPin_2026-04-17_14-30-56.png"></p>
+<p>生成beacon</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-31-15-f68b4fde1961df4a946aaf106d6d819f-PixPin_2026-04-17_14-31-13-0143a6.png" alt="PixPin_2026-04-17_14-31-13.png"></p>
+<p>文件浏览器</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-33-47-8bd922e4e80318ae5932de0e57c24b22-PixPin_2026-04-17_14-33-41-596584.png" alt="PixPin_2026-04-17_14-33-41.png"></p>
+<p>进程浏览器</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-34-30-c95470fa402343e275ee9d8c79309358-PixPin_2026-04-17_14-34-29-131ab6.png" alt="PixPin_2026-04-17_14-34-29.png"></p>
+<p>后端TeamServer的架构设计</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F04%2F17%2F14-31-54-a6f0bc3ad236d996de4605b624e3d362-PixPin_2026-04-17_14-31-42-833d76.png" alt="PixPin_2026-04-17_14-31-42.png"></p>
+<p>至于要不要开源，我的问答是：会开源。至于什么时候开源，等框架趋于稳定之后再说。</p>
+<p>但是考虑到C2框架可能会被滥用，我可能会采用半开源的想法，即开源beacon，但是client和server暂时不打算开源，以后再考虑全部开源。</p>
+<p>还更防御规避的文章吗？会的，至少最近在研究C2框架，没有过多精力放在写文章和研究防御规避的主题研究。我手上还有一篇4月初写的存稿，小声说一下，本篇文章是本月的唯一的一篇文章，哈哈水了一篇文章，也没有违法我之前的约定。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/03/27/%E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack-Spoofing%EF%BC%89/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-04-17 14:44:15
+            </span>
+            
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' +  + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F04%2F17%2F%25E4%25BD%25BF%25E7%2594%25A8Vibe-Coding%25E5%25BC%2580%25E5%258F%2591C2%25E6%25A1%2586%25E6%259E%25B6%25E6%2597%25B6%25E7%259A%2584%25E6%2584%259F%25E6%2583%25B3%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/04/17/%E4%BD%BF%E7%94%A8Vibe-Coding%E5%BC%80%E5%8F%91C2%E6%A1%86%E6%9E%B6%E6%97%B6%E7%9A%84%E6%84%9F%E6%83%B3/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
