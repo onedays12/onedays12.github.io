@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      在开发Beacon过程中遇到的一些问题 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c51fa9d4309a4cc29084417c30c738c0"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">在开发Beacon过程中遇到的一些问题</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-05-15 23:28:54
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E6%9D%82%E8%B0%88/" title="杂谈">
+                    <b>#</b> 杂谈
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>Beacon，一个多么美妙的单词，在安全人的心中，它是：红队弹回的会话，蓝队追猎的心跳，攻防双方在别人机器上角力的核心。</p>
+<p>到今天，我已经完成了当初给自己定下的目标——开发出一套完整的C2框架。</p>
+<p>如果要给C2框架的开发难度排个序，我的答案是：Server &gt; Beacon &gt; Client。</p>
+<p>但如果是给各模块的重要程度排序，权衡之后，我的答案是：Beacon &gt; Server &gt; Client。</p>
+<p>我相信大部分师傅来看我的文章，更关注的是底层的防御规避研究和 Beacon的具体实现，开发过程中的工程细节我就不在这里展开了，虽然代码不是我写，全由codex完成，但好歹我提供了想法，设计框架和调试验证&gt;.&lt;。所以我会开源C版本的Beacon，后续再开源Go版本的跨平台Beacon，以供参考和反制。</p>
+<p>Beacon项目结构（后期可能会变）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F15%2F23-05-44-ff0f34274437d40c063ba32b638685f4-20260515230544259-90baee.png"></p>
+<p>下文是我在开发Beacon过程中遇到的一些问题和解决思路。</p>
+<h1 id="一、Job管理系统"><a href="#一、Job管理系统" class="headerlink" title="一、Job管理系统"></a>一、Job管理系统</h1><p>起初，我认为Job管理系统是多余的。</p>
+<p>Beacon主线程收到任务，执行BOF，返回结果，流程简单清晰，为什么要引入一套复杂的Job管理？</p>
+<p>直到我执行了 <code>askcred.o</code>。这个BOF会弹出一个Windows远程登录凭据窗口，等待用户输入。问题来了Beacon主线程同步执行BOF，BOF内部调用了弹窗，弹窗在等待用户点击确认或取消。在用户操作之前，<code>askcred.o</code> 的执行不会返回，<strong>导致Beacon主线程被卡死了</strong>，我们没办法执行其他命令，这样的单线程命令执行设计显然是不合理的。</p>
+<p>为此，我引入了Job管理系统。</p>
+<ol>
+<li><strong>创建流程</strong>：首先使用JobCreate创建job，随后在JobStartThread里用CreateThread启动job。</li>
+<li><strong>运行期间</strong>：工作线程执行的目标函数需要使用JobIsCancelRequested定期检查取消标志。无论正常结束还是收到取消请求，工作线程的退出路径统一为：<strong>清理 → JobComplete → 线程返回</strong>，都使用JobComplete标记Job完成并释放jobs。</li>
+<li><strong>取消流程</strong>：可以使用killjob对指定任务发出cancel_event，不强制终止工作线程。线程的销毁由工作线程自行完成，这是协作模型的核心。</li>
+</ol>
+<p>上面只是我简单的对Job管理系统的简单概况，实际代码更复杂，我就不过多叙说了。</p>
+<h1 id="二、Beacon-入口线程不能强制终止，而应该是协作停止"><a href="#二、Beacon-入口线程不能强制终止，而应该是协作停止" class="headerlink" title="二、Beacon 入口线程不能强制终止，而应该是协作停止"></a>二、Beacon 入口线程不能强制终止，而应该是协作停止</h1><p>我使用的BOF Loader解析至少有两个线程</p>
+<ol>
+<li><strong>BOF Loader工作线程</strong>：负责加载COFF、重定位、调用BOF入口。</li>
+<li><strong>BOF 入口线程</strong>：实际执行bof的go入口函数。</li>
+</ol>
+<p>在开发BOF Loader的过程中，我遇到一个诡异的bug，当我使用killjob杀掉需要在后台执行的BOF（比如说askcreds.o），beacon直接终止了BOF Loader的工作线程，使用jobs命令也看不到运行的BOF，这一切看起来正常，但是远程登录窗口的弹窗还是存在！如果各位askcred.o的代码就会明白，它在BOF使用了CreateThread创建了线程，我们只结束了BOF Loader的工作线程，但是BOF内部线程并没有一起结束，导致弹窗还在的bug。</p>
+<p>AskCreds这类BOF要想被killjob正确取消，应该使用BeaconGetStopJobEvent主动监听，如果监听到取消事件，则自行关闭窗口和内部线程，避免留下残留窗口和线程。</p>
+<h1 id="三、BOF应该使用函数指针的方式执行入口，而不应该使用线程劫持的方式执行BOF"><a href="#三、BOF应该使用函数指针的方式执行入口，而不应该使用线程劫持的方式执行BOF" class="headerlink" title="三、BOF应该使用函数指针的方式执行入口，而不应该使用线程劫持的方式执行BOF"></a>三、BOF应该使用函数指针的方式执行入口，而不应该使用线程劫持的方式执行BOF</h1><p>我的BOF Loader主要参考 <a target="_blank" rel="noopener" href="https://github.com/Cen4enCen/CenCoffLdr">https://github.com/Cen4enCen/CenCoffLdr</a> ，参考项目中就是使用线程劫持的方式执行入口函数，本Beacon BOF Loader也照搬其实现，但bug也随之而来。</p>
+<p>还是askcreds.o这个BOF，当我在自己的win11上执行，成功弹窗远程登录窗口，但是在win10虚拟机上确没有弹出窗口，并且Beacon也掉线了。</p>
+<p>这让我百思不得其解，其实这个问题在我开发go版本的beacon时就遇到了，然后我也让朋友试了一下，使用cs的Inline-execute执行askcreds.o正常，使用我开发的beacon，执行askcred.o失败了且Beacon掉线，当时我还认为应该是go版本的bof loader与c版本的bof loader存在执行上的差异，直到着手开发c版本的Beacon BOF loader，再一次遇到beacon 奔溃，而我也陷入了奔溃。</p>
+<p>正常来说，我们为BOF注册了VEH异常处理，任何BOF内部发生的异常我们BOF loader都能稳稳接住（哈哈夸张的说法），那么最有可能的问题就是BOF Loader的问题。由于精力有限，没有过多时间调试bof loader奔溃的原因，我让codex分析原因，当我看到它给出的修复的方案中有：BOF应该使用函数的指针方式执行入口，而不应该使用线程劫持的方式执行BOF，这让我联想到havoc的BOF Loader用函数指针的方式执行bof go函数，因为函数指针的方式比线程劫持更普遍，更适用，更不会破坏上下文。</p>
+<p>实时也是如此，将执行方式修改成函数指针后，win10虚拟机环境下，成功执行askcred.o，且Beacon没有掉线！</p>
+<h1 id="四、模块践踏分配内存不应随便使用"><a href="#四、模块践踏分配内存不应随便使用" class="headerlink" title="四、模块践踏分配内存不应随便使用"></a>四、模块践踏分配内存不应随便使用</h1><p>在BOF Loader中，为了尽快为BOF分配足够大的内存空间，我最初选择了Module Stomping，践踏目标是propsys.dll（约950KB，Windows属性系统，负责文件、文件夹等对象的属性管理）。</p>
+<p>但实践证明这条路走不通。以askcred.o为例，由于很多程序或功能直接或间接依赖propsys.dll，一旦践踏它，askcred.o执行过程中调用链经过被践踏的区域，就会发生异常导致beacon崩溃。</p>
+<p>一个直觉是换成不那么常见的DLL，比如clipwinrt.dll。但这治标不治本——BOF的API依赖不可预测，不同BOF的依赖链不同，没有任何一个DLL能保证对所有BOF都安全。只要用Module Stomping，就永远存在这个隐患。</p>
+<p><strong>最终结论</strong>：Module Stomping不适合作为BOF Loader的通用内存分配方案。我权衡利弊后，决定回归常规的VirtualAlloc或NtAllocateVirtualMemory申请私有内存。虽然会引入RWX页面这个检测信号，但换取的是BOF Loader的稳定性——功能正确永远优先于隐蔽性。</p>
+<h1 id="五、后台持久性任务与睡眠混淆的冲突"><a href="#五、后台持久性任务与睡眠混淆的冲突" class="headerlink" title="五、后台持久性任务与睡眠混淆的冲突"></a>五、后台持久性任务与睡眠混淆的冲突</h1><p>在上文中，我引入了job管理系统，专门用于管理后台持久性任务生命周期，但这也引入了后台持久性任务与睡眠混淆的冲突。</p>
+<p>就以Ekko技术为例，Beacon睡眠混淆的目的就是进入睡眠前，加密&#x2F;混淆Beacon自身的进程映像或所使用的内存空间，唤醒时再解密恢复。</p>
+<p>而后台持久性任务的要求是：在beacon睡眠期间持续运行某些功能。两者在时间维度上直接冲突——一边要把内存锁死，当执行代码（.text）或者使用到某些全局变量（.data,bss）或UNWIND_INFO（.pdata），一边要在锁死的状态下继续干活。</p>
+<p>最常见的就是tunnel后台持久性任务，我的想法是只要有台持久性任务，就从睡眠混淆降级到普通的sleep，这也要引入到工作线程和主线程的概念，这一部分属于job管理系统，我不过多介绍。当存在工作线程还在工作，我们就将睡眠混淆降级到普通的sleep，保证后台任务能够正常执行，最也是havoc的实现方案。</p>
+<p>检查线程数量，这是非常关键的逻辑。如果当前implant有活动线程则禁止sleep obfuscation</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F15%2F22-25-30-a5d01b47db230ba84e667ddef35f2fd9-20260515222529409-b1c6ce.png"></p>
+<p>为了提高Beacon的隐蔽性，是非常不建议在Beacon上建立tunnel的，而是单独使用独立的工具建立隐蔽隧道，但我还是保留beacon在复杂网络上建立隐蔽隧道的能力。</p>
+<p>当然我这套睡眠混淆机制还不够完善，等我详细研究CobaltStike的SleepMask机制后再完善一下。</p>
+<h1 id="六、反射DLL完善计划"><a href="#六、反射DLL完善计划" class="headerlink" title="六、反射DLL完善计划"></a>六、反射DLL完善计划</h1><p>我的Beacon是要对标CobaltStrike Beacon（自信&gt;.&lt;），其payload根据执行阶段的不同分为stager和stagerless。</p>
+<ol>
+<li>stager：一个由asm汇编实现的小型加载器，可以从server中下载stage，并跳转执行stage。</li>
+<li>stagerless：功能完整的可执行Beacon程序，不依赖加载就可以执行。</li>
+</ol>
+<p>其中stage就是经过特殊patch的Beacon.dll，patch的过程是在Beacon.dll的DOS头修改成一小段的stub，用于跳转到Beacon.dll内部的导出函数ReflectiveLoader。</p>
+<p>PS：一个小插曲，当我在有卡巴斯基的环境上测试Beacon.dll，还没执行呢，就被卡巴斯基给抓到了，这让我百思不得其解。经过一系列的排查，居然是因为导出函数名是：“ReflectiveLoader”，真是蚌埠住了。</p>
+<p>我自认为beacon的ReflectiveLoader是完全能够胜任解析并加载自身的，不过还是留下了很多特征点，就比如旧PE数据还没清除呢。我最初是ReflectiveLoader来清除就PE数据，这个是没错的，错就错在ReflectiveLoader是beacon.dll的导出函数，让ReflectiveLoader清除自身，搞笑的吧。</p>
+<p>我又转念一想，将RDL独立于反射DLL之后，方便后续清除旧PE数据和消除映射后PE特征，看起来是不是很熟悉呢？这不就是SRDI吗？确实，在Beacon开源后，我将彻底重构Convert2Shellcode项目，进入2.0版本，这次真的是真的。在看了m09的 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/8cYwfqXE57yTQjCJGoDBwA">https://mp.weixin.qq.com/s/8cYwfqXE57yTQjCJGoDBwA</a> 文章之后，我就想完善项目，增加tls data、tls index、延迟导入表解析，支持复杂的rust程序转shellcode。</p>
+<h1 id="七、结语"><a href="#七、结语" class="headerlink" title="七、结语"></a>七、结语</h1><p>写到这里，我的Beacon开发过程中遇到的问题就算是写完一部分了，还有很多一些问题我先暂时不说，等时机成熟再聊一聊。</p>
+<p>不得不承认，差不多两个月的时间同时开发Server、Client、Beacon的难度超乎我的想象，但每一次调试和优化都让我对攻防技术有了更深的理解，也让我对未来的完善充满期待。</p>
+<p>至于dumplass、浏览器凭据提取、RunPE、Shellcode 注入、VNC、AMSI Bypass、ETW Bypass、系统调用、调用栈欺骗、反调试、反沙箱、BeaconGate、级联、横向移动等高级功能，涉及较深的对抗深度，我就不公开了，以后有机会我会以文章的形式讲解。</p>
+<p>再聊一聊开源计划方面，预计在今年6月只开源Beacon本身，暂时不会开源Server和Client的源码，这样既能避免C2框架被滥用，又方便研究者进行防御与反制。</p>
+<p>忘记说了，Codex nb！Codex nb！Codex nb！重要的事情说三遍。</p>
+<p>本月还有一篇文章，也请各位师傅关注一下我的 <a target="_blank" rel="noopener" href="https://onedays12.github.io/">github</a>，我什么都会做的&gt;.&lt;</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F15%2F23-25-41-791024ade026b8b99839dfa9a8ac9b91-%E6%B4%9B%E8%8C%9C-eed727.jpg" alt="洛茜.jpg"></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/04/17/%E4%BD%BF%E7%94%A8Vibe-Coding%E5%BC%80%E5%8F%91C2%E6%A1%86%E6%9E%B6%E6%97%B6%E7%9A%84%E6%84%9F%E6%83%B3/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-05-15 23:28:54
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E6%9D%82%E8%B0%88/" title="杂谈">
+                        <b>#</b> 杂谈
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81Job%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="toc-text">一、Job管理系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Beacon-%E5%85%A5%E5%8F%A3%E7%BA%BF%E7%A8%8B%E4%B8%8D%E8%83%BD%E5%BC%BA%E5%88%B6%E7%BB%88%E6%AD%A2%EF%BC%8C%E8%80%8C%E5%BA%94%E8%AF%A5%E6%98%AF%E5%8D%8F%E4%BD%9C%E5%81%9C%E6%AD%A2"><span class="toc-text">二、Beacon 入口线程不能强制终止，而应该是协作停止</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81BOF%E5%BA%94%E8%AF%A5%E4%BD%BF%E7%94%A8%E5%87%BD%E6%95%B0%E6%8C%87%E9%92%88%E7%9A%84%E6%96%B9%E5%BC%8F%E6%89%A7%E8%A1%8C%E5%85%A5%E5%8F%A3%EF%BC%8C%E8%80%8C%E4%B8%8D%E5%BA%94%E8%AF%A5%E4%BD%BF%E7%94%A8%E7%BA%BF%E7%A8%8B%E5%8A%AB%E6%8C%81%E7%9A%84%E6%96%B9%E5%BC%8F%E6%89%A7%E8%A1%8CBOF"><span class="toc-text">三、BOF应该使用函数指针的方式执行入口，而不应该使用线程劫持的方式执行BOF</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%A8%A1%E5%9D%97%E8%B7%B5%E8%B8%8F%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%E4%B8%8D%E5%BA%94%E9%9A%8F%E4%BE%BF%E4%BD%BF%E7%94%A8"><span class="toc-text">四、模块践踏分配内存不应随便使用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%90%8E%E5%8F%B0%E6%8C%81%E4%B9%85%E6%80%A7%E4%BB%BB%E5%8A%A1%E4%B8%8E%E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%E7%9A%84%E5%86%B2%E7%AA%81"><span class="toc-text">五、后台持久性任务与睡眠混淆的冲突</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E5%8F%8D%E5%B0%84DLL%E5%AE%8C%E5%96%84%E8%AE%A1%E5%88%92"><span class="toc-text">六、反射DLL完善计划</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E7%BB%93%E8%AF%AD"><span class="toc-text">七、结语</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E5%9C%A8%E5%BC%80%E5%8F%91Beacon%E8%BF%87%E7%A8%8B%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F05%2F15%2F%25E5%259C%25A8%25E5%25BC%2580%25E5%258F%2591Beacon%25E8%25BF%2587%25E7%25A8%258B%25E4%25B8%25AD%25E9%2581%2587%25E5%2588%25B0%25E7%259A%2584%25E4%25B8%2580%25E4%25BA%259B%25E9%2597%25AE%25E9%25A2%2598%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/05/15/%E5%9C%A8%E5%BC%80%E5%8F%91Beacon%E8%BF%87%E7%A8%8B%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
