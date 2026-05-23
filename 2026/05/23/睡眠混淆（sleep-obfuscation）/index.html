@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      睡眠混淆（sleep obfuscation） 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c51fa9d4309a4cc29084417c30c738c0"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">睡眠混淆（sleep obfuscation）</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-05-23 16:35:59
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                    <b>#</b> 防御规避
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>在现代高级威胁防御环境下，攻击者为了规避EDR&#x2F;AV对进程内存的扫描，经常采用“睡眠混淆”技术，将恶意模块在休眠期间加密，并在适当时机恢复执行。本文聚焦四种代表性的睡眠混淆实现：<strong>Ekko、ZILEAN、FOLIAGE 和 Cronos</strong>。它们虽然具体实现方式各异，但核心目标一致：通过改写内存权限、动态加密&#x2F;解密模块以及精密调度机制，使恶意模块在休眠窗口期难以被检测。本文将从调度方式、上下文捕获、执行链及内存处理等角度详细分析这四种技术的原理与流程，帮助读者理解高级恶意程序如何利用Windows内核与线程机制实现隐蔽睡眠。</p>
+<h1 id="一、Ekko"><a href="#一、Ekko" class="headerlink" title="一、Ekko"></a>一、Ekko</h1><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/Cracked5pider/Ekko">Cracked5pider&#x2F;Ekko: Sleep Obfuscation</a></p>
+<p>相信各位师傅对Ekko技术非常熟悉了，我就长话短说，Ekko利用 <code>CreateTimerQueueTimer</code> + <code>NtContinue</code>，把改权限（RX-&gt;RW），加密内存，睡眠，解密，恢复权限（RW-&gt;RX）做成一条<strong>ROP的上下文链</strong>，让Timer线程执行，主线程在等待的过程中，整个进程内存被加密&#x2F;解密。</p>
+<p>来看<strong>Ekko</strong>的主流程：</p>
+<ol>
+<li><p><code>CreateTimerQueue</code> 创建一个定时器队列。</p>
+</li>
+<li><p>用 <code>CreateTimerQueueTimer(..., RtlCaptureContext, ...)</code> 捕获Timer线程的 <code>CONTEXT</code>。</p>
+</li>
+<li><p>复制出多份 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CONTEXT</span><br></pre></td></tr></table></figure>
+
+<p>，分别代表：</p>
+<ul>
+<li><code>RopProtRW</code>：调用 <code>VirtualProtect(ImageBase, Size, PAGE_READWRITE, &amp;OldProtect)</code></li>
+<li><code>RopMemEnc</code>：调用 <code>SystemFunction032(&amp;Key, &amp;Img)</code>（RC4加密当前进程映像）</li>
+<li><code>RopDelay</code>：调用 <code>WaitForSingleObject(NtCurrentProcess(), SleepTime)</code></li>
+<li><code>RopMemDec</code>：再次调用 <code>SystemFunction032</code>（解密）</li>
+<li><code>RopProtRX</code>：<code>VirtualProtect(..., PAGE_EXECUTE_READWRITE, ...)</code></li>
+<li><code>RopSetEvt</code>：<code>SetEvent(hEvent)</code> 通知主线程可以继续</li>
+</ul>
+</li>
+</ol>
+<p>这里需要理解的就是 <code>CreateTimerQueueTimer(..., RtlCaptureContext, ...)</code> 捕获的是<strong>Timer线程</strong>的 <code>CONTEXT</code> ，我在《调用栈欺骗（Callstack Spoofing）》文章就说过了，这里我们再进一步验证。</p>
+<p>我们来到微软的官方文档：<a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/windows/win32/api/threadpoollegacyapiset/nf-threadpoollegacyapiset-createtimerqueuetimer">createTimerQueueTimer 函数 (threadpoollegacyapiset.h) - Win32 apps | Microsoft Learn</a>，其中Flags参数为<strong>WT_EXECUTEINTIMERTHREAD</strong>时表示回调函数由计时器线程本身调用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F26%2F18-50-04-3d2fdb5c3878e4c4f9f107f942d36aec-PixPin_2026-03-26_18-50-01-4be8be.png" alt="PixPin_2026-03-26_18-50-01.png"></p>
+<p>如果捕获的是主线程的上下文，RopMemEnc都加密了整个进程映像，此后 <code>.text</code> 是一堆密文，怎么可能执行会执行到RopDelay呢，所以是捕获的是Timer线程的上下文。</p>
+<p>还有一点需要明白的是主线程执行下图这块代码所需的时间是非常短的，远远快于计时器发出信号之前必须经过的当前时间的时间量，即 <code>主线程跑完Setup的时间 &lt;&lt; 200ms</code> （以执行到 <code>RopMemEnc</code> 作为评判标准）。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F26%2F18-56-11-ae32cc1d03a8ecb2b11e2e01f75ac96f-PixPin_2026-03-26_18-56-08-fe2585.png" alt="PixPin_2026-03-26_18-56-08.png"></p>
+<p>我们可以简单地调试验证一下，在 <code>CreateTimerQueueTimer(……,RopSetEvt,)</code> 下一个断点，如果能够正常停在断点处，没有出现异常，则说明 <code>主线程跑完Setup的时间 &lt;&lt; 计时器设置的时间量（DueTime）</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F26%2F19-06-29-da3ecdc4fac4307728f10b0b0e877a2a-PixPin_2026-03-26_19-06-25-3b18e7.png" alt="PixPin_2026-03-26_19-06-25.png"></p>
+<p>如果我们在 <code>CreateTimerQueueTimer(……,RopDelay,)</code> 下一个断点，并停留大概1s的时间后往下走，则发生异常，因为我们停留的1s内，Timer线程执行了RopMemEnc，对进程映射加密了，主线程执行密文崩溃。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F26%2F19-06-12-251950a802ec005a4efc55f696563575-PixPin_2026-03-26_19-06-10-c0775d.png" alt="PixPin_2026-03-26_19-06-10.png"></p>
+<p>最后一点为什么 <code>CreateTimerQueueTimer</code> + <code>NtContinue</code> 能够间接执行目标函数，我不想再这里过多赘述，请阅读我的另一篇文章：<a target="_blank" rel="noopener" href="https://onedays12.github.io/2026/03/27/%E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack-Spoofing%EF%BC%89/#5-MaskCallStack%EF%BC%88%E5%85%B7%E4%BD%93%E6%A0%88%E6%AC%BA%E9%AA%97%E5%AE%9E%E7%8E%B0%EF%BC%89">《调用栈欺骗（Callstack Spoofing）》</a></p>
+<p>根据上文的分析，主线程创建计时器队列计时器可以看作是一瞬间的事，所以Timer的时间片可以看作是100ms执行一个操作。Timer线程每个时间片执行的操作：</p>
+<table>
+<thead>
+<tr>
+<th>DueTime</th>
+<th>计划时刻</th>
+<th>实际执行时刻</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>100</td>
+<td>T0+100ms</td>
+<td>T0+100ms</td>
+<td>VirtualProtect RW</td>
+</tr>
+<tr>
+<td>200</td>
+<td>T0+200ms</td>
+<td>T0+200ms</td>
+<td>SystemFunction032(加密)</td>
+</tr>
+<tr>
+<td>300</td>
+<td>T0+300ms</td>
+<td>T0+300ms</td>
+<td>WaitForSingleObject（Timer阻塞SleepTime秒时间）</td>
+</tr>
+<tr>
+<td>400</td>
+<td>T0+400ms</td>
+<td><strong>T0+400ms+SleepTime</strong></td>
+<td>SystemFunction032(解密)</td>
+</tr>
+<tr>
+<td>500</td>
+<td>T0+500ms</td>
+<td><strong>T0+500ms+SleepTime</strong></td>
+<td>VirtualProtect RX</td>
+</tr>
+<tr>
+<td>600</td>
+<td>T0+600ms</td>
+<td><strong>T0+600ms+SleepTime</strong></td>
+<td>SetEvent</td>
+</tr>
+</tbody></table>
+<p>T0可以近似地看作最后一个 <code>CreateTimerQueueTimer</code> 执行完后的时间。</p>
+<p><strong>注意</strong>：以上全凭个人主观猜测，不保证正确性！</p>
+<p>主线程和Timer线程各自时间轴上的状态：</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F03%2F26%2F19-45-25-a70659d5acfcf7d3d29d42926cac3978-Drawing%202026-03-25%2023.05.55.excalidraw-6d8b84.png" alt="Drawing 2026-03-25 23.05.55.excalidraw.png"></p>
+<p>Timer执行执行加解密的的时间（忽略执行CreateTimerQueueTimer的时间，因为这个时间非常短）相对于Sleeptime来说是非常非常短的，这也就是说大部分时间EDR抓不到Beacon的内存特征，除非它时时刻刻盯着这块内存的变化，我想这也不太可能吧？</p>
+<h1 id="二、ZILEAN"><a href="#二、ZILEAN" class="headerlink" title="二、ZILEAN"></a>二、ZILEAN</h1><p>代码：<a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Obf.c#L339">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;Obf.c at main · HavocFramework&#x2F;Havoc</a></p>
+<p>使用 <code>RtlRegisterWait</code> 注册一组延迟触发的wait callback，然后让这些callback调用 <code>NtContinue</code> 恢复伪造好的 <code>CONTEXT</code>，从而按顺序执行 <code>VirtualProtect → 加密 → Sleep → 解密 → 恢复权限 → SetEvent</code>。</p>
+<p>其整体的执行顺序跟Ekko技术一致，只是调度方式和执行线程有所不同，具体来说就是：</p>
+<ol>
+<li>EKKO使用RtlCreateTimerQueue&#x2F;RtlCreateTimer创建定时器队列和定时器进行API调度，使用定时器线程（Timer thread）执行目标函数。</li>
+<li>ZILEAN使用RtlRegisterWait给等待对象wait_event注册一个等待任务（call back），如果wait_event被触发，或者等待超时delay_ms到达，就由wait thread执行等待任务。</li>
+</ol>
+<p>ZILEAN依赖的关键API如下：</p>
+<ol>
+<li>RtlRegisterWait：注册wait callback</li>
+<li>RtlDeregisterWait：清理wait handle</li>
+<li>RtlCaptureContext：捕获线程上下文，作为CONTEXT模板</li>
+<li>NtContinue：恢复伪造上下文，从而跳转执行指定函数</li>
+<li>SystemFunction032：对内存区域做加密&#x2F;解密</li>
+</ol>
+<p><strong>第一阶段：创建wait_event对象</strong></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F12-50-10-d3323cbad33f5ad790bfb60b2935129e-PixPin_2026-05-23_12-50-07-ba162a.png" alt="PixPin_2026-05-23_12-50-07.png"></p>
+<p><strong>第二阶段：捕获Wait 线程上下文作为模板</strong></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F12-58-04-8374c4614c8a29b0519a5922bf139eec-PixPin_2026-05-23_12-58-01-7b8c26.png" alt="PixPin_2026-05-23_12-58-01.png"></p>
+<p>RtlCaptureContext(&amp;TimerCtx) 不是主线程直接调用，而是wait callback线程里执行，所以TimerCtx保存的是 wait callback线程的上下文。</p>
+<p><strong>第三阶段：通知主线程已完成捕获</strong></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-05-08-86e6d35e9b0d5de68a6ce661b7f78022-PixPin_2026-05-23_13-05-06-dfeab0.png" alt="PixPin_2026-05-23_13-05-06.png"></p>
+<p>Delay +&#x3D; 100，延迟100ms后，让wait callback线程执行 <code>EventSet</code> ，通知主线程上下文已捕获，所以 <code>EvntTimer</code> 是一个同步信号。</p>
+<p>SysNtWaitForSingleObject的，其Alertable &#x3D; FALSE表示无限等待，也就是说主线程会一直卡在这里，直到EvntTimer被设置。</p>
+<p><strong>第四步：初始化ROP CONTEXT</strong></p>
+<p>等待EvntStart。使用WaitForSingleObjectEx，阻塞wait callback线程执行ROP链，直到主线程发出开始信号。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-47-10-5a2b3d1b12ff45dba4f6c00c45c152af-PixPin_2026-05-23_13-47-02-f682fc.png" alt="PixPin_2026-05-23_13-47-02.png"></p>
+<p>把Beacon模块区域改成可读写，方便加密。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-48-44-f909e19bcbd0b551e2a72f233f93ccc3-PixPin_2026-05-23_13-48-41-de2869.png" alt="PixPin_2026-05-23_13-48-41.png"></p>
+<p>加密。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-49-43-091b43e2e016889edf7cef6db574deb9-PixPin_2026-05-23_13-49-40-22d33b.png" alt="PixPin_2026-05-23_13-49-40.png"></p>
+<p>这里是用当前进程句柄做等待对象，因为当前进程在运行期间不会signaled，所以基本等价于：<code>Sleep(Delay + TimeOut);</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-52-58-694d9a76e8f26d22180133e3c670eb0c-PixPin_2026-05-23_13-52-47-9da58b.png" alt="PixPin_2026-05-23_13-52-47.png"></p>
+<p>解密。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-53-45-b1c70ef22490250d64e4561db04485b1-PixPin_2026-05-23_13-53-42-3a24dd.png" alt="PixPin_2026-05-23_13-53-42.png"></p>
+<p>恢复内存权限。需要关注的是：加密前把整个ImgBase&#x2F;ImgSize改成PAGE_READWRITE，但恢复时只恢复 TxtBase&#x2F;TxtSize。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-55-09-2902f96fb5d768fdc54c430807c0039c-PixPin_2026-05-23_13-55-07-fb4192.png" alt="PixPin_2026-05-23_13-55-07.png"></p>
+<p>通知主线程：整条ROP睡眠混淆链结束。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F13-56-47-25454ba9ab6da05b95533afe9adece80-PixPin_2026-05-23_13-56-42-dd365c.png" alt="PixPin_2026-05-23_13-56-42.png"></p>
+<p><strong>第五阶段：ROP链执行与结束</strong></p>
+<p>每个 Rop[i] 都会被注册成一个未来执行的callback。callback函数是NtContinue。callback参数是&amp;Rop[i]。这些调用不是同步线性调用，而是由按时间触发。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F14-03-10-3dc627566ae4aad14598c7398c47e4b5-PixPin_2026-05-23_14-03-03-b3112c.png" alt="PixPin_2026-05-23_14-03-03.png"></p>
+<p>首先wait callback线程执行WaitForSingleObjectEx的ROP，线程阻塞，直到主线程发出EvntStart开始信号。</p>
+<p>主线程使用SysNtSignalAndWaitForSingleObject先设置 <code>EvntStart</code> 信号，wait callback线程收到信号，继续往下执行剩余ROP链，然后主线程等待 <code>EvntDelay</code> 信号，直到ROP链结束。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F14-00-34-a76031ec58d7683a5dfc1b53e02ebaeb-PixPin_2026-05-23_14-00-31-46f12a.png" alt="PixPin_2026-05-23_14-00-31.png"></p>
+<h1 id="三、FOLIAGE"><a href="#三、FOLIAGE" class="headerlink" title="三、FOLIAGE"></a>三、FOLIAGE</h1><p>代码：<a target="_blank" rel="noopener" href="https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Obf.c#L417">Havoc&#x2F;payloads&#x2F;Demon&#x2F;src&#x2F;core&#x2F;Obf.c at main · HavocFramework&#x2F;Havoc</a></p>
+<p>FOLIAGE与前面EKKO&#x2F;ZILEAN 不同：它不是用Timer&#x2F;Wait回调触发 <code>NtContinue</code>，而是创建一个挂起线程，然后向它连续投递APC，让APC依次执行一组 <code>NtContinue(CONTEXT)</code>，完成加密、睡眠、解密和恢复。</p>
+<p>主要流程如下：</p>
+<ol>
+<li>创建事件hEvent  </li>
+<li>创建挂起线程hThread  </li>
+<li>获取hThread初始CONTEXT  </li>
+<li>基于这个CONTEXT构造多组ROP CONTEXT  </li>
+<li>向hThread 队列投递多个NtContinue APC  </li>
+<li>AlertResumeThread恢复线程并触发 APC  </li>
+<li>ROP 链依次执行：  <ul>
+<li>等待 hEvent  </li>
+<li>改内存 RW  </li>
+<li>加密模块  </li>
+<li>获取当前线程上下文  </li>
+<li>设置伪造上下文  </li>
+<li>sleep  </li>
+<li>解密模块  </li>
+<li>恢复 .text 权限  </li>
+<li>恢复原上下文  </li>
+<li>退出线程</li>
+</ul>
+</li>
+</ol>
+<p><strong>第一阶段：创建事件hEvent</strong>。<code>hEvent</code> 用来控制ROP链开始执行，他与ZILEAN的EvntStart作用相同。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-20-44-3b2ba5a33e8b9167895ef58f6ef2d57c-PixPin_2026-05-23_15-20-41-22bd2f.png" alt="PixPin_2026-05-23_15-20-41.png"></p>
+<p><strong>第二阶段：创建挂起线程hThread</strong> </p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-21-04-2800b6f73b48df74cced4d5b94b878ef-PixPin_2026-05-23_15-21-02-ad964a.png" alt="PixPin_2026-05-23_15-21-02.png"></p>
+<p><strong>第三阶段：获取hThread初始CONTEXT</strong></p>
+<p>SysNtDuplicateObject的作用是复制当前线程的句柄，得到一个可以被后续 <code>NtGetContextThread</code> &#x2F; <code>NtSetContextThread</code> 使用的线程句柄。</p>
+<p>NtGetContextThread的作用是获取暂停线程的上下文。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-28-52-44ceb70c3390fafe17d195e15c73a774-PixPin_2026-05-23_15-28-47-395b6f.png" alt="PixPin_2026-05-23_15-28-47.png"></p>
+<p><strong>第四阶段：基于这个CONTEXT构造多组ROP CONTEXT</strong>。这个构造过程与上文介绍的ZILEAN完全一致，我就不过多介绍了。</p>
+<p><strong>第五阶段：APC投递执行链</strong>。FOLIAGE的调度方式就是创建一个自建线程，然后通过APC队列把多组 <code>NtContinue(CONTEXT)</code> 投递给这个线程，由这个线程依次执行整条sleep obfuscation链。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-36-51-49d06f2edb8494721c3b9f6793e76fe5-PixPin_2026-05-23_15-36-48-edff29.png" alt="PixPin_2026-05-23_15-36-48.png"></p>
+<p><strong>第六阶段：AlertResumeThread恢复线程并触发 APC</strong></p>
+<p>NtAlertResumeThread的作用是先alert这个线程，再resume这个线程，也就是说线程变成可告警状态，即等待期间可以被APC打断，并在当前线程中执行异步过程调用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-39-32-33691913ad8d1513422a3eba5a0880fc-PixPin_2026-05-23_15-39-30-9c4178.png" alt="PixPin_2026-05-23_15-39-30.png"></p>
+<p><strong>第七阶段：ROP链执行与结束</strong></p>
+<p>首先自建线程执行WaitForSingleObjectEx的ROP，线程阻塞，直到主线程发出hEvent开始信号。</p>
+<p>主线程使用SysNtSignalAndWaitForSingleObject先设置hEvent信号，自建线程收到信号，继续往下执行剩余ROP链，然后主线程等待hThread结束信号，直到ROP链结束。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F15-48-02-d91ab5a9f40f97b5db7c7fa9f01c89e3-PixPin_2026-05-23_15-47-45-6b548e.png" alt="PixPin_2026-05-23_15-47-45.png"></p>
+<h1 id="四、Cronos"><a href="#四、Cronos" class="headerlink" title="四、Cronos"></a>四、Cronos</h1><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/Idov31/Cronos?tab=readme-ov-file">GitHub - Idov31&#x2F;Cronos：一种利用等待定时器规避内存扫描的睡眠混淆技术的PoC。·GitHub</a></p>
+<p>博文：<a target="_blank" rel="noopener" href="https://idov31.github.io/posts/cronos-sleep-obfuscation">timeout &#x2F;t 31 &amp;&amp; start evil.exe</a></p>
+<p>一种基于<strong>Ekko</strong>思路的新型睡眠混淆技术PoC。Cronos利用可等待定时器对<strong>当前主EXE 的PE映像范围</strong>进行加密，并在加密期间将该映像权限从 <code>PAGE_EXECUTE_READWRITE</code> 改为 <code>PAGE_READWRITE</code>，睡眠结束后再恢复为 <code>PAGE_EXECUTE_READWRITE</code>，以降低内存扫描器在睡眠窗口中直接扫描有效代码的概率。</p>
+<p><strong>Ekko</strong>使用 <code>CreateTimerQueueTimer</code> 创建定时器，并设置等待时间，然后放入 <code>TimerQueue</code> 队列中。时间到期后，系统会自动分配工作线程执行回调。</p>
+<p><strong>Cronos</strong>使用 <code>CreateWaitableTimerW</code> 创建<strong>内核定时器对象</strong>，获取对象句柄，然后通过 <code>SetWaitableTimer</code> 配置定时器参数，包括到期时间、APC回调、周期等。主线程执行 <code>SleepEx</code> 后进入可警告等待状态，即等待期间可以被APC打断，并在当前线程中执行异步过程调用。</p>
+<p>Cronos和Ekko的整体流程大致一致。区别在于：Cronos 在<strong>当前线程</strong>的可警告等待期间执行APC回调，而Ekko通过<strong>独立工作线程</strong>执行TimerQueue回调。</p>
+<ol>
+<li>创建可等待定时器</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-08-23-5cc15d29f8f9ed8d63d8b4eb2beb1725-20260404150823-6bf34b.png" alt="img"></p>
+<ol>
+<li>APC 回调中捕获上下文</li>
+</ol>
+<p>通过一个dummy timer触发 <code>RtlCaptureContext</code>，在APC回调执行路径中捕获当前线程的寄存器上下文，并保存到 <code>ctxDummyThread</code> 结构中。这个上下文不是普通业务代码中刚进入 <code>SleepEx</code> 时的现场，而是APC分发路径中的上下文，后续会以它作为模板构造多个 <code>NtContinue</code> 上下文。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-12-09-cd4fc1e0c45d3ddf563da64c6b3a1bcb-20260404151208-12bd0f.png" alt="img"></p>
+<ol>
+<li>创建四个上下文</li>
+</ol>
+<p>以捕获到的APC上下文为模板，克隆4个副本，分别构造：</p>
+<ul>
+<li><code>VirtualProtect(ImageBase, ImageSize, PAGE_READWRITE, &amp;oldProtect)</code></li>
+<li><code>SystemFunction032(&amp;Image, &amp;Key)</code> 加密</li>
+<li><code>SystemFunction032(&amp;Image, &amp;Key)</code> 解密</li>
+<li><code>VirtualProtect(ImageBase, ImageSize, PAGE_EXECUTE_READWRITE, &amp;oldProtect)</code></li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-56-15-06a9aa7e662f9522cf0d9db68751e2ec-20260404155614-f203a9.png" alt="img"></p>
+<ol>
+<li>时间线编排</li>
+</ol>
+<p>时间线以线程进入可警告等待状态后，也就是执行 <code>SleepEx(..., TRUE)</code> 后作为起始点。</p>
+<p>需要注意：源码中的宏名是 <code>InitializeTimerMs</code>，但实际换算逻辑是 <code>sec * 1000 * 10 * 1000</code>，也就是按“秒”转换成 100ns 单位的负相对时间。因此 <code>CronosSleep(10)</code> 对应的时间线大致如下：</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-58-09-f7931419792fc56ace417892a608fd6c-20260404155808-65e3ff.png" alt="img"></p>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>立即</td>
+<td><code>VirtualProtect(PAGE_READWRITE)</code></td>
+</tr>
+<tr>
+<td>1 秒</td>
+<td><code>SystemFunction032</code> 加密</td>
+</tr>
+<tr>
+<td>sleeptime - 1  秒</td>
+<td><code>SystemFunction032</code> 解密</td>
+</tr>
+<tr>
+<td>sleeptime 秒</td>
+<td><code>VirtualProtect(PAGE_EXECUTE_READWRITE)</code></td>
+</tr>
+</tbody></table>
+<ol>
+<li>为SleepEx调用链寻找 gadgets</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-04-28-b7bf46ebd60e6031f861a57f863e3091-20260406130427-74df13.png" alt="img"></p>
+<ol>
+<li>全部设置为NtContinue 作为 APC 回调，并传入对应上下文</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-06-42-27aa4005919db66960238d08269ff03c-20260406130641-2e81d8.png" alt="img"></p>
+<ol>
+<li>偏移计算</li>
+</ol>
+<p>在正式介绍 <code>SleepEx</code> ROP链的汇编代码之前，需要先解释一个问题：构造上下文时，为什么会有下面这些看起来比较奇怪的偏移？</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ctxProtectionRW.Rsp -= (8 + 0x150);</span><br><span class="line">ctxEncryption.Rsp -= (8 + 0xF0); </span><br><span class="line">ctxDecryption.Rsp -= (8 + 0x90); </span><br><span class="line">ctxProtectionRWX.Rsp -= (8 + 0x30);  </span><br></pre></td></tr></table></figure>
+
+<p>Ekko使用NtContinue恢复上下文执行目标函数时，如果希望目标函数能够正常返回，ctx.Rsp必须指向目标函数的返回地址。通常情况下，RtlCaptureContext捕获后的Rsp可以理解为位于返回地址之后（栈高地址），因此需要ctx.Rsp -&#x3D; 8，让Rsp指向返回地址。</p>
+<p>但Cronos这里额外多出了 0x150、0xF0、0x90、0x30。原因在于Cronos并不是直接从主代码调用目标函数，而是通过：</p>
+<p><code>SleepEx alertable wait -&gt; APC dispatch -&gt; NtContinue -&gt; VirtualProtect / SystemFunction032</code></p>
+<p>这种路径间接执行目标函数。</p>
+<p>更准确地说：在执行到call ntdll!KiUserCallForwarder之前，APC分发逻辑已经在当前线程栈上消耗了一部分栈空间。Cronos需要让NtContinue恢复后的目标函数返回地址，正好落在APCdispatcher已经布置好的返回路径上。</p>
+<p>此外，由于QuadSleep ROP链的存在，每一次调用SleepEx时的Rsp都不同于主代码中直接调用SleepEx时的Rsp。下面通过调试观察。</p>
+<p>在主代码中调用SleepEx后，RSP &#x3D; 00000065202FDA98</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-29-42-43fa8498c70dcf5ae41075dfd052bb3f-20260406132942-b58097.png" alt="img"></p>
+<p>进入到ROP链后，第一次调用SleepEx，RSP &#x3D; 00000065202FD948</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-30-18-2a0d41d3f582de884258a7dcb436d85c-20260406133017-a82de2.png" alt="img"></p>
+<p>两者差值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00000065202FDA98 - 00000065202FD948 = 0x150</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-33-47-50e52553b6634d2b56ef626d6c6005e7-20260406133346-b77953.png" alt="img"></p>
+<p>进一步探究推到</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">注：Base_RSP以主代码中调用SleepEx后的RSP为基准。</span><br><span class="line"></span><br><span class="line">capturedRSP = Base_RSP - D</span><br><span class="line"></span><br><span class="line">其中D表示APC分发路径在执行目标回调前已经消耗的栈空间。</span><br><span class="line"></span><br><span class="line">第i次 SleepEx 触发 APC 时，call ntdll!KiUserCallForwarder 压入返回地址的位置为：</span><br><span class="line"></span><br><span class="line">= SleepEx_i_RSP - D - 8</span><br><span class="line">= (Base_RSP - depth_i) - D - 8</span><br><span class="line">= (Base_RSP - D) - depth_i - 8</span><br><span class="line">= capturedRSP - depth_i - 8</span><br><span class="line"></span><br><span class="line">所以：</span><br><span class="line"></span><br><span class="line">ctxX.Rsp = capturedRSP - depth_i - 8</span><br></pre></td></tr></table></figure>
+
+<p>其中depth_i就是每一次SleepEx入口相对于Base_RSP的栈深度差：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SleepEx #1: depth = 0x150  -&gt; offset = -(8 + 0x150)</span><br><span class="line">SleepEx #2: depth = 0xF0   -&gt; offset = -(8 + 0xF0)</span><br><span class="line">SleepEx #3: depth = 0x90   -&gt; offset = -(8 + 0x90)</span><br><span class="line">SleepEx #4: depth = 0x30   -&gt; offset = -(8 + 0x30)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-02-50-fd3086b60849ad0a261c8d4166bdeaa3-Drawing%202026-04-06%2013.49.16.excalidraw-6c05e2.png" alt="Drawing 2026-04-06 13.49.16.excalidraw.png"></p>
+<p>这样做的目的，是让所有通过APC + NtContinue执行的目标函数都能统一返回到KiUserCallForwarder后续的APC分发路径中，再由系统恢复被APC打断的SleepEx现场。</p>
+<p>调试验证一下。</p>
+<p>0x6cca2fcf38</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/05/20-10-06-4a58696c743a103cb1ffb96acf57ada6-20260405201005-024cfd.png" alt="img"></p>
+<p>VirtualProtect(PAGE_READWRITE) 的返回地址就是ntdll!KiUserCallForwarder 的返回地址，函数执行完后会返回到call ntdll!KiUserCallForwarder 的下一条指令。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/05/20-19-12-40dcd0c101f9a68d26bb9bc38bdcc911-20260405201912-c172c9.png" alt="img"></p>
+<p> <code>call    ntdll!KiUserCallForwarder</code> 之后，在0x6cca2fcf38处留下返回地址作为VirtualProtect的返回地址。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/05/20-19-55-2a1a8b539349cedc6211afd38b9072d2-20260405201955-f52bc0.png" alt="img"></p>
+<p>第二次调用VirtualProtect，此时rsp &#x3D; 0x000000147CCFD0A8，正常来说是指向返回地址，但是不知道为什么并没有写入正确的返回地址，导致VirtualProtect指向ret指令后，触发c0000005异常。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/00-38-55-8bd56e886668246a8a6b2e6449c28e74-20260406003855-8260e8.png" alt="img"></p>
+<p>这一切的原因我不得而知，我只能确定是写了返回地址，目标函数执行完后能正常返回。我再次声明，<strong>以上全是我个人的主观推测，可能有误导性！</strong> 我也尝试使用动态调试的方法验证，可能是水平有限实在无法验证，如果各位师傅有验证的思路可以告诉我，谢谢！</p>
+<p><strong>最终结论</strong>：<br><code>指向目标函数返回地址的 RSP = capturedRSP - depth_i - 8</code></p>
+<p>也就是：</p>
+<p><code>ctxX.Rsp = capturedRSP - depth_i - 8</code></p>
+<p>这个结论的实际意义是：如果修改了QuadSleep的汇编代码，只要新增或删除了会改变栈深度的指令，比如push、pop、sub rsp, xx、add rsp, xx 等，就必须重新计算每一次SleepEx的depth_i，不能继续沿用原来的0x150、0xF0、0x90、0x30。</p>
+<p>例如，我像正常函数一样保存非易失寄存器：</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-34-16-938e19bd614907e9e2d6b342843a3796-20260406143415-1ae78a.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-34-22-f7a745c58106158eceaf1236e46e98da-20260406143422-69dfc7.png" alt="img"></p>
+<p>这里多了两次push，栈深度增加0x10，所以CronosSleep中4个上下文的offset都需要相应增加 0x10。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-35-44-ffd48ec16215c6efaabaffe9896ad82e-20260406143544-45c195.png" alt="img"></p>
+<p>正常执行</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-36-12-80a9075042087d10108266e5b41b7782-20260406143612-bd7a35.png" alt="img"></p>
+<p>反之，出错</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-38-52-b8f6c46f3c4e27d7ead40a6a19335b77-20260406143851-9c0c75.png" alt="img"></p>
+<p>总的来说，凡是在汇编QuadSleep中改变每次进入SleepEx前栈深度的操作，都会影响这4个上下文的Rsp偏移，必须重新调试或计算对应的depth_i。</p>
+<ol>
+<li>执行SleepEx ROP链</li>
+</ol>
+<p>因为当线程调用SleepEx进入可警告等待状态，触发执行了一个APC函数，就会返回到正常的执行状态。详见： <a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-sleepex">https://learn.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-sleepex</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/05/19-35-41-02af5dbac38927a3c1eb5e081876e44e-20260405193541-d45c71.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/21-16-09-c06ce796222aaf54ba1c9a6911fb87e8-20260404211609-d79051.png" alt="img"></p>
+<p>调用链</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">QuadSleep jmp SleepEx #1</span><br><span class="line">                 └─ APC #1 (t=0s)</span><br><span class="line">                     └─ NtContinue -&gt; VirtualProtect(PAGE_READWRITE)</span><br><span class="line">                         └─ ret -&gt; APC dispatcher 清理</span><br><span class="line">                             └─ 恢复 SleepEx #1 现场</span><br><span class="line">                                 └─ SleepEx #1 返回</span><br><span class="line">                                     └─ ROP 链继续</span><br><span class="line">             </span><br><span class="line">             QuadSleep 进入 SleepEx #2</span><br><span class="line">                 └─ APC #2 (t=1s)</span><br><span class="line">                     └─ NtContinue -&gt; SystemFunction032(加密)</span><br><span class="line">                         └─ ret -&gt; APC dispatcher 清理</span><br><span class="line">                             └─ 恢复 SleepEx #2 现场</span><br><span class="line">                                 └─ SleepEx #2 返回</span><br><span class="line">                                     └─ ROP 链继续</span><br><span class="line">             </span><br><span class="line">                             ← 当前主 EXE 映像处于加密状态，进入睡眠窗口 →</span><br><span class="line">             </span><br><span class="line">             QuadSleep 进入 SleepEx #3</span><br><span class="line">                 └─ APC #3 (t=sleepTime-1s，例如 9s)</span><br><span class="line">                     └─ NtContinue -&gt; SystemFunction032(解密)</span><br><span class="line">                         └─ ret -&gt; APC dispatcher 清理</span><br><span class="line">                             └─ 恢复 SleepEx #3 现场</span><br><span class="line">                                 └─ SleepEx #3 返回</span><br><span class="line">                                     └─ ROP 链继续</span><br><span class="line">             </span><br><span class="line">             QuadSleep 进入 SleepEx #4</span><br><span class="line">                 └─ APC #4 (t=sleepTime，例如 10s)</span><br><span class="line">                     └─ NtContinue -&gt; VirtualProtect(PAGE_EXECUTE_READWRITE)</span><br><span class="line">                         └─ ret -&gt; APC dispatcher 清理</span><br><span class="line">                             └─ 恢复 SleepEx #4 现场</span><br><span class="line">                                 └─ SleepEx #4 返回</span><br><span class="line">                                     └─ end_label -&gt; ret             </span><br></pre></td></tr></table></figure>
+
+<p>在这里我还想讲一下：Cronos 技术中，<strong>ROP链是在主线程执行的</strong>，而不是在新建线程或者线程池线程中。当主线程进入 alertable 等待时，已经排队的APC就会依次执行，ROP链在主线程上下文中运行。</p>
+<p>Cronos看起来像是在主线程中加密当前进程映像，因此很容易产生一个疑问：既然主线程所在的 EXE <code>.text</code> 已经被加密，那它继续执行时为什么不会崩溃？</p>
+<p>关键在于，Cronos并不是让主线程在加密后继续执行自身代码，而是让主线程进入 <code>SleepEx(alertable)</code> 的系统等待路径；加密、解密和权限恢复都通过 APC + <code>NtContinue</code> 在这个等待路径中完成。只有当解密和权限恢复完成后，主线程才从<code>SleepEx</code> &#x2F;ROP 链返回到原始代码继续执行。也就是说，加密窗口内真正运行的是APC dispatcher、<code>NtContinue</code>、<code>VirtualProtect</code>、<code>SystemFunction032</code>、<code>SleepEx</code> 等系统路径，而不是已经被加密的主 EXE <code>.text</code>。</p>
+<h1 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h1><table>
+<thead>
+<tr>
+<th>技术名称</th>
+<th>调度方式</th>
+<th>核心流程</th>
+<th>特点与优势</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Ekko</strong></td>
+<td>TimerQueue Timer + NtContinue</td>
+<td>1. 创建 TimerQueue  2. 捕获 Timer 线程上下文  3. 构造 ROP CONTEXT 链  4. 执行 <code>VirtualProtect → 加密 → Sleep → 解密 → 恢复权限 → SetEvent</code></td>
+<td>使用独立 Timer 线程，主线程仅等待事件完成；ROP链串联执行，模块在休眠期间加密，难被扫描</td>
+</tr>
+<tr>
+<td><strong>ZILEAN</strong></td>
+<td>RtlRegisterWait callback + NtContinue</td>
+<td>1. 创建 wait_event 对象  2. 捕获 Wait 线程上下文  3. 构造 ROP CONTEXT  4. 等待主线程触发 EvntStart  5. 执行 <code>VirtualProtect → 加密 → Sleep → 解密 → 恢复权限 → SetEvent</code></td>
+<td>依赖 Wait 线程执行回调，异步触发；主线程与 Wait 线程协调信号完成 ROP 链</td>
+</tr>
+<tr>
+<td><strong>FOLIAGE</strong></td>
+<td>APC 队列 + 自建挂起线程</td>
+<td>1. 创建事件 hEvent  2. 创建挂起线程 hThread  3. 获取初始 CONTEXT  4. 构造多组 ROP CONTEXT  5. 投递 NtContinue APC  6. AlertResumeThread 唤醒线程  7. ROP 链执行模块权限修改、加密、Sleep、解密、恢复</td>
+<td>利用 APC 异步执行，线程自身可被 alertable 调用打断，链式执行更隐蔽；支持上下文&#x2F;栈伪装</td>
+</tr>
+<tr>
+<td><strong>Cronos</strong></td>
+<td>WaitableTimer + SleepEx(alertable) + NtContinue</td>
+<td>1. 创建可等待定时器  2. 捕获 APC 执行路径上下文  3. 构造四个 CONTEXT（改权限&#x2F;加密&#x2F;解密&#x2F;恢复）  4. SleepEx 期间触发 APC  5. 执行上下文链</td>
+<td>在主线程 SleepEx alertable 等待期间执行 APC；对当前主 EXE 的 PE 映像加密，简化调度流程</td>
+</tr>
+</tbody></table>
+<p>睡眠混淆是C2框架中一项重要的防御规避技术，它的核心目标是在Beacon休眠期间隐藏内存特征，降低被 EDR&#x2F;AV扫描命中的概率。</p>
+<p>出于研究目的，我在自研C2中实现了 <strong>Ekko</strong> 和 <strong>ZILEAN</strong>。但从工程角度看，睡眠混淆并不是一项必须实现的能力。它本质上是一把双刃剑：一方面可以在休眠期间隐藏Beacon的内存特征，另一方面也会带来更复杂的执行链和更明显的行为特征。对于自研C2而言，是否引入这类机制，应该取决于实际研究目标和对抗场景，而不是单纯追求“高级功能”的数量。</p>
+<p>本月最后一篇文章如约而至。下一篇文章的主题我也不卖关子了，就是大名鼎鼎的——<strong>间接系统调用</strong>。</p>
+<p>我相信各位师傅对这项技术并不陌生。无论是Hell’s Gate、Halo’s Gate，还是后续各种syscall stub、syscall number动态解析与绕过思路，间接系统调用一直都是Windows攻防研究中绕不开的话题。下一篇文章我会结合自己的理解，聊一聊这项技术。</p>
+<p>当然我还有其他的主题可以写，比如最近在某公众号闹得沸沸扬扬的绕过核晶添加计划任务和添加用户，不过转念一想我可没这么厉害，能够一直绕过核晶，之前绕过了几天，还是被杀掉了，所以还是不丢人显眼。</p>
+<p>真的最近几个月真是高强度更新文章和自研C2，耗费了大量精力，等7月一过，先消停一段时间，不定时更新博客。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/05/15/%E5%9C%A8%E5%BC%80%E5%8F%91Beacon%E8%BF%87%E7%A8%8B%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-05-23 16:35:59
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                        <b>#</b> 防御规避
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81Ekko"><span class="toc-text">一、Ekko</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81ZILEAN"><span class="toc-text">二、ZILEAN</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81FOLIAGE"><span class="toc-text">三、FOLIAGE</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Cronos"><span class="toc-text">四、Cronos</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-text">五、总结</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%EF%BC%88sleep%20obfuscation%EF%BC%89 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F05%2F23%2F%25E7%259D%25A1%25E7%259C%25A0%25E6%25B7%25B7%25E6%25B7%2586%25EF%25BC%2588sleep-obfuscation%25EF%25BC%2589%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/05/23/%E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%EF%BC%88sleep-obfuscation%EF%BC%89/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
