@@ -165,7 +165,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2026-05-23 16:35:59
+          2026-05-23 16:53:08
         </span>
         
               <span class="post-categories">
@@ -362,12 +362,12 @@
 <li>创建可等待定时器</li>
 </ol>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-08-23-5cc15d29f8f9ed8d63d8b4eb2beb1725-20260404150823-6bf34b.png" alt="img"></p>
-<ol>
+<ol start="2">
 <li>APC 回调中捕获上下文</li>
 </ol>
 <p>通过一个dummy timer触发 <code>RtlCaptureContext</code>，在APC回调执行路径中捕获当前线程的寄存器上下文，并保存到 <code>ctxDummyThread</code> 结构中。这个上下文不是普通业务代码中刚进入 <code>SleepEx</code> 时的现场，而是APC分发路径中的上下文，后续会以它作为模板构造多个 <code>NtContinue</code> 上下文。</p>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-12-09-cd4fc1e0c45d3ddf563da64c6b3a1bcb-20260404151208-12bd0f.png" alt="img"></p>
-<ol>
+<ol start="3">
 <li>创建四个上下文</li>
 </ol>
 <p>以捕获到的APC上下文为模板，克隆4个副本，分别构造：</p>
@@ -378,7 +378,7 @@
 <li><code>VirtualProtect(ImageBase, ImageSize, PAGE_EXECUTE_READWRITE, &amp;oldProtect)</code></li>
 </ul>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/04/15-56-15-06a9aa7e662f9522cf0d9db68751e2ec-20260404155614-f203a9.png" alt="img"></p>
-<ol>
+<ol start="4">
 <li>时间线编排</li>
 </ol>
 <p>时间线以线程进入可警告等待状态后，也就是执行 <code>SleepEx(..., TRUE)</code> 后作为起始点。</p>
@@ -408,15 +408,15 @@
 <td><code>VirtualProtect(PAGE_EXECUTE_READWRITE)</code></td>
 </tr>
 </tbody></table>
-<ol>
+<ol start="5">
 <li>为SleepEx调用链寻找 gadgets</li>
 </ol>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-04-28-b7bf46ebd60e6031f861a57f863e3091-20260406130427-74df13.png" alt="img"></p>
-<ol>
+<ol start="6">
 <li>全部设置为NtContinue 作为 APC 回调，并传入对应上下文</li>
 </ol>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/13-06-42-27aa4005919db66960238d08269ff03c-20260406130641-2e81d8.png" alt="img"></p>
-<ol>
+<ol start="7">
 <li>偏移计算</li>
 </ol>
 <p>在正式介绍 <code>SleepEx</code> ROP链的汇编代码之前，需要先解释一个问题：构造上下文时，为什么会有下面这些看起来比较奇怪的偏移？</p>
@@ -468,7 +468,7 @@
 <p>反之，出错</p>
 <p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images/2026/04/06/14-38-52-b8f6c46f3c4e27d7ead40a6a19335b77-20260406143851-9c0c75.png" alt="img"></p>
 <p>总的来说，凡是在汇编QuadSleep中改变每次进入SleepEx前栈深度的操作，都会影响这4个上下文的Rsp偏移，必须重新调试或计算对应的depth_i。</p>
-<ol>
+<ol start="8">
 <li>执行SleepEx ROP链</li>
 </ol>
 <p>因为当线程调用SleepEx进入可警告等待状态，触发执行了一个APC函数，就会返回到正常的执行状态。详见： <a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-sleepex">https://learn.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-sleepex</a></p>
@@ -520,6 +520,8 @@
 <p>我相信各位师傅对这项技术并不陌生。无论是Hell’s Gate、Halo’s Gate，还是后续各种syscall stub、syscall number动态解析与绕过思路，间接系统调用一直都是Windows攻防研究中绕不开的话题。下一篇文章我会结合自己的理解，聊一聊这项技术。</p>
 <p>当然我还有其他的主题可以写，比如最近在某公众号闹得沸沸扬扬的绕过核晶添加计划任务和添加用户，不过转念一想我可没这么厉害，能够一直绕过核晶，之前绕过了几天，还是被杀掉了，所以还是不丢人显眼。</p>
 <p>真的最近几个月真是高强度更新文章和自研C2，耗费了大量精力，等7月一过，先消停一段时间，不定时更新博客。</p>
+<p>画师B站：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV18o5x6cEdP?buvid=Y54BF0509C3764944258B70030BAB75EDB12&from_spmid=search.search-result.0.0&is_story_h5=false&mid=CYZ+65gmzqa6QTrTo5AiXg==&plat_id=116&share_from=ugc&share_medium=iphone&share_plat=ios&share_session_id=E3B07499-531D-4C66-B225-2DDBFE31FA81&share_source=QQ&share_tag=s_i&spmid=united.player-video-detail.0.0&timestamp=1779526085&unique_k=hSo9wQ0&up_id=2815073&vd_source=664ef2f5d49884364b7e5990035b2fae">玫瑰不必长高，但是可以长大_哔哩哔哩_bilibili</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F05%2F23%2F16-47-05-59b6f467a3e9f18a545dea8177cf6621-IMG_7701-824dd1.PNG" alt="IMG_7701.PNG"></p>
 
       </div>
       
@@ -535,7 +537,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2026-05-23 16:35:59
+              2026-05-23 16:53:08
             </span>
             
                   <span class="post-categories">
