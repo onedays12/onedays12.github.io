@@ -13,9 +13,9 @@
   
   <title>
     
-      Category 
+      archive_a: 2026/7 
       
-       : 武器化
+      
       |
     
      oneday
@@ -116,47 +116,182 @@
 
 
       <div class="flex-container">
-        <!-- 标签详情页，展示某个标签下的文章列表，url形式：https://yoursite/tags/某个标签/ -->
+        <!-- 归档页，展示本站所有文章，按照年份降序归类，url形式：https://yoursite/archives/ -->
 
-<div class="container category-details">
-  <div class="content-title">
-    <h2>
-      <span>武器化</span>
-    </h2>
-  </div>
-  
-    <div class="post-list">
+<!-- last: 按年份把文章分组，当前遍历到的年份 -->
+<!-- now: 当前遍历到的文章的发布年份 -->
+
+<div class="container archives">
+  <div class="post-list">
+    
+        <!-- 后续文章的发布年份呈现 -->
+        <div class="content-title">
+          <h2>
+            <span>2026</span>
+          </h2>
+        </div>
+      
       <div class="post-item" title="重构SRDI">
-        <span class="time-m-d">2026-07-18</span>
-        <a href="/2026/07/18/%E9%87%8D%E6%9E%84SRDI/">
-          <span>重构SRDI</span>
-        </a>
+        <div class="time-m-d">07-18</div>
+        <div class="title">
+          <a href="/2026/07/18/%E9%87%8D%E6%9E%84SRDI/">
+            <span>重构SRDI</span>
+          </a>
+        </div>
       </div>
-    </div>
-  
-    <div class="post-list">
+    
+      <div class="post-item" title="以SysWhispers4项目学习系统调用">
+        <div class="time-m-d">06-20</div>
+        <div class="title">
+          <a href="/2026/06/20/%E4%BB%A5SysWhispers4%E9%A1%B9%E7%9B%AE%E5%AD%A6%E4%B9%A0%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/">
+            <span>以SysWhispers4项目学习系统调用</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="睡眠混淆（sleep obfuscation）">
+        <div class="time-m-d">05-23</div>
+        <div class="title">
+          <a href="/2026/05/23/%E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%EF%BC%88sleep-obfuscation%EF%BC%89/">
+            <span>睡眠混淆（sleep obfuscation）</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="在开发Beacon过程中遇到的一些问题">
+        <div class="time-m-d">05-15</div>
+        <div class="title">
+          <a href="/2026/05/15/%E5%9C%A8%E5%BC%80%E5%8F%91Beacon%E8%BF%87%E7%A8%8B%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/">
+            <span>在开发Beacon过程中遇到的一些问题</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="使用Vibe-Coding开发C2框架时的感想">
+        <div class="time-m-d">04-17</div>
+        <div class="title">
+          <a href="/2026/04/17/%E4%BD%BF%E7%94%A8Vibe-Coding%E5%BC%80%E5%8F%91C2%E6%A1%86%E6%9E%B6%E6%97%B6%E7%9A%84%E6%84%9F%E6%83%B3/">
+            <span>使用Vibe-Coding开发C2框架时的感想</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="调用栈欺骗（Callstack Spoofing）">
+        <div class="time-m-d">03-27</div>
+        <div class="title">
+          <a href="/2026/03/27/%E8%B0%83%E7%94%A8%E6%A0%88%E6%AC%BA%E9%AA%97%EF%BC%88Callstack-Spoofing%EF%BC%89/">
+            <span>调用栈欺骗（Callstack Spoofing）</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="动态调试分析BOF符号解析和重定位">
+        <div class="time-m-d">03-14</div>
+        <div class="title">
+          <a href="/2026/03/14/%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95%E5%88%86%E6%9E%90BOF%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90%E5%92%8C%E9%87%8D%E5%AE%9A%E4%BD%8D/">
+            <span>动态调试分析BOF符号解析和重定位</span>
+          </a>
+        </div>
+      </div>
+    
       <div class="post-item" title="COffLoader For Windows（BOFLoader）">
-        <span class="time-m-d">2026-03-13</span>
-        <a href="/2026/03/13/COffLoader-For-Windows%EF%BC%88BOFLoader%EF%BC%89/">
-          <span>COffLoader For Windows（BOFLoader）</span>
-        </a>
+        <div class="time-m-d">03-13</div>
+        <div class="title">
+          <a href="/2026/03/13/COffLoader-For-Windows%EF%BC%88BOFLoader%EF%BC%89/">
+            <span>COffLoader For Windows（BOFLoader）</span>
+          </a>
+        </div>
       </div>
-    </div>
-  
-    <div class="post-list">
+    
+      <div class="post-item" title="Beacon级联代理">
+        <div class="time-m-d">03-13</div>
+        <div class="title">
+          <a href="/2026/03/13/Beacon%E7%BA%A7%E8%81%94%E4%BB%A3%E7%90%86/">
+            <span>Beacon级联代理</span>
+          </a>
+        </div>
+      </div>
+    
+        <!-- 后续文章的发布年份呈现 -->
+        <div class="content-title">
+          <h2>
+            <span>2025</span>
+          </h2>
+        </div>
+      
+      <div class="post-item" title="2025">
+        <div class="time-m-d">12-24</div>
+        <div class="title">
+          <a href="/2025/12/24/2025/">
+            <span>2025</span>
+          </a>
+        </div>
+      </div>
+    
       <div class="post-item" title="Execute-NET-Assembly">
-        <span class="time-m-d">2025-12-12</span>
-        <a href="/2025/12/12/Execute-NET-Assembly/">
-          <span>Execute-NET-Assembly</span>
-        </a>
+        <div class="time-m-d">12-12</div>
+        <div class="title">
+          <a href="/2025/12/12/Execute-NET-Assembly/">
+            <span>Execute-NET-Assembly</span>
+          </a>
+        </div>
       </div>
-    </div>
-  
-  <nav class="post-navigation">
     
-    <span class="page-num">1 / 1</span>
+      <div class="post-item" title="跨位数注入">
+        <div class="time-m-d">12-12</div>
+        <div class="title">
+          <a href="/2025/12/12/%E8%B7%A8%E4%BD%8D%E6%95%B0%E6%B3%A8%E5%85%A5/">
+            <span>跨位数注入</span>
+          </a>
+        </div>
+      </div>
     
-  </nav>
+      <div class="post-item" title="新电脑">
+        <div class="time-m-d">10-23</div>
+        <div class="title">
+          <a href="/2025/10/23/%E6%96%B0%E7%94%B5%E8%84%91/">
+            <span>新电脑</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="从零开始手搓C2框架">
+        <div class="time-m-d">10-14</div>
+        <div class="title">
+          <a href="/2025/10/14/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E6%90%93C2%E6%A1%86%E6%9E%B6/">
+            <span>从零开始手搓C2框架</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="C2通信协议解析（一）：HTTP(s)、mTLS、WebSocket、DNS">
+        <div class="time-m-d">10-14</div>
+        <div class="title">
+          <a href="/2025/10/14/C2%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9AHTTP-s-%E3%80%81mTLS%E3%80%81WebSocket%E3%80%81DNS/">
+            <span>C2通信协议解析（一）：HTTP(s)、mTLS、WebSocket、DNS</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="Go多版本管理工具">
+        <div class="time-m-d">10-12</div>
+        <div class="title">
+          <a href="/2025/10/12/Go%E5%A4%9A%E7%89%88%E6%9C%AC%E7%AE%A1%E7%90%86%E5%B7%A5%E5%85%B7/">
+            <span>Go多版本管理工具</span>
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="被GitBook给气笑了">
+        <div class="time-m-d">10-12</div>
+        <div class="title">
+          <a href="/2025/10/12/%E8%A2%ABGitBook%E7%BB%99%E6%B0%94%E7%AC%91%E4%BA%86/">
+            <span>被GitBook给气笑了</span>
+          </a>
+        </div>
+      </div>
+    
+  </div>
 </div>
 
         

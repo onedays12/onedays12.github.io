@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Doe" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      重构SRDI 
+      
+      
+      |
+    
+     oneday
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.jpg">
+    <link rel="icon" href="/images/favicon.jpg">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+    
+<link rel="stylesheet" href="/css/figcaption/mac-block.css">
+
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c51fa9d4309a4cc29084417c30c738c0"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/avatar.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">oneday</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/categories/">
+          <a href="/categories/">Categories</a>
+        </li>
+      
+        <li class="nav-item" data-path="/friends/">
+          <a href="/friends/">Friends</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">重构SRDI</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2026-07-18 18:48:00
+        </span>
+        
+              <span class="post-categories">
+                <i class="iconfont icon-bookmark" title="Categories"></i>
+                
+                <span class="span--category">
+                  <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                    <b>#</b> 武器化
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <blockquote>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/onedays12/Convert2Shellcode">https://github.com/onedays12/Convert2Shellcode</a><br>文章首发：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/92534">https://xz.aliyun.com/news/92534</a></p>
+</blockquote>
+<p>时隔一年，我终于有动力开始重构<strong>Convert2Shellcode</strong>项目了。重构的原因主要有以下几点：</p>
+<ol>
+<li>在编写Rust Beacon时，我突发奇想，将Rust Beacon的EXE转换为Shellcode后运行，结果居然报错了。这让我意识到当前项目在兼容性和稳定性方面仍有不少问题。</li>
+<li>我想放弃在C Beacon内部导出<code>ReflectiveLoader</code>的设计，改为将<code>ReflectiveLoader</code>外置于Beacon DLL。这样一来，就可以在<code>ReflectiveLoader</code>中实现更多有趣且灵活的功能。</li>
+<li>这个项目最初只是我学习SRDI的产物，早期编写时设计还比较稚嫩，并没有充分考虑未来的扩展性。例如，如何传递用户参数、如何支持x86，以及如何兼容更多类型的PE文件等问题，当时都还没有完善处理。</li>
+</ol>
+<p>这篇文章将围绕<code>Convert2Shellcode</code>项目的完整重构方案展开，重点记录这次重构过程中遇到的问题、设计取舍以及对应的解决思路。主要内容包括：</p>
+<ol>
+<li>运行上下文的构造与管理 </li>
+<li>用户参数传递机制的设计</li>
+<li>Rust 程序无法直接转换为 Shellcode 的问题分析：TLS Data</li>
+<li>DLL 指定导出函数的调用支持</li>
+<li>旧 PE 数据的清理方案</li>
+<li>映射后 PE 特征的抹除思路</li>
+<li>x86 EXE 转 Shellcode 的支持</li>
+<li><code>Convert2Shellcode</code>与 Iris Beacon睡眠混淆冲突的解决思路</li>
+</ol>
+<h1 id="一-、运行上下文的构造与管理"><a href="#一-、运行上下文的构造与管理" class="headerlink" title="一 、运行上下文的构造与管理"></a>一 、运行上下文的构造与管理</h1><h2 id="1-1-RDI2-Header"><a href="#1-1-RDI2-Header" class="headerlink" title="1.1 RDI2 Header"></a>1.1 RDI2 Header</h2><p>在SRDI Loader中，我定义 <code>RDI2 Header</code> 的二进制布局。RDI2 Header的价值在于把shellcode生成阶段和SRDI loader运行阶段解耦。生成器只负责拼接并填写header，loader只需要拿到header指针，就可以解析raw PE、user data和export调用信息。</p>
+<p><code>HDR_*</code> 定义的是 <code>RDI2_HEADER</code> 的字段偏移。这个header由 <code>Convert2Shellcode.c</code> 在生成shellcode时写入，loader入口处通过<code>RCX/ECX</code> 拿到header指针后，再根据这些偏移解析raw PE、user data、flags和 export hash。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F18-37-56-8f82fe6de93855d86ed5e696e1a414bc-20260716183756062-76412b.png" alt="img"></p>
+<p>大概等价于C结构体：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">typedef struct _RDI2_HEADER &#123;</span><br><span class="line">    uint32_t Magic;       // 0x00: &quot;RDI2&quot;</span><br><span class="line">    uint16_t Version;     // 0x04</span><br><span class="line">    uint16_t Flags;       // 0x06</span><br><span class="line">    uint32_t PeOffset;    // 0x08</span><br><span class="line">    uint32_t PeSize;      // 0x0C</span><br><span class="line">    uint32_t UserOffset;  // 0x10</span><br><span class="line">    uint32_t UserSize;    // 0x14</span><br><span class="line">    uint32_t ExportHash;  // 0x18</span><br><span class="line">    uint32_t Reserved;    // 0x1C</span><br><span class="line">&#125; RDI2_HEADER;            // 0x20 bytes</span><br></pre></td></tr></table></figure>
+
+<p>各字段含义如下：</p>
+<ul>
+<li><code>Magic</code>：用于识别RDI2 payload。当前常量<code>0x32494452</code>按小端序存储后对应ASCII字符串 <code>&quot;RDI2&quot;</code>。若要替换Magic，生成器与四个SRDI Loader必须同步修改。</li>
+<li><code>Version</code>：Header协议版本。目前生成器写入版本 <code>2</code>，用于未来扩展和兼容性判断。</li>
+<li><code>Flags</code>：功能开关位。当前仅定义 bit 0：<code>RDI_FLAG_EXPORT (0x0001)</code>。当该位被设置且 <code>ExportHash</code> 非零时，请求执行指定DLL导出函数。</li>
+<li><code>PeOffset</code>：raw PE相对于RDI2 Header起始地址的偏移。当前生成器固定写入<code>0x20</code>，但使用偏移而非绝对地址，使front&#x2F;post两种静态布局共享同一套loader逻辑。</li>
+<li><code>PeSize</code>：raw PE文件大小。loader将其作为源PE长度元数据，并在<code>ClearSourcePe</code>阶段清理原始PE数据。</li>
+<li><code>UserOffset</code>：用户数据相对于Header起始地址的偏移；没有用户数据时为<code>0</code>。</li>
+<li><code>UserSize</code>：用户数据长度。导出模式下，loader将用户数据地址和长度传递给目标导出函数。</li>
+<li><code>ExportHash</code>：目标具名导出函数的ROR13 hash。Header中不保存导出函数名，loader在映射后的目标 PE 导出表中按该 hash 查找。</li>
+<li><code>Reserved</code>：保留字段。当前生成器写入<code>0</code>，供后续Header扩展使用。</li>
+</ul>
+<h2 id="1-2-CTX上下文"><a href="#1-2-CTX上下文" class="headerlink" title="1.2 CTX上下文"></a>1.2 CTX上下文</h2><p>除了Header之外，SRDI Loader还需要在栈上定义CTX区域作为loader的临时状态中心。</p>
+<p>v1版本时我以 <code>[rbp+offset]</code> 临时槽位保存状态的早期手工映射loader。这三个值贯穿整个loader的整个加载流程：映射PE、重定位、修复导入表、调整节权限、执行TLS Callback、调用入口点，全都围绕这三个栈槽展开。 这种设计在功能较少时还能够接受，但随着后续要支持用户参数传递、指定导出函数调用、raw PE清理、mapped PE特征抹除、Rust程序所需的Static TLS Data初始化、以及x86架构时，原有结构就会变得难以扩展。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[rbp+8] = 旧 DOS 头地址，也就是原始 PE 基址  </span><br><span class="line">[rbp+16] = 新 DOS 头地址，也就是 VirtualAlloc 后的新映射基址  </span><br><span class="line">[rbp+24] = 新 NT 头地址</span><br></pre></td></tr></table></figure>
+
+<p>v2的上下文以 <code>rbp</code> 作为稳定锚点，在栈上开出 <code>CTX_SIZE</code> 大小的上下文区，用来保存解析后的header信息、源 PE 地址、映射后的image 地址、NT Header、重定位delta、用户参数、已解析的API地址以及TLS处理过程中需要的临时状态。它解决的是<strong>loader 执行过程中如何管理状态</strong>的问题。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F18-38-21-d3e25df81d06b7a8c3b403e478972d82-20260716183820988-932ac3.png" alt="img"></p>
+<p>对应的C结构体大致是这样的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdint.h&gt;</span><br><span class="line">#include &lt;stddef.h&gt;</span><br><span class="line"></span><br><span class="line">#pragma pack(push, 1)</span><br><span class="line"></span><br><span class="line">typedef struct _RDI_RUNTIME_CONTEXT_X64_FRONT &#123;</span><br><span class="line">    uint8_t  Reserved000[0x08];</span><br><span class="line"></span><br><span class="line">    uint64_t Header;                     // 0x008, RDI2_HEADER 指针</span><br><span class="line">    uint64_t SrcBase;                    // 0x010, shellcode 内 raw PE 地址</span><br><span class="line">    uint64_t DstBase;                    // 0x018, 映射后 PE 基址</span><br><span class="line">    uint64_t SrcNt;                      // 0x020, raw PE NT Header</span><br><span class="line">    uint64_t DstNt;                      // 0x028, mapped image NT Header</span><br><span class="line">    uint64_t Delta;                      // 0x030, DstBase - ImageBase</span><br><span class="line"></span><br><span class="line">    uint64_t UserPtr;                    // 0x038, 用户数据地址</span><br><span class="line">    uint64_t UserLen;                    // 0x040, 用户数据长度</span><br><span class="line">    uint64_t Flags;                      // 0x048, RDI2 flags</span><br><span class="line">    uint32_t ExportHash;                 // 0x050, 目标导出函数 ROR13 hash</span><br><span class="line">    uint32_t Reserved054;                // 0x054, 对齐/保留</span><br><span class="line"></span><br><span class="line">    uint32_t OldProtect;                 // 0x058, VirtualProtect 旧权限</span><br><span class="line">    uint32_t Reserved05C;                // 0x05C, 对齐/保留</span><br><span class="line"></span><br><span class="line">    uint64_t Tmp;                        // 0x060, 通用临时值/导出函数地址</span><br><span class="line"></span><br><span class="line">    uint64_t ApiVirtualAlloc;            // 0x068, VirtualAlloc</span><br><span class="line">    uint64_t ApiVirtualProtect;          // 0x070, VirtualProtect</span><br><span class="line">    uint64_t ApiLoadLibraryA;            // 0x078, LoadLibraryA</span><br><span class="line">    uint64_t ApiGetProcAddress;          // 0x080, GetProcAddress</span><br><span class="line">    uint64_t ApiRtlAddFunctionTable;     // 0x088, RtlAddFunctionTable</span><br><span class="line">    uint64_t ApiNtFlushInstructionCache; // 0x090, NtFlushInstructionCache</span><br><span class="line"></span><br><span class="line">    uint64_t Entry;                      // 0x098, header scrub 前保存的 OEP/DllMain</span><br><span class="line">    uint8_t  Reserved0A0[0x08];</span><br><span class="line"></span><br><span class="line">    uint64_t NtdllBase;                  // 0x0A8, ntdll.dll 基址</span><br><span class="line">    uint64_t ApiRtlGetVersion;           // 0x0B0, RtlGetVersion</span><br><span class="line">    uint64_t WinBuild;                   // 0x0B8, Windows build number</span><br><span class="line">    uint8_t  Reserved0C0[0x08];</span><br><span class="line"></span><br><span class="line">    uint64_t LdrpTls;                    // 0x0C8, LdrpHandleTlsData 地址</span><br><span class="line">    uint8_t  PatternLen;                 // 0x0D0, x64 TLS 特征码长度</span><br><span class="line">    uint8_t  Reserved0D1[0x0F];</span><br><span class="line"></span><br><span class="line">    uint8_t  PatternBuf[0x10];           // 0x0E0, x64 TLS 特征码</span><br><span class="line">    uint8_t  Reserved0F0[0x10];</span><br><span class="line"></span><br><span class="line">    uint8_t  VersionBuf[0x130];          // 0x100, OSVERSIONINFOEXW 临时空间</span><br><span class="line">    uint8_t  FakeLdr[0x120];             // 0x230, fake LDR_DATA_TABLE_ENTRY</span><br><span class="line">    uint8_t  Reserved350[0x0B0];         // 0x350 ~ 0x3FF</span><br><span class="line"></span><br><span class="line">&#125; RDI_RUNTIME_CONTEXT_X64_FRONT;</span><br><span class="line">#pragma pack(pop)</span><br></pre></td></tr></table></figure>
+
+<p>简单来说，<code>HDR_*</code> 是payload协议，负责描述<strong>输入是什么</strong>；<code>CTX_*</code> 是运行时上下文，负责<strong>保存加载过程中发生了什么</strong>。前者让生成器和loader解耦，后者让loader的内部状态管理更加清晰，这正是v2相比v1更容易扩展的核心原因。</p>
+<h1 id="二、用户参数传递机制和调用DLL指定导出函数的设计"><a href="#二、用户参数传递机制和调用DLL指定导出函数的设计" class="headerlink" title="二、用户参数传递机制和调用DLL指定导出函数的设计"></a>二、用户参数传递机制和调用DLL指定导出函数的设计</h1><p>在v1版本中，loader的目标只是尽可能把一个PE映射起来并跳转到入口点，因此并没有设计额外的用户参数传递机制。无论是EXE还是DLL，最终都只会走默认入口即PE文件头定义的<code>AddressOfEntryPoint</code>：EXE调用<code>OEP</code>，DLL调用<code>DllMain</code>。</p>
+<p>但是在v2版本中，我希望<code>Convert2Shellcode</code> 不只是把PE转成shellcode，还能让调用者向被加载的DLL传入一段自定义参数。因此，v2在<code>RDI2 Header</code> 中增加了<code>UserOffset</code>和<code>UserSize</code>两个字段，用来描述用户参数在shellcode中的位置和长度。</p>
+<h2 id="2-1-参数的编码方式"><a href="#2-1-参数的编码方式" class="headerlink" title="2.1 参数的编码方式"></a>2.1 参数的编码方式</h2><p><code>--user-data</code>表示从文件中读取一段原始字节数据，适合传递较大的配置文件或二进制结构。</p>
+<p><code>--user-data-hex</code>表示用户直接在命令行中传入十六进制字符串，工具会将其转换成真实的 byte buffer。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--user-data-hex 01020304</span><br></pre></td></tr></table></figure>
+
+<p>最终会被转换成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">01 02 03 04</span><br></pre></td></tr></table></figure>
+
+<p>无论用户选择哪种输入方式，进入shellcode拼接阶段后，它们都会被统一看作一段原始字节数组：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">uint8_t* user;</span><br><span class="line">DWORD user_size;</span><br></pre></td></tr></table></figure>
+
+<p>也就是说，loader并不关心这段数据原本来自文件，还是来自命令行十六进制字符串。对loader来说，它只是一段连续的字节buffer。</p>
+<p>这样设计的好处是简单、通用。参数内容可以是字符串、JSON、TLV、二进制结构体，甚至是加密后的配置块。<code>Convert2Shellcode</code> 本身不强行规定参数格式，只负责把这段数据附加到最终shellcode中，由PE文件自行消费。</p>
+<h2 id="2-2-参数在-shellcode-中的位置"><a href="#2-2-参数在-shellcode-中的位置" class="headerlink" title="2.2 参数在 shellcode 中的位置"></a>2.2 参数在 shellcode 中的位置</h2><p>在v2的布局中，用户参数被放在raw PE后面：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[RDI2 Header][raw PE][user data]</span><br></pre></td></tr></table></figure>
+
+<p>对应到<code>RDI2_HEADER</code>，主要由两个字段描述：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">uint32_t UserOffset;</span><br><span class="line">uint32_t UserSize;</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>UserOffset</code>表示用户数据相对于<code>RDI2 Header</code>起始地址的偏移，<code>UserSize</code>表示用户数据长度。</p>
+<p>如果没有用户数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UserOffset = 0;</span><br><span class="line">UserSize   = 0;</span><br></pre></td></tr></table></figure>
+
+<p>如果存在用户数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">UserOffset = sizeof(RDI2_HEADER) + PeSize;</span><br><span class="line">UserSize   = user_data_size;</span><br></pre></td></tr></table></figure>
+
+<p>loader 运行时只需要根据 header 指针计算：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">user_ptr = header + UserOffset;</span><br><span class="line">user_len = UserSize;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，<code>UserOffset</code> 是相对于 <code>RDI2 Header</code> 的偏移，而不是相对于shellcode起始地址的偏移。这样做是为了统一 front&#x2F;post 两种布局。无论RDI code在raw PE前面还是后面，只要bootstrap最终把 <code>RCX/ECX</code> 指向 <code>RDI2 Header</code>，loader就可以通过相同的方式找到用户数据。</p>
+<h2 id="2-3-指定导出函数的触发与调用流程"><a href="#2-3-指定导出函数的触发与调用流程" class="headerlink" title="2.3 指定导出函数的触发与调用流程"></a>2.3 指定导出函数的触发与调用流程</h2><p>有了用户参数之后，还需要解决另一个问题：这段参数最终应该交给谁来消费。</p>
+<p>在默认加载路径下，EXE会调用OEP，DLL会调用<code>DllMain</code>。但这两个入口都不太适合作为通用的参数入口。EXE的OEP本身没有统一的参数约定，而<code>DllMain</code>的函数签名又是固定的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BOOL WINAPI DllMain(</span><br><span class="line">    HINSTANCE hinstDLL,</span><br><span class="line">    DWORD     fdwReason,</span><br><span class="line">    LPVOID    lpReserved</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>虽然理论上可以把用户参数塞进<code>lpReserved</code>，但这样会破坏<code>DllMain</code>原本的语义，也不利于后续扩展。因此在v2中，我选择增加一种更明确的调用模式：<strong>指定DLL导出函数作为用户入口</strong>。</p>
+<p>在生成shellcode 时，用户可以通过两种方式指定目标导出函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--export-name &lt;name&gt;</span><br><span class="line">--export-hash &lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<p><code>--export-name</code>表示直接传入导出函数名，由<code>Convert2Shellcode</code> 在生成阶段计算对应的 ROR13 hash。</p>
+<p><code>--export-hash</code>则允许用户直接传入已经计算好的hash。最终，无论使用哪种方式，都会写入<code>RDI2_HEADER.ExportHash</code> 字段中。</p>
+<p>同时，只要<code>ExportHash</code>不为 0，生成器就会在header的<code>Flags</code>字段中设置<code>RDI_FLAG_EXPORT</code>。也就是说，是否进入指定导出函数调用模式，并不是由<code>UserOffset/UserSize</code>决定的，而是由<code>Flags</code>和<code>ExportHash</code>共同决定的。用户参数只负责提供数据，<code>RDI_FLAG_EXPORT</code>才负责告诉loader，这次不要只走默认入口，而是调用指定导出函数。</p>
+<p>loader进入 <code>CallImageEntry</code> 后，会先检查 <code>Flags</code> 中是否存在 <code>RDI_FLAG_EXPORT</code>。如果没有这个标志，就直接走默认入口分发逻辑；如果存在，则继续读取 <code>CTX_EXPORT_HASH</code>，并通过 <code>ResolveExportByHash</code> 在映射后的DLL导出表中查找目标函数。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F08%2F18-58-16-af4788696977d04fa2181cc8a2507e21-20260708185816230-97ccf1.png" alt="img"></p>
+<p>指定导出函数解析成功后，loader会将映射后的PE基址、用户参数指针和用户参数长度传给目标函数。x64下对应的调用约定如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef void (*RDI_EXPORT_ENTRY)(</span><br><span class="line">    void*    image_base,</span><br><span class="line">    void*    user_data,</span><br><span class="line">    uint32_t user_size</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>也就是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">RCX = mapped image base</span><br><span class="line">RDX = user data pointer</span><br><span class="line">R8D = user data length</span><br></pre></td></tr></table></figure>
+
+<p>这样一来，DLL就可以导出一个专门的业务入口，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">extern &quot;C&quot; __declspec(dllexport)</span><br><span class="line">void Start(void* image_base, void* user_data, uint32_t user_size)</span><br><span class="line">&#123;</span><br><span class="line">    // user_data 可以是字符串、JSON、TLV、二进制配置块等</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种设计比只依赖<code>DllMain</code> 更灵活。<code>DllMain</code> 可以保持轻量，只完成模块级初始化；需要参数的初始化、配置解析和启动等业务逻辑，则放在指定导出函数中执行。</p>
+<p>当前实现中，指定导出函数<strong>不会替代</strong><code>DllMain</code>。加载器完成TLS data初始化和TLS callback调用后，会先解析目标导出函数地址；随后清除mapped image header，调用<code>DllMain(DLL_PROCESS_ATTACH)</code>，最后再调用指定导出函数。因此，导出函数可以依赖<code>DllMain</code>已初始化的全局状态。</p>
+<p>导出函数通过名称的ROR13 hash查找，适用于按名称导出的函数；名称大小写会影响hash结果。是否进入 export 模式由<code>Flags</code> 中的 <code>RDI_FLAG_EXPORT</code>决定；生成payload时，<code>ExportHash = 0</code>通常表示没有指定目标导出函数，且不应设置该标志。</p>
+<h2 id="2-4-一个简单的传递用户参数调用导出函数的例子"><a href="#2-4-一个简单的传递用户参数调用导出函数的例子" class="headerlink" title="2.4 一个简单的传递用户参数调用导出函数的例子"></a>2.4 一个简单的传递用户参数调用导出函数的例子</h2><p>为了验证v2架构下的参数传递与指定导出函数调用机制，下文将展示支持多参数切分的测试DLL，我们进行如下的规定：DLL内部<strong>管道符 |</strong> 作为边界符，通过 <code>Convert2Shellcode.exe</code> 工具将多个参数通过十六进制方式压缩并注入。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include &lt;stdint.h&gt;</span><br><span class="line"></span><br><span class="line">// 辅助函数：在内存中就地切分参数（不依赖复杂 CRT，保持 Payload 轻量）</span><br><span class="line">void SplitParameters(char* buffer, uint32_t size, char** arg1, char** arg2) &#123;</span><br><span class="line">    *arg1 = buffer; // 参数 1 指向缓冲区开头</span><br><span class="line">    *arg2 = nullptr;</span><br><span class="line"></span><br><span class="line">    for (uint32_t i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        if (buffer[i] == &#x27;|&#x27;) &#123;</span><br><span class="line">            buffer[i] = &#x27;\0&#x27;; // 将管道符替换为 C 风格字符串截断符</span><br><span class="line">            if (i + 1 &lt; size) &#123;</span><br><span class="line">                *arg2 = &amp;buffer[i + 1]; // 参数 2 指向分隔符后的下一个字节</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // 兜底防御：若未传入分隔符，则参数 2 保持与参数 1 相同</span><br><span class="line">    if (*arg2 == nullptr) &#123;</span><br><span class="line">        *arg2 = buffer;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 核心业务导出函数</span><br><span class="line">// x86 模式下必须显式指定 __cdecl 调用约定</span><br><span class="line">#ifdef _M_IX86</span><br><span class="line">extern &quot;C&quot; __declspec(dllexport) void __cdecl TestMessageBox(void* image_base, void* user_data, uint32_t user_size)</span><br><span class="line">#else</span><br><span class="line">extern &quot;C&quot; __declspec(dllexport) void TestMessageBox(void* image_base, void* user_data, uint32_t user_size)</span><br><span class="line">#endif</span><br><span class="line">&#123;</span><br><span class="line">    if (user_data == nullptr || user_size == 0) &#123;</span><br><span class="line">        MessageBoxA(NULL, &quot;未检测到用户参数!&quot;, &quot;SRDI v2 错误&quot;, MB_OK | MB_ICONWARNING);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 在堆上申请空间拷贝用户数据，避免直接在 Shellcode 只读/清零区域进行内存写操作</span><br><span class="line">    char* local_buf = (char*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, user_size + 1);</span><br><span class="line">    if (!local_buf) return;</span><br><span class="line">    </span><br><span class="line">    CopyMemory(local_buf, user_data, user_size);</span><br><span class="line">    local_buf[user_size] = &#x27;\0&#x27;;</span><br><span class="line"></span><br><span class="line">    char* title = nullptr;</span><br><span class="line">    char* content = nullptr;</span><br><span class="line"></span><br><span class="line">    // 解析并切分多参数</span><br><span class="line">    SplitParameters(local_buf, user_size, &amp;title, &amp;content);</span><br><span class="line"></span><br><span class="line">    // 格式化弹出框标题，顺便直观打印出映射基址</span><br><span class="line">    char final_title[256];</span><br><span class="line">    wsprintfA(final_title, &quot;%s [ImageBase: 0x%p]&quot;, title, image_base);</span><br><span class="line"></span><br><span class="line">    // 执行弹窗</span><br><span class="line">    MessageBoxA(NULL, content, final_title, MB_OK | MB_ICONINFORMATION);</span><br><span class="line"></span><br><span class="line">    // 释放临时堆</span><br><span class="line">    HeapFree(GetProcessHeap(), 0, local_buf);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) &#123;</span><br><span class="line">    return TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>Convert2Shellcode.exe</code> 生成工具，将 <code>messagebox_export.x64.dll</code> 转成shellcode。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\Convert2Shellcode.exe --arch x64 --type front --input example\bin\messagebox_export.x64.dll --output msgbox_x64_front.bin --export-name TestMessageBox --user-data-hex 546573745469746c657c48656c6c6f2046726f6d2053524449207632</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>--user-data-hex</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// hex 字符串</span><br><span class="line">546573745469746c657c48656c6c6f2046726f6d2053524449207632</span><br><span class="line"></span><br><span class="line">//十六进制数据解码后的完整字符串为</span><br><span class="line">TestTitle|Hello From SRDI v2</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PS C:\Users\Administrator\Desktop\test&gt; .\Convert2Shellcode.exe --arch x64 --type front --input example\bin\messagebox_export.x64.dll --output msgbox_x64_front.bin --export-name TestMessageBox --user-data-hex 546573745469746c657c48656c6c6f2046726f6d2053524449207632</span><br><span class="line">[+] arch:      x64</span><br><span class="line">[+] type:      front</span><br><span class="line">[+] input PE:  103424 bytes</span><br><span class="line">[+] RDI text:  3373 bytes</span><br><span class="line">[+] user data: 28 bytes</span><br><span class="line">[+] output:    msgbox_x64_front.bin (106877 bytes)</span><br><span class="line">PS C:\Users\Administrator\Desktop\test&gt;</span><br></pre></td></tr></table></figure>
+
+<p>随便编写一个shellcode loader用于加载刚刚生成的 <code>msgbox_x64_front.bin</code></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F08%2F18-50-27-4d8efd9894234b9699a1ff4891bc5a4e-20260708185027652-cfecaf.png" alt="img"></p>
+<p>不使用用户参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\Convert2Shellcode.exe --arch x64 --type front --input example\bin\messagebox_export.x64.dll --output msgbox_x64_front.bin --export-name TestMessageBox</span><br></pre></td></tr></table></figure>
+
+<p>乱码是字符集的问题，这无关紧要，正确应该输出：“未检测到用户参数!”</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F08%2F18-51-53-ca0efba321c0504f245d81c377b42f0f-20260708185153587-f1082a.png" alt="img"></p>
+<h1 id="三、PE数据生命周期管理与映射后痕迹处理"><a href="#三、PE数据生命周期管理与映射后痕迹处理" class="headerlink" title="三、PE数据生命周期管理与映射后痕迹处理"></a>三、PE数据生命周期管理与映射后痕迹处理</h1><h2 id="3-1-清除旧PE数据"><a href="#3-1-清除旧PE数据" class="headerlink" title="3.1 清除旧PE数据"></a>3.1 清除旧PE数据</h2><p>在v1版本中，我更多关注的是如何把PE成功映射起来并跳转到入口点，因此对加载完成后的数据残留问题考虑得并不多。到了v2版本，我实现了PE数据生命周期管理与映射后痕迹处理，在shellcode中同时会存在两份和PE相关的数据：一份是最初随shellcode一起携带的raw PE，另一份是经过<code>VirtualAlloc</code>映射后的PE image。</p>
+<p>这两份数据的生命周期并不相同。raw PE只是loader的输入数据，作用是提供headers、sections、import table、relocation table、TLS directory等原始信息。一旦<code>MapImage</code>完成，headers和sections已经被复制到新的image内存中，raw PE本身就不再参与后续执行。因此，在映射成功之后，可以通过 <code>ClearSourcePe</code> 将shellcode内部携带的原始PE数据清零。</p>
+<p>这样做的意义主要有两个。</p>
+<ul>
+<li>第一，减少shellcode中残留的完整PE文件内容，避免同一份PE数据在内存中长期保留两份。</li>
+<li>第二，明确raw PE的生命周期：它只是加载阶段的输入，而不是运行阶段需要依赖的数据。对于front和post两种布局来说，raw PE 的实际位置虽然不同，但v2已经通过<code>RDI2 Header</code> 统一保存了 <code>PeOffset</code> 和 <code>PeSize</code>，SRDI loader只需要根据 <code>CTX_SRC_BASE</code> 和 PE 大小清理对应区域即可，不需要关心当前payload是front还是post布局。</li>
+</ul>
+<p>下图的内容的就是SRDI Loader</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F13-37-19-c8e5a6731f50da7e4d291ab2f86ecdab-PixPin_2026-06-14_13-36-42-e838eb.png" alt="PixPin_2026-06-14_13-36-42.png"></p>
+<p>下图就是PE数据了，我们在这里观察，在shellcode执行之后，旧PE数据会不会消失</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F13-38-08-9d2bf2a9bf0641b439f1838656ca5b92-PixPin_2026-06-14_13-38-06-ba20d1.png" alt="PixPin_2026-06-14_13-38-06.png"></p>
+<p>可以看到确实被清除了旧PE数据，不过SRDI loader自身（bootstrap + RDI .text + RDI2 header）仍在内存还保留在内存中，如果觉得这不够OpSec，可以自行设计清除Loader残留数据，或者等我以后再更新相关内容。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F13-40-36-07b50a71d42568565da3aed9c81f114b-PixPin_2026-06-14_13-40-33-f47226.png" alt="PixPin_2026-06-14_13-40-33.png"></p>
+<h2 id="3-2-清除映射后的PE特征"><a href="#3-2-清除映射后的PE特征" class="headerlink" title="3.2 清除映射后的PE特征"></a>3.2 清除映射后的PE特征</h2><p>不过，映射后的PE image header不能在同一时间点做同样的处理。原因在于header在加载流程后半段仍会被多次使用：重定位读取base relocation directory，导入修复读取import directory，TLS初始化读取TLS directory，x64异常处理依赖 <code>.pdata</code> &#x2F; exception directory。提前清除header会让loader自身失去解析数据目录的依据，导致后续流程失败。</p>
+<p>因此v2将mapped image header的处理推迟到所有loader-only逻辑完成后、进入最终入口调用前。<code>ClearSourcePe</code> 发生在映射完成后，清除的是原始PE buffer。<code>ScrubMappedPeHeaders</code> 发生在调用export、<code>DllMain</code> 或EXE OEP前，清除的是映射映像自身的header。两者作用对象不同，时序也不同。</p>
+<p>启动windbg，看看映射后的PE特征是否被消除，在front SRDI内部调用VirtualAlloc之前打上一个断点，调用完后，观察RAX所指向的内存地址，这是刚刚申请的新内存，用于PE映射。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F14-29-52-c1e88d3670554cc25243fbadb65c9715-PixPin_2026-06-14_14-29-47-0b46c5.png" alt="PixPin_2026-06-14_14-29-47.png"></p>
+<p>之后在call CallImageEntry下一个断点，因为按照上面得出的结论：<code>ScrubMappedPeHeaders</code> 发生在调用export、<code>DllMain</code> 或EXE OEP之前。所以我们观察在调用call CallImageEntry之前，还是有明显的PE特征（“MZ”和“PE”、“This program cannot be run in DOS mode”）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F14-37-41-c5a2bdbfc057bb69538d08304bbd4301-PixPin_2026-06-14_14-37-36-28238e.png" alt="PixPin_2026-06-14_14-37-36.png"></p>
+<p>调用call CallImageEntry之后，从mapped PE首地址开始，清零<code>SizeOfHeaders</code> 大小的空间，这覆盖了DOS header、DOS stub、NT headers、OptionalHeader、section table——但不覆盖DataDirectory指向的目录实体（它们在 .rdata 等节里）</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F15-02-15-c8d7fc06bacb1077ed9ee3dc9e6919ec-PixPin_2026-06-14_15-02-06-451980.png" alt="PixPin_2026-06-14_15-02-06.png"></p>
+<p>再往下看看，<code>.text</code>、<code>.data</code>、<code>.rdata</code>等节的内容是不被清除的</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F06%2F14%2F15-03-36-9c1ab2924ea891957ae2b6eca56e853b-PixPin_2026-06-14_15-03-33-1c8388.png" alt="PixPin_2026-06-14_15-03-33.png"></p>
+<h1 id="四、Rust-程序无法直接转换为Shellcode的问题分析：TLS-Data"><a href="#四、Rust-程序无法直接转换为Shellcode的问题分析：TLS-Data" class="headerlink" title="四、Rust 程序无法直接转换为Shellcode的问题分析：TLS Data"></a>四、Rust 程序无法直接转换为Shellcode的问题分析：TLS Data</h1><h2 id="4-1-Rust-EXE转成shellcode后崩溃"><a href="#4-1-Rust-EXE转成shellcode后崩溃" class="headerlink" title="4.1 Rust EXE转成shellcode后崩溃"></a>4.1 Rust EXE转成shellcode后崩溃</h2><p>这次重构最开始遇到的一个问题，是我尝试将Rust Beacon的EXE直接转换成shellcode后运行，结果程序在进入Rust运行逻辑前后出现异常。最开始我以为问题可能出在导入表、重定位或者<code>.pdata</code> 异常表处理上，但在补齐这些常规手工映射逻辑之后，问题仍然没有完全解决。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F08%2F23-00-07-c2847b97efe14f9b25e34814c041e578-20260708230007213-178fe2.png" alt="img"></p>
+<p>后面继续分析PE结构时，我注意到Rust编译出来的EXE里存在TLS Directory。这里的TLS不是简单的TLS Callback问题，而是<strong>Static TLS Data</strong>的初始化问题。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F09%2F13-10-57-b30bf5c8b82541f68a90b22b1f59ce55-20260709131057225-9a3018.png" alt="img"></p>
+<p>很多早期SRDI&#x2F;reflective loader在处理TLS时，只会做一件事：遍历 <code>AddressOfCallBacks</code>，然后在调用入口点前依次执行TLS Callback。这个逻辑对于一些普通C&#x2F;C++程序可能已经够用，但它并不等价于Windows Loader对TLS的完整处理流程。</p>
+<p>因参考文章和参考资料稀缺，正在我一筹莫展之时，我回想起 <a target="_blank" rel="noopener" href="https://wiki.chainreactors.red/blog/2025/01/07/IoM_advanced_TLS/">IoM进阶系列(1) PELoader&amp;RDI的TLS之殇 - ChainReactor Wiki</a> 这篇文章，里面就说到在编写Rust EXE时遇到的PE转shellcode问题，并顺藤摸瓜找了其SRDI项目 <a target="_blank" rel="noopener" href="https://github.com/chainreactors/malefic-srdi">chainreactors&#x2F;malefic-srdi</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F09%2F21-52-07-c327537014a7f76b5c0390b0c1929596-20260709215207181-91d864.png" alt="img"></p>
+<p>正常情况下，一个PE被系统加载时，Windows Loader不只是调用TLS Callback。它还会根据TLS Directory中的信息，为模块初始化静态TLS数据。一个典型的x64 TLS Directory里包含这些关键字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">typedef struct _IMAGE_TLS_DIRECTORY64 &#123;</span><br><span class="line">    ULONGLONG StartAddressOfRawData;</span><br><span class="line">    ULONGLONG EndAddressOfRawData;</span><br><span class="line">    ULONGLONG AddressOfIndex;</span><br><span class="line">    ULONGLONG AddressOfCallBacks;</span><br><span class="line">    DWORD     SizeOfZeroFill;</span><br><span class="line">    DWORD     Characteristics;</span><br><span class="line">&#125; IMAGE_TLS_DIRECTORY64;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>StartAddressOfRawData</td>
+<td>TLS 初始数据模板的起始地址</td>
+</tr>
+<tr>
+<td>EndAddressOfRawData</td>
+<td>TLS 初始数据模板的结束地址</td>
+</tr>
+<tr>
+<td>AddressOfIndex</td>
+<td>指向 TLS index 存放位置</td>
+</tr>
+<tr>
+<td>AddressOfCallBacks</td>
+<td>TLS callback 数组</td>
+</tr>
+</tbody></table>
+<p>其中 <code>StartAddressOfRawData</code> 和 <code>EndAddressOfRawData</code> 描述的是TLS初始数据模板，<code>SizeOfZeroFill</code> 表示后面需要额外清零的区域，<code>AddressOfIndex</code>则指向一个TLS index存放位置。程序运行时，如果代码访问静态TLS变量，最终会依赖这个index到当前线程的TLS slot中取出对应的数据地址。</p>
+<p>MSVC版把静态TLS的访问逻辑直接编进了代码（通过<code>TEB-&gt;ThreadLocalStoragePointer[tls_index]</code>取数据），而初始化依赖外部完成；GNU版则退化成显式<code>TlsAlloc/TlsGetValue</code>，运行时自管理，不需要Loader做静态TLS 初始化。所以同一份Rust源码，GNU版能被普通PE Loader加载，MSVC版不行——问题精确锁定在<strong>Static TLS Data 的初始化缺失</strong>。</p>
+<p>所以Rust EXE无法直接转换为shellcode的核心原因并不是Rust不能shellcode化，而是v1 loader对PE加载语义的模拟还不完整。对于依赖TLS Data的Rust程序来说，仅仅把PE映射起来并跳到OEP，是不够的。</p>
+<h2 id="4-2-v2-的解决方案：系统的LdrpHandleTlsData"><a href="#4-2-v2-的解决方案：系统的LdrpHandleTlsData" class="headerlink" title="4.2 v2 的解决方案：系统的LdrpHandleTlsData"></a>4.2 v2 的解决方案：系统的LdrpHandleTlsData</h2><p>那么正常系统的LoadLibrary是如何处理静态TLS data的呢？根据前人的研究： <a target="_blank" rel="noopener" href="https://github.com/paskalian/WID_LoadLibrary">https://github.com/paskalian/WID_LoadLibrary</a> 我们可以清楚的了解LoadLibrary的具体流程。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F14-47-14-85219f39e689bcd1ee0baf3d34669d55-20260711144714151-af705d.png" alt="img"></p>
+<p>如果只关心对TLS data的处理，那么我将目光聚焦于LdrpDoPostSnapWork函数。这是ntdll加载流水线中<strong>导入绑定（snap）完成后、模块初始化前</strong>的后处理函数，核心职责是<strong>TLS Data 初始化 + CFG IAT 修复</strong>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F18-10-34-699acc7eab8ca0448f240417d766d0f2-20260711181034756-b4134f.png" alt="img"></p>
+<p>这个函数的触发时机是 <code>LdrpMapAndSnapDependency</code>（IAT 已填好）之后、<code>LdrpInitializeNode</code>（TLS Callback + DllMain）之前。关键的代码是下图所示</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F18-22-19-c0e5184c55f40b4aef70cb327dbbfa94-20260711182219451-0647a9.png" alt="img"></p>
+<ul>
+<li>如果DllEntry-&gt;TlsIndex !&#x3D; 0：已有TLS index，跳过LdrpHandleTlsData，直接进CFG</li>
+<li>否则：调LdrpHandleTlsData(DllEntry)</li>
+</ul>
+<p><code>TlsIndex</code> 的具有双重含义</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>TlsIndex 值</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>模块无TLS Directory</td>
+<td>0</td>
+<td>调LdrpHandleTlsData，ntdll内部发现没TLS直接返回成功</td>
+</tr>
+<tr>
+<td>模块有TLS，首次加载</td>
+<td>0（还没分配）</td>
+<td>调 LdrpHandleTlsData，ntdll 分配 index、拷贝 raw data、写 TEB、把 index 写回 DllEntry-&gt;TlsIndex</td>
+</tr>
+<tr>
+<td>模块有TLS，已处理过</td>
+<td>非 0</td>
+<td>跳过LdrpHandleTlsData</td>
+</tr>
+</tbody></table>
+<p><code>LdrpHandleTlsData</code> 做了什么呢？</p>
+<ol>
+<li>解析<code>DllEntry-&gt;DllBase</code>对应PE的TLS Directory</li>
+<li><code>RtlFindClearBitsAndSet(LdrpTlsBitmap, 1, 0)</code> 分配一个小于64的静态TLS index</li>
+<li>把index写入PE的 <code>AddressOfIndex</code></li>
+<li>分配TLS数据块，拷贝<code>StartAddressOfRawData ~ EndAddressOfRawData</code> + <code>SizeOfZeroFill</code> 清零</li>
+<li>写<code>TEB-&gt;ThreadLocalStoragePointer[index]</code></li>
+<li>构造<code>TLS_ENTRY</code>，挂到全局 <code>LdrpTlsList</code></li>
+</ol>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F19-01-16-20df262f8c9e297250acd4ab091cd08b-20260711190116724-07879d.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F19-02-04-ca37e47dde2cba75fd67667e35791cdd-20260711190204042-01256c.png" alt="img"></p>
+<p>如果走系统加载路径，尽量复用系统loader内部的TLS处理逻辑。也就是在ntdll中定位<code>LdrpHandleTlsData</code>，构造一个最小化的 <code>LDR_DATA_TABLE_ENTRY</code>（只填 <code>DllBase</code>），并将当前手工映射出来的image base填进去，再交给 <code>LdrpHandleTlsData</code> 去处理TLS数据。这个思路的好处是兼容性更接近系统加载器，因为TLS index分配、TLS entry初始化等细节可以尽量交给ntdll自己完成。</p>
+<p>想法是很美好的，但是<code>LdrpHandleTlsData</code>是内部的、未导出的函数，也就是说你在ntdll的导出表是找不到该函数的地址，常规的PEB+导出表动态获取函数地址的方法直接失效。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F11%2F19-37-08-b6c44107390ed4d2be104a7da99dad9c-20260711193708298-1789de.png" alt="img"></p>
+<p>不过参考文章和参考项目 <a target="_blank" rel="noopener" href="https://github.com/chainreactors/malefic-srdi">chainreactors&#x2F;malefic-srdi</a> 中给出了一个非常精妙的的寻找方案：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">RtlGetVersion → dwBuildNumber</span><br><span class="line">│</span><br><span class="line">├── build &gt;= 21996 (Win11+)  →  字符串交叉引用路径</span><br><span class="line">│</span><br><span class="line">└── build &lt;  21996 (Win7-10) →  硬编码字节特征路径</span><br></pre></td></tr></table></figure>
+
+<p>Win11的ntdll中 <code>LdrpHandleTlsData</code> 函数体内嵌了调试日志字符串 <code>&quot;LdrpInitializeTls&quot;</code> 。这个字符串在版本间极其稳定，比指令字节特征可靠得多。</p>
+<p>下面是 <code>LdrpInitializeTls</code> 内部的部分汇编指令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">.text:000000018000439C loc_18000439C:                          ; CODE XREF: LdrpInitializeTls+E9↑j</span><br><span class="line">.text:000000018000439C                 lea     rax, [rsi+48h]</span><br><span class="line">.text:00000001800043A0                 mov     [rsp+88h+var_58], rbp</span><br><span class="line">.text:00000001800043A5                 mov     [rsp+88h+var_60], rax</span><br><span class="line">.text:00000001800043AA                 lea     r8, aLdrpinitialize_5 ; &quot;LdrpInitializeTls&quot;</span><br><span class="line">.text:00000001800043B1                 lea     rax, aDllWzHasTlsInf ; &quot;DLL \&quot;%wZ\&quot; has TLS information at %p\n&quot;</span><br><span class="line">.text:00000001800043B8                 mov     r9d, 2</span><br><span class="line">.text:00000001800043BE                 mov     edx, 296h</span><br><span class="line">.text:00000001800043C3                 mov     [rsp+88h+var_68], rax</span><br><span class="line">.text:00000001800043C8                 lea     rcx, aMinkernelNtdll_2 ; &quot;minkernel\\ntdll\\ldrtls.c&quot;</span><br><span class="line">.text:00000001800043CF                 call    LdrpLogInternal</span><br><span class="line">.text:00000001800043D4                 xor     r9d, r9d</span><br><span class="line">.text:00000001800043D7                 mov     [rsp+88h+var_68], r14</span><br><span class="line">.text:00000001800043DC                 lea     r8, [rsp+88h+var_48]</span><br><span class="line">.text:00000001800043E1                 mov     rdx, rsi</span><br><span class="line">.text:00000001800043E4                 mov     rcx, rbp</span><br><span class="line">.text:00000001800043E7                 call    LdrpAllocateTlsEntry</span><br><span class="line">.text:00000001800043EC                 test    eax, eax</span><br><span class="line">.text:00000001800043EE                 js      loc_18000436F</span><br><span class="line">.text:00000001800043F4                 mov     eax, 0FFFFh</span><br><span class="line">.text:00000001800043F9                 mov     [rsi+6Eh], ax</span><br><span class="line">.text:00000001800043FD                 jmp     loc_18000434B</span><br></pre></td></tr></table></figure>
+
+<p>以上面的反汇编代码为例，win11系统上的思路就很简单了，首先确认ntdll基址，之后找<code>LdrpInitializeTls</code>函数内部的字符串 <code>“LdrpInitializeTls”</code>，得到字符串的绝对地址 <code>string_addr</code>。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-34-07-ed49e802fd3f3ea787506e2c1b6f8e9b-20260712183407581-481a6a.png" alt="img"></p>
+<p>在ntdll <code>.text</code> 段中搜索 <code>4C 8D 05</code>（<code>lea     r8, aLdrpinitialize_5</code>），并验证RIP-relative计算后目标等于 <code>string_addr</code>，最终确定LEA指令绝对地址 <code>lea_addr</code> 。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-38-23-22b3e2325fed76c9193ac02b1698890c-20260712183823025-fd5410.png" alt="img"></p>
+<p>从 <code>lea_addr</code> 开始，向后扫描最多0x30字节，找第一个 <code>E8</code>（<code>call rel32</code>），这个就是 <code>call    LdrpLogInternal</code>，不是我们要的，但它是定位锚点，最终得到绝对地址 <code>call1_addr</code> 。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-40-37-8dfcdb14536b144b4992fee10192e564-20260712184036930-18426c.png" alt="img"></p>
+<p>从 <code>call1_addr + 5</code> 开始，继续找下一个call指令 <code>E8</code>，这个就是 <code>call    LdrpAllocateTlsEntry</code>，最终得到绝对地址 <code>call2_addr</code> </p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-41-35-6e4f96c8c61e5db17b29b99818211976-20260712184135062-46fc9a.png" alt="img"></p>
+<p><code>E8 rel32</code> 指令是相对RIP偏移跳转，<code>rel32</code> 是有符号偏移，从call指令的下一条指令开始算，<code>call2_addr + 5 + rel32 = alloc_tls_addr</code> 最终可以得到 <code>LdrpAllocateTlsEntry</code> 的绝对地址 <code>alloc_tls_addr</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-42-34-3089929843ab0e336803377ecaca2ac2-20260712184234371-69227e.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-44-42-086ef17d6e2e28f2ea0c0fe4e64186a5-20260712184442549-1f86d8.png" alt="img"></p>
+<p>为什么要找到 <code>LdrpAllocateTlsEntry</code> 的绝对地址？<code>LdrpAllocateTlsEntry</code> 在ntdll里只被两个函数调用：</p>
+<ul>
+<li><code>LdrpInitializeTls</code></li>
+<li><code>LdrpHandleTlsData</code>（我们要找的）<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-15-14-e76e503a7ebc3b7d4218e68b0412e0f3-20260712181514069-e67381.png" alt="img"></li>
+</ul>
+<p>现在已知<code>LdrpAllocateTlsEntry</code>的地址。在整个<code>.text</code>段中逐字节扫描<code>E8</code>指令，解码每个call的目标，找到所有调用<code>LdrpAllocateTlsEntry</code>的位置。我们需要利用<strong>已知的 call2 调用点</strong>来排除 <code>LdrpInitializeTls</code>，从所有调用<code>LdrpAllocateTlsEntry</code> 的地点中，跳过已知属于<code>LdrpInitializeTls</code>的<code>call2</code>。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F22-10-12-6f82e27a34effccbe9a0538089cd283e-20260713221012168-84cc64.png" alt="img"></p>
+<p>最终得到的<code>call_xref_addr</code>位于<code>LdrpHandleTlsData</code> 函数体内部，并非函数入口。ntdll是x64 PE，其Optional Header的 <code>IMAGE_DIRECTORY_ENTRY_EXCEPTION</code> 指向<code>.pdata</code>异常处理目录。<code>.pdata</code>由 <code>RUNTIME_FUNCTION</code>表项组成，每一项记录一个函数的 <code>[BeginAddress, EndAddress)</code> RVA范围。</p>
+<p>将<code>call_xref_addr - ntdll_base</code> 转换为RVA，遍历<code>.pdata</code>，找到满足：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">BeginAddress &lt;= call_xref_rva &amp;&amp;</span><br><span class="line">call_xref_rva &lt; EndAddress</span><br></pre></td></tr></table></figure>
+
+<p>的表项。该表项的 <code>BeginAddress</code> 加上 <code>ntdll_base</code>，即为包含该调用点的函数入口。</p>
+<p>在Windows 11 22631（我本机）的示例中，<code>call_xref_addr = ntdll+0x4654</code>，命中的 <code>RUNTIME_FUNCTION</code> 范围为 <code>[0x4528, 0x4A3C)</code>，因此最终得到：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LdrpHandleTlsData = ntdll + 0x4528</span><br></pre></td></tr></table></figure>
+
+<p>相比依赖编译器填充字节，<code>.pdata</code> 是该x64模块实际使用的函数范围元数据，对此类具备unwind信息的内部函数更可靠。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F22-13-35-b5991c98b4b01830dd92a5e6cf9e71d8-20260713221335337-f44def.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F12%2F18-50-06-30c279a9543f62f12b66d2adae098012-20260712185006429-c61677.png" alt="img"></p>
+<p>win11以下的版本没有调试日志字符串 <code>&quot;LdrpInitializeTls&quot;</code> ，要如何处理呢？最简单粗暴的方法就是根据硬编码字节特征匹配了。</p>
+<p><code>LdrpHandleTlsData</code> 函数体内有一段稳定的指令序列，这段序列在不同Windows 版本间不同（因为编译器版本、优化选项、指令调度不同），但在同一版本内固定。</p>
+<p><code>SelectLdrpTlsPattern</code> 按 build number 选取一组参数：</p>
+<table>
+<thead>
+<tr>
+<th>Build 范围</th>
+<th>选择条件</th>
+<th>特征长度</th>
+<th>特征字节</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>7600 - 9199</td>
+<td><code>win_build &gt;= 7600</code></td>
+<td>11</td>
+<td><code>41 B8 09 00 00 00 48 8D 44 24 38</code></td>
+</tr>
+<tr>
+<td>9200 - 9599</td>
+<td><code>win_build &gt;= 9200</code></td>
+<td>8</td>
+<td><code>48 8B 79 30 45 8D 66 01</code></td>
+</tr>
+<tr>
+<td>9600 - 15062</td>
+<td><code>win_build &gt;= 9600</code></td>
+<td>9</td>
+<td><code>44 8D 43 09 4C 8D 4C 24 38</code></td>
+</tr>
+<tr>
+<td>15063 - 17133</td>
+<td><code>win_build &gt;= 15063</code></td>
+<td>6</td>
+<td><code>74 33 44 8D 43 09</code></td>
+</tr>
+<tr>
+<td>17134 - 18361</td>
+<td><code>win_build &gt;= 17134</code></td>
+<td>6</td>
+<td><code>74 33 44 8D 43 09</code></td>
+</tr>
+<tr>
+<td>18362 - 21995</td>
+<td><code>win_build &gt;= 18362</code></td>
+<td>6</td>
+<td><code>74 33 44 8D 43 09</code></td>
+</tr>
+</tbody></table>
+<p>win10 v18363<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F22-46-45-60bc49f09da6e5dfe7146de5620fc46b-20260713224644773-54f112.png" alt="img"></p>
+<p>win10 v10586<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F23-10-25-cabe63dbc3a1d1cd8be1954a5c982f2b-20260713231025618-ae12b5.png" alt="img"></p>
+<p>win8 v9200<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F23-18-04-8c140991ea46ba63930b64b6c3b7d8e6-20260713231804383-798eec.png" alt="img"></p>
+<p>win7 v7601<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F22-55-14-4a1f087e0f1f3a0e1167561808bc4fda-20260713225514595-230629.png" alt="img"></p>
+<p>Win7-Win10的x64路径仍根据系统Build选择硬编码字节特征，字节特征命中后得到的是函数体内地址<code>match_addr</code>，将其转换为<code>match_rva = match_addr - ntdll_base</code>，再查询ntdll的 <code>.pdata</code> 异常处理目录。</p>
+<p><code>.pdata</code> 中的每个 <code>RUNTIME_FUNCTION</code> 表项记录函数的 <code>[BeginAddress, EndAddress)</code> RVA 范围。找到满足：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BeginAddress &lt;= match_rva &amp;&amp; match_rva &lt; EndAddress</span><br></pre></td></tr></table></figure>
+
+<p>的表项后，函数入口就是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">function_start = ntdll_base + BeginAddress;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F13%2F22-37-40-f2b6e228c74c4a937657d138c3a32e4c-20260713223740275-1930a2.png" alt="img"></p>
+<p>除了使用系统的 <code>LdrpHandleTlsData</code> 处理 TLS data 外，理论上也可以自行模拟该函数的功能（即手动完成 TLS 目录解析、<code>TlsIndex</code> 分配、<code>ThreadLocalStoragePointer</code> 槽位写入、raw data 拷贝和 zero-fill 等操作）。但这真的有必要实现吗？</p>
+<p>在 Convert2Shellcode 项目中，我没有选择手动实现 <code>LdrpHandleTlsData</code>，而是直接定位并调用 ntdll 内部的原版函数。这样做有两个好处：</p>
+<ol>
+<li><strong>体积更小</strong>：省去了完整的 TLS 初始化逻辑代码</li>
+<li><strong>正确性更高</strong>：系统原版函数会正确处理所有边界情况（多模块共享 TLS bitmap、回调链、<code>LdrpTlsList</code> 全局链表维护等），手写实现难以覆盖所有 Windows 版本的内部结构差异。</li>
+</ol>
+<p>当然，这种方案的代价是依赖 ntdll 内部未导出函数的地址定位（通过字符串交叉引用或版本特征码），如果目标环境的 ntdll 被大幅修改或混淆，可能需要额外的适配工作。但对于绝大多数实战场景，直接调用系统函数是最简洁可靠的选择。</p>
+<p>在RefLoader调试工程中，我额外实现了完整的手动模拟路径作为fallback，用于验证手动方案的可行性和正确性，但这部分代码并未引入SRDI shellcode。光是在 Windows 11 22631上模拟 <code>LdrpHandleTlsData</code> 就需要约 200 行C代码，把它们塞到SRDI里面是弊大于利。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F14%2F23-26-34-13de002801421f3dd4e73790029be751-20260714232634669-2bcfb5.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F14%2F23-26-50-fa2e644a3497d87e55cac6698370ba68-20260714232649755-77d92e.png" alt="img"></p>
+<h1 id="五、PE32-支持：x86-下手工映射流程的差异适配"><a href="#五、PE32-支持：x86-下手工映射流程的差异适配" class="headerlink" title="五、PE32 支持：x86 下手工映射流程的差异适配"></a>五、PE32 支持：x86 下手工映射流程的差异适配</h1><h2 id="5-1-统一协议，分离实现"><a href="#5-1-统一协议，分离实现" class="headerlink" title="5.1 统一协议，分离实现"></a>5.1 统一协议，分离实现</h2><p><code>Convert2Shellcode</code> 对x64和x86 复用同一套RDI2协议：<code>RDI2 Header</code>、user data、export hash，以及 front&#x2F;post的入口语义保持一致。</p>
+<p>PE32 与 PE32+ 的结构和运行时约定差异较大，因此分别维护x86、x64 ASM，比在同一份代码中混合分支更容易维护。</p>
+<h2 id="5-2-x86-入口约定"><a href="#5-2-x86-入口约定" class="headerlink" title="5.2 x86 入口约定"></a>5.2 x86 入口约定</h2><p>x86的front和post均以<code>ECX</code>传递RDI2 Header地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">front: [x86 bootstrap][RDI .text][RDI2 header][raw PE][optional user data]</span><br><span class="line">post:  [x86 post bootstrap][RDI2 header][raw PE][optional user data][RDI .text]</span><br></pre></td></tr></table></figure>
+
+<p>因此，RDI主逻辑只需从<code>ECX</code>指向的Header中取得raw PE和user data，不关心当前是front还post。</p>
+<h2 id="5-3-仅支持-PE32"><a href="#5-3-仅支持-PE32" class="headerlink" title="5.3 仅支持 PE32"></a>5.3 仅支持 PE32</h2><p>x86 loader检查<code>IMAGE_NT_OPTIONAL_HDR32_MAGIC</code>（<code>0x10B</code>），只接受PE32：支持32位loader映射 32 位PE32。不支持64位进程直接执行32位shellcode。</p>
+<h2 id="5-4-PE32-的字段与重定位"><a href="#5-4-PE32-的字段与重定位" class="headerlink" title="5.4 PE32 的字段与重定位"></a>5.4 PE32 的字段与重定位</h2><p>PE32和PE32+的Optional Header 布局不同。x86 loader使用PE32对应偏移：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ImageBase           -&gt; [NT + 0x34]</span><br><span class="line">Export Directory    -&gt; [NT + 0x78]</span><br><span class="line">Import Directory    -&gt; [NT + 0x80]</span><br><span class="line">Base Relocation Dir -&gt; [NT + 0xA0]</span><br><span class="line">TLS Directory       -&gt; [NT + 0xC0]</span><br></pre></td></tr></table></figure>
+
+<p>重定位类型也不同：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x64: IMAGE_REL_BASED_DIR64   (10)</span><br><span class="line">x86: IMAGE_REL_BASED_HIGHLOW (3)</span><br></pre></td></tr></table></figure>
+
+<p>因此，x86独立处理PE32的映射、重定位、导入表修复和TLS。</p>
+<h2 id="5-5-不注册目标-PE-的-pdata"><a href="#5-5-不注册目标-PE-的-pdata" class="headerlink" title="5.5 不注册目标 PE 的 .pdata"></a>5.5 不注册目标 PE 的 <code>.pdata</code></h2><p>x64映射PE后需要通过<code>RtlAddFunctionTable</code> 注册异常函数表；x86 PE32不需要这一步，因此x86 loader不包含目标PE的 <code>.pdata</code> 注册逻辑。</p>
+<p>不过，这不代表x86不处理TLS。x86仍会解析<code>RtlGetVersion</code>，按系统版本选择特征码定位 <code>ntdll!LdrpHandleTlsData</code>，并构造fake LDR entry交给系统完成Static TLS Data初始化。</p>
+<h2 id="5-6-x86-TLS：调用系统路径"><a href="#5-6-x86-TLS：调用系统路径" class="headerlink" title="5.6 x86 TLS：调用系统路径"></a>5.6 x86 TLS：调用系统路径</h2><p>对于包含TLS Directory的PE，srdi loader定位并调用系统的 <code>LdrpHandleTlsData</code>，由ntdll完成TLS index分配、TLS数据复制和当前线程TLS vector更新。</p>
+<p>随后，srdi loader再调用TLS callback，最后进入EXE OEP，或执行DLL的 <code>DllMain(DLL_PROCESS_ATTACH)</code>。</p>
+<h2 id="5-7-x86-导出函数调用约定"><a href="#5-7-x86-导出函数调用约定" class="headerlink" title="5.7 x86 导出函数调用约定"></a>5.7 x86 导出函数调用约定</h2><p>x86 export 模式使用 <code>__cdecl</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">push user_len</span><br><span class="line">push user_ptr</span><br><span class="line">push dst_base</span><br><span class="line">call eax</span><br><span class="line">add  esp, 0Ch</span><br></pre></td></tr></table></figure>
+
+<p>对应的导出函数应声明为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">extern &quot;C&quot; __declspec(dllexport)</span><br><span class="line">void __cdecl Start(void* image_base, void* user_data, uint32_t user_size);</span><br></pre></td></tr></table></figure>
+
+<p>不要使用<code>WINAPI</code> 或 <code>__stdcall</code>，否则被调用函数和loader会重复清理参数，导致栈不平衡。DLL的<code>DllMain</code> 与TLS callback仍按Windows约定使用 <code>__stdcall</code>。</p>
+<h1 id="六、Convert2Shellcode-与-Iris-Beacon-睡眠混淆冲突的解决思路"><a href="#六、Convert2Shellcode-与-Iris-Beacon-睡眠混淆冲突的解决思路" class="headerlink" title="六、Convert2Shellcode 与 Iris Beacon 睡眠混淆冲突的解决思路"></a>六、<code>Convert2Shellcode</code> 与 Iris Beacon 睡眠混淆冲突的解决思路</h1><p>一次意味的发现，当我使用自己编写的shellcode loader加载经过SRDI shellcode化后的beacon.exe（v0.1.3版本之前的C-Beacon），我想看一下睡眠混淆是否成功，不探究还好，一探究就引发后续一系列的对于睡眠混淆功能模块的重新思考和设计。</p>
+<p>正常情况下，我们运行stagerless的beacon，可以上线，且能加密&#x2F;解密beacon image。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F19-29-19-b7d95ef48b86833ac3177cb3d191ca15-20260716192919629-464070.png" alt="img"></p>
+<p>不过使用shellcode loader加载加载经过SRDI shellcode化后的beacon.exe，在内存视图窗口观察睡眠混淆功能是否正确将这块区域内存加密&#x2F;解密，出乎意料的是，没有加密&#x2F;解密，难道是睡眠混淆出了问题吗？我前期已经验证过，单独运行beacon.exe，睡眠混淆能够正常加密&#x2F;解密beacon.exe的映像区域。</p>
+<p>随后，我仔细阅读了v0.1.2睡眠混淆的代码，获取需要加密的内存基址这部分代码让我疑惑：通过GetModuleHandle是返回当前进程的映像基址，而sleep混淆将其作为加密&#x2F;解密的起始点，如果是运行beacon.exe，这没有任何问题，但是如果 SRDI + beacon.exe 的shellcode模式呢，GetModuleHandle返回的是loader的映像基址，这样加密&#x2F;解密就是loader.exe的内存区域。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F19-28-21-bdea856075263228350e756dbd4f86a6-20260716192820786-cd6056.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-14-23-58a6b48bf08a309db77348d4a268ed6c-20260716201423389-5a324e.png" alt="img"></p>
+<p>办法其实很简单，我在v0.1.3版本中，在入口函数中增加基址参数，无论是DLLMain还是WinMain，都需要调用方传递beacon运行的基址。WinMain的启动是通过CRT初始化，会自动传递beacon的运行基址，其hInstance就是Beacon运行的基址。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-21-25-c4769b8821da39fe05425d90d3dc590a-20260716202125090-636cce.png" alt="img"></p>
+<p>对于stager中下载的stage（beacon.dll），因为是通过反射dll注入的方式运行，所有反射加载器需要将加载dll时自行记录pe映射基址，并在调用入口点时将映射基址传递过去。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-23-11-ee64d33e5dbb7b3abe63b893c86d8d38-20260716202311531-79bb61.png" alt="img"></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-24-07-171697592d31a8ca9854908c653d4c86-20260716202407500-b3b17b.png" alt="img"></p>
+<p>前期我就想将C-beacon项目的反射加载器独立出来，专门做一个高级功能的加载器，支持清除旧PE数据，消除新PE特征，这也是Convert2Shellcode进入v2.0版本的契机，不过我将不传递PE基址的版本作为通用版本，将传递PE基址的版本作为Beacon的专用加载器，这样就可以将C-beacon项目中的inject_reflective.c给剥离出来，让stage beacon.dll作为一个普通的dll，让操作员通过各种改良的反射加载器将其加载到内存中执行。</p>
+<p>有了基址之后，睡眠混淆机制就能运行成功了吗？我的答案是：还缺了点东西。再详细看看我之前对于SRDI的设计，为了提高exe&#x2F;dll shellcode化后的规避能力，我是完全抹除了PE头。而这段代码中，却需要通过DOS、NT头定位到SizeofImage，和.text节的地址和大小，我抹除了PE头，导致下面代码直接失效。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-39-12-a820ac5411ae4360745b03e3db61c5ed-20260716203912477-3cf707.png" alt="img"></p>
+<p><strong>解决方案</strong>：在patch beacon teampalate时，将自行解析PE文件，将有用的信息patch到profile slot中，这些操作都是在server中完成，牺牲一点点等待时间（可忽略不计），却可以让Beacon能够加密&#x2F;解密整SizeofImage的内存区域，并恢复.text节的内存属性，我认为是值得的。</p>
+<p>patch的结构体大概长这样</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">typedef struct &#123;</span><br><span class="line">    uint32_t image_size;    // network / big-endian order</span><br><span class="line">    uint32_t text_rva;      // network / big-endian order</span><br><span class="line">    uint32_t text_size;     // network / big-endian order</span><br><span class="line">    uint32_t text_protect;  // network / big-endian order</span><br><span class="line">&#125; SleepImageLayout;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-52-35-eb60ff365e4bb6643b3247a177cb4a34-20260716205235520-8680c6.png" alt="img"></p>
+<p>beacon就可以使用配置中定义好的CfgSleepImageLayout结构，正确的加密&#x2F;解密SizeofImage的内存区域，并恢复.text节的内存属性。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F21-04-16-d1ed47c14340ec4d5389f5e6b82dd8be-20260716210416212-4f7fad.png" alt="img"></p>
+<p>为了调试方便，我在C-Beacon的Sleep命令中增加基址回传，也就是说可以在client中下发sleep命令，sleep执行完后会将基址输出到client的控制台上。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-55-18-a456e3a303fc994c7d0008f26a52eadd-20260716205518244-fe0d6a.png" alt="img"></p>
+<p>现在，我们重新让shellcode loader加载执行shellcode化后的beacon.exe，上线后，执行sleep命令获取beacon的运行基址。</p>
+<p>shellcode loader的映像内容正常。</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F20-58-01-905aa04be98331eb424202f494b99cc5-20260716205801783-640b31.png" alt="img"></p>
+<p>client控制台输出的hInstance&#x3D;0000018DF04F0000就是beacon的运行基址</p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F21-13-01-3939c410e3b5b88dae1107011e13928c-20260716211301015-bc99f9.png" alt="img"></p>
+<p>0000018DF04F0000~0000018DF04F1000的区域就是PE头，不过，这块区域被SRDI Loader给清零了<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F21-10-22-b7c8dd2544654bf5918d4370841ae86f-20260716211022566-27f057.png" alt="img"></p>
+<p>0000018DF04F1000~0000018DF0526000是.text区域，下面的内存区域是原始未加密的状态。<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F21-06-35-b1ad983b47b506052453d871e57b146c-20260716210635539-98470a.png" alt="img"></p>
+<p>加密中<br><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F16%2F21-13-25-033546e5a33dcb73c5ef8aa1c52e5b34-20260716211325051-6d2e2a.png" alt="img"></p>
+<p><strong>PS</strong>：上面所说的方案只适用C-Beacon，对于Rust-Beacon，可能行不通：因为Rust的入口点一般是main，而对于PE头AddressOfEntrypoint的一般说是链接器放入的Rust runtime初始化入口点，如果我们在rust beacon中导出一个函数，参数是基址，这样的模式可能跳过rust runtime的初始化，导致意想不到的错误发生。</p>
+<p>如果你还想在rust-beacon中实现睡眠混淆，那么你必须知道beacon的基址在哪里。如果还想使用GetModuleHandleW来获取beacon基址，从而加密beacon代码这个路径是行不通的。与C-Beacon不同，C-Beacon可以通过GetModuleHandleW获取基址并正常工作；但如果用shellcode loader加载执行 shellcode 化后的rust-beacon.exe，在进入睡眠混淆路径后会报错。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[*] shellcode: .\rustbeacon_new.bin (1821025 bytes)</span><br><span class="line">[*] running shellcode at 00000219B0060000</span><br><span class="line">[*] thread id: 34288</span><br><span class="line">[*] Beacon starting...</span><br><span class="line">[*] Collected Metadata: OS=windows, Arch=x64, User=Administrator, IP=192.168.1.6</span><br><span class="line">[*] BeaconID: 2164271191</span><br><span class="line">[*] Sleeping for 5.15s...</span><br><span class="line">[-] unhandled exception: 0xc0000005 at 00007FFED0A34700 access=FFFFFFFFFFFFFFFF mode=0</span><br></pre></td></tr></table></figure>
+
+<p>我想到了一些解决方案，但转念一想，项目主体仍是C实现的Beacon对象，Rust-Beacon只是用于扩展研究。因此，现阶段继续保持默认清除PE头，rust-beacon不实现睡眠混淆，如果非要实现睡眠混淆，则不要使用SRDI 工具。</p>
+<p>引入睡眠混淆会与其他机制产生不同的化学反应。比如本文所述的SRDI与睡眠混淆的冲突，以及在开发Iris Beacon过程中我还遇到的睡眠混淆与远程注入Beacon引发的CFG问题、级联模块的重新设计。</p>
+<p>这些问题我会在后续文章中展开记录。但核心的教训是：<strong>睡眠混淆不是一个可以独立插入的功能模块，它会穿透加载层、注入层和通信层的边界，迫使你重新审视整个Beacon的运行时架构。</strong> 这也是为什么Iris Beacon最终将 <code>RuntimeGate</code>、<code>SleepImageLayout</code>、基址传递机制这些基础设施全部打通后才算真正落地。</p>
+<h1 id="写在博客上的"><a href="#写在博客上的" class="headerlink" title="写在博客上的"></a>写在博客上的</h1><p>连续写作的计划到本文章发出去的时候就已经结束了（还有一篇文章要失约了），4个月写了9篇文章，已让我筋疲力尽，有没有让各位满意呢？我接下来需要沉淀一段时间，将学习的方向转向windows内核、linux内核、AD域以及漏洞挖掘的研究中，等我学有所成之后在分享出来吧，可能是几个月，也可能是几年，我也说不准。</p>
+<p>博客还是会不定时更新，虽然脑子的想法还有挺多，但架不住每月都产出一篇文章啊，社畜人的下班时间是很宝贵的哦&gt;.&lt;</p>
+<p>P站画师： <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/147294913">https://www.pixiv.net/artworks/147294913</a></p>
+<p><img src="https://images-of-oneday.oss-cn-guangzhou.aliyuncs.com/images%2F2026%2F07%2F17%2F17-57-01-1ed20d0dd1fd6ed1dd527a6189b1af53-%E7%A5%80-8335a6.png" alt="祀.png"></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/2026/06/20/%E4%BB%A5SysWhispers4%E9%A1%B9%E7%9B%AE%E5%AD%A6%E4%B9%A0%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2026-07-18 18:48:00
+            </span>
+            
+                  <span class="post-categories">
+                    <i class="iconfont icon-bookmark" title="Categories"></i>
+                    
+                    <span class="span--category">
+                      <a href="/categories/%E6%AD%A6%E5%99%A8%E5%8C%96/" title="武器化">
+                        <b>#</b> 武器化
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80-%E3%80%81%E8%BF%90%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E6%9E%84%E9%80%A0%E4%B8%8E%E7%AE%A1%E7%90%86"><span class="toc-text">一 、运行上下文的构造与管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-RDI2-Header"><span class="toc-text">1.1 RDI2 Header</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-CTX%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">1.2 CTX上下文</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%94%A8%E6%88%B7%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E6%9C%BA%E5%88%B6%E5%92%8C%E8%B0%83%E7%94%A8DLL%E6%8C%87%E5%AE%9A%E5%AF%BC%E5%87%BA%E5%87%BD%E6%95%B0%E7%9A%84%E8%AE%BE%E8%AE%A1"><span class="toc-text">二、用户参数传递机制和调用DLL指定导出函数的设计</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E5%8F%82%E6%95%B0%E7%9A%84%E7%BC%96%E7%A0%81%E6%96%B9%E5%BC%8F"><span class="toc-text">2.1 参数的编码方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-%E5%8F%82%E6%95%B0%E5%9C%A8-shellcode-%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="toc-text">2.2 参数在 shellcode 中的位置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E6%8C%87%E5%AE%9A%E5%AF%BC%E5%87%BA%E5%87%BD%E6%95%B0%E7%9A%84%E8%A7%A6%E5%8F%91%E4%B8%8E%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="toc-text">2.3 指定导出函数的触发与调用流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E4%BC%A0%E9%80%92%E7%94%A8%E6%88%B7%E5%8F%82%E6%95%B0%E8%B0%83%E7%94%A8%E5%AF%BC%E5%87%BA%E5%87%BD%E6%95%B0%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="toc-text">2.4 一个简单的传递用户参数调用导出函数的例子</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81PE%E6%95%B0%E6%8D%AE%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86%E4%B8%8E%E6%98%A0%E5%B0%84%E5%90%8E%E7%97%95%E8%BF%B9%E5%A4%84%E7%90%86"><span class="toc-text">三、PE数据生命周期管理与映射后痕迹处理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E6%B8%85%E9%99%A4%E6%97%A7PE%E6%95%B0%E6%8D%AE"><span class="toc-text">3.1 清除旧PE数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E6%B8%85%E9%99%A4%E6%98%A0%E5%B0%84%E5%90%8E%E7%9A%84PE%E7%89%B9%E5%BE%81"><span class="toc-text">3.2 清除映射后的PE特征</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Rust-%E7%A8%8B%E5%BA%8F%E6%97%A0%E6%B3%95%E7%9B%B4%E6%8E%A5%E8%BD%AC%E6%8D%A2%E4%B8%BAShellcode%E7%9A%84%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90%EF%BC%9ATLS-Data"><span class="toc-text">四、Rust 程序无法直接转换为Shellcode的问题分析：TLS Data</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-Rust-EXE%E8%BD%AC%E6%88%90shellcode%E5%90%8E%E5%B4%A9%E6%BA%83"><span class="toc-text">4.1 Rust EXE转成shellcode后崩溃</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-v2-%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%E7%B3%BB%E7%BB%9F%E7%9A%84LdrpHandleTlsData"><span class="toc-text">4.2 v2 的解决方案：系统的LdrpHandleTlsData</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E3%80%81PE32-%E6%94%AF%E6%8C%81%EF%BC%9Ax86-%E4%B8%8B%E6%89%8B%E5%B7%A5%E6%98%A0%E5%B0%84%E6%B5%81%E7%A8%8B%E7%9A%84%E5%B7%AE%E5%BC%82%E9%80%82%E9%85%8D"><span class="toc-text">五、PE32 支持：x86 下手工映射流程的差异适配</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#5-1-%E7%BB%9F%E4%B8%80%E5%8D%8F%E8%AE%AE%EF%BC%8C%E5%88%86%E7%A6%BB%E5%AE%9E%E7%8E%B0"><span class="toc-text">5.1 统一协议，分离实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-2-x86-%E5%85%A5%E5%8F%A3%E7%BA%A6%E5%AE%9A"><span class="toc-text">5.2 x86 入口约定</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-3-%E4%BB%85%E6%94%AF%E6%8C%81-PE32"><span class="toc-text">5.3 仅支持 PE32</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-4-PE32-%E7%9A%84%E5%AD%97%E6%AE%B5%E4%B8%8E%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text">5.4 PE32 的字段与重定位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-5-%E4%B8%8D%E6%B3%A8%E5%86%8C%E7%9B%AE%E6%A0%87-PE-%E7%9A%84-pdata"><span class="toc-text">5.5 不注册目标 PE 的 .pdata</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-6-x86-TLS%EF%BC%9A%E8%B0%83%E7%94%A8%E7%B3%BB%E7%BB%9F%E8%B7%AF%E5%BE%84"><span class="toc-text">5.6 x86 TLS：调用系统路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-7-x86-%E5%AF%BC%E5%87%BA%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E7%BA%A6%E5%AE%9A"><span class="toc-text">5.7 x86 导出函数调用约定</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%E3%80%81Convert2Shellcode-%E4%B8%8E-Iris-Beacon-%E7%9D%A1%E7%9C%A0%E6%B7%B7%E6%B7%86%E5%86%B2%E7%AA%81%E7%9A%84%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF"><span class="toc-text">六、Convert2Shellcode 与 Iris Beacon 睡眠混淆冲突的解决思路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%86%99%E5%9C%A8%E5%8D%9A%E5%AE%A2%E4%B8%8A%E7%9A%84"><span class="toc-text">写在博客上的</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+  
+    <script async type="text/javascript" src="/plugins/valine.min.js" onload="loadValineSuc(this)"></script>
+  
+
+  <div id="vcomments"></div>
+
+  <script>
+    function loadValineSuc() {
+      new Valine({
+        el: '#vcomments',
+        appId: 'kr7nhXQQsnagsiZAr9IIxoDq-gzGzoHsz',
+        appKey: 'Sujqic7fHSzakqEntTDwEJp3',
+        placeholder: 'Welcome!',
+        avatar: 'retro',
+        lang: 'en'
+      })
+    }
+  </script>
+
+    <style>
+      .comments-container .v .vempty {
+        display: none!important;
+      }
+    </style>
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/onedays12">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/onedays12">Copyright © 2026 oneday</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E9%87%8D%E6%9E%84SRDI + '&url=' + http%3A%2F%2Fexample.com%2F2026%2F07%2F18%2F%25E9%2587%258D%25E6%259E%2584SRDI%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://example.com/2026/07/18/%E9%87%8D%E6%9E%84SRDI/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
